@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikibase;
 
-use GuzzleHttp\Client;
-use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Exception\GuzzleException;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Http\HttpTransport;
 use JsonException;
+use Throwable;
 
 /**
  * Safe common reader for supported Wikibase installations.
@@ -25,9 +24,12 @@ final class ReadOnlyWikibaseClient
         'factgrid' => 'https://database.factgrid.de/w/api.php',
     ];
 
-    public function __construct(private readonly ClientInterface $httpClient = new Client())
+    public function __construct(?HttpTransport $httpClient = null)
     {
+        $this->httpClient = $httpClient ?? HttpTransport::default();
     }
+
+    private readonly HttpTransport $httpClient;
 
     /** @return array<string,mixed>|null */
     public function entity(string $provider, string $itemId, string $language): ?array
@@ -40,27 +42,16 @@ final class ReadOnlyWikibaseClient
         $language = $this->language($language);
         try {
             $response = $this->httpClient->request('GET', $endpoint, [
-                'allow_redirects' => false,
-                'connect_timeout' => 3.0,
-                'headers'         => [
-                    'Accept'     => 'application/json',
-                    'User-Agent' => 'webtrees Wikibase Places/0.2 (https://github.com/hartenthaler/hh_external_places)',
-                ],
-                'http_errors' => false,
-                'query'       => [
                     'action'        => 'wbgetentities',
                     'format'        => 'json',
                     'formatversion' => '2',
                     'ids'           => $itemId,
                     'languages'     => $language . '|en',
                     'props'         => 'labels|descriptions|claims',
-                ],
-                'timeout' => 6.0,
-            ]);
-        } catch (GuzzleException) {
-            return null;
-        }
+                ], ['Accept' => 'application/json', 'User-Agent' => 'webtrees Wikibase Places/0.2 (https://github.com/hartenthaler/hh_external_places)'], 6.0);
+        } catch (Throwable) { return null; }
 
+        if ($response === null) { return null; }
         $body = $response->getBody()->getContents();
         if ($response->getStatusCode() !== 200 || strlen($body) > self::MAX_RESPONSE_BYTES) {
             return null;
@@ -82,11 +73,12 @@ final class ReadOnlyWikibaseClient
         $term = trim($term);
         if ($endpoint === null || mb_strlen($term) < 2 || mb_strlen($term) > 120) { return []; }
         try {
-            $response = $this->httpClient->request('GET', $endpoint, ['query' => ['action' => 'wbsearchentities', 'format' => 'json', 'language' => $this->language($language), 'uselang' => $this->language($language), 'search' => $term, 'limit' => 10, 'type' => 'item'], 'allow_redirects' => false, 'connect_timeout' => 3.0, 'headers' => ['Accept' => 'application/json', 'User-Agent' => 'webtrees Wikibase Places/0.2'], 'http_errors' => false, 'timeout' => 6.0]);
+            $response = $this->httpClient->request('GET', $endpoint, ['action' => 'wbsearchentities', 'format' => 'json', 'language' => $this->language($language), 'uselang' => $this->language($language), 'search' => $term, 'limit' => 10, 'type' => 'item'], ['Accept' => 'application/json', 'User-Agent' => 'webtrees Wikibase Places/0.2'], 6.0);
+            if ($response === null) { return []; }
             $body = $response->getBody()->getContents();
             if ($response->getStatusCode() !== 200 || strlen($body) > self::MAX_RESPONSE_BYTES) { return []; }
             $payload = json_decode($body, true, 20, JSON_THROW_ON_ERROR);
-        } catch (GuzzleException|JsonException) { return []; }
+        } catch (Throwable) { return []; }
         $results = [];
         foreach (array_slice($payload['search'] ?? [], 0, 10) as $item) {
             $qid = $item['id'] ?? null;
@@ -104,11 +96,12 @@ final class ReadOnlyWikibaseClient
         $center = sprintf('Point(%.6F %.6F)', $longitude, $latitude);
         $query = 'SELECT ?item ?itemLabel ?itemDescription ?coord WHERE { SERVICE wikibase:around { ?item wdt:P48 ?coord . bd:serviceParam wikibase:center "' . $center . '"^^geo:wktLiteral . bd:serviceParam wikibase:radius "' . number_format($radiusKm, 3, '.', '') . '" . } SERVICE wikibase:label { bd:serviceParam wikibase:language "' . $this->language($language) . ',en". } } LIMIT 20';
         try {
-            $response = $this->httpClient->request('GET', 'https://database.factgrid.de/query/sparql', ['query' => ['format' => 'json', 'query' => $query], 'allow_redirects' => false, 'connect_timeout' => 3.0, 'headers' => ['Accept' => 'application/sparql-results+json', 'User-Agent' => 'webtrees Wikibase Places/0.2'], 'http_errors' => false, 'timeout' => 8.0]);
+            $response = $this->httpClient->request('GET', 'https://database.factgrid.de/query/sparql', ['format' => 'json', 'query' => $query], ['Accept' => 'application/sparql-results+json', 'User-Agent' => 'webtrees Wikibase Places/0.2'], 8.0);
+            if ($response === null) { return []; }
             $body = $response->getBody()->getContents();
             if ($response->getStatusCode() !== 200 || strlen($body) > self::MAX_RESPONSE_BYTES) { return []; }
             $payload = json_decode($body, true, 32, JSON_THROW_ON_ERROR);
-        } catch (GuzzleException|JsonException) { return []; }
+        } catch (Throwable) { return []; }
         $results = [];
         foreach (array_slice($payload['results']['bindings'] ?? [], 0, 20) as $binding) {
             $uri = $binding['item']['value'] ?? null;

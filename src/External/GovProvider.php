@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace Hartenthaler\Webtrees\Module\ExternalPlacesModule\External;
 
-use GuzzleHttp\Client;
-use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Exception\GuzzleException;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\ExternalIdentifier;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Http\HttpTransport;
 use JsonException;
 
 /** Read-only adapter for the public GOV REST service. */
@@ -15,8 +13,11 @@ final class GovProvider implements ExternalProvider
 {
     public const AUTHORITY_URI = 'https://gov.genealogy.net/';
 
-    public function __construct(private readonly ClientInterface $httpClient = new Client(), private readonly ExternalProviderCache $cache = new ExternalProviderCache())
+    private readonly HttpTransport $httpClient;
+
+    public function __construct(?HttpTransport $httpClient = null, private readonly ExternalProviderCache $cache = new ExternalProviderCache())
     {
+        $this->httpClient = $httpClient ?? HttpTransport::default();
     }
 
     public function key(): string { return 'gov'; }
@@ -40,14 +41,16 @@ final class GovProvider implements ExternalProvider
             return $this->map($identifier, $cached);
         }
         try {
-            $response = $this->httpClient->request('GET', 'https://gov.genealogy.net/api/data/' . rawurlencode($identifier->value), [
-                'allow_redirects' => false, 'connect_timeout' => 3.0,
-                'headers' => ['Accept' => 'application/json', 'User-Agent' => 'webtrees GOV Places/0.2'],
-                'http_errors' => false, 'timeout' => 6.0,
-            ]);
-            if ($response->getStatusCode() !== 200 || strlen($body = $response->getBody()->getContents()) > 1_000_000) { return null; }
+            // Use the same endpoint as Vesta's Gov4Webtrees module.  The
+            // older /api/data/{id} form is still used as a compatibility
+            // fallback by some GOV installations.
+            $response = $this->httpClient->request('GET', 'https://gov.genealogy.net/api/getObject', ['itemId' => $identifier->value], ['Accept' => '*/*', 'User-Agent' => 'webtrees GOV Places/0.2'], 30.0);
+            if ($response === null || $response->getStatusCode() !== 200) {
+                $response = $this->httpClient->request('GET', 'https://gov.genealogy.net/api/data/' . rawurlencode($identifier->value), [], ['Accept' => '*/*', 'User-Agent' => 'webtrees GOV Places/0.2'], 30.0);
+            }
+            if ($response === null || $response->getStatusCode() !== 200 || strlen($body = $response->getBody()->getContents()) > 1_000_000) { return null; }
             $data = json_decode($body, true, 24, JSON_THROW_ON_ERROR);
-        } catch (GuzzleException|JsonException) { return null; }
+        } catch (JsonException) { return null; }
         if (!is_array($data)) { return null; }
         $this->cache->write($this->key(), $identifier->value, $data);
         return $this->map($identifier, $data);
@@ -80,11 +83,15 @@ final class GovProvider implements ExternalProvider
     private function requestJson(string $url, array $query): ?array
     {
         try {
-            $response = $this->httpClient->request('GET', $url, ['query' => $query, 'allow_redirects' => false, 'connect_timeout' => 3.0, 'headers' => ['Accept' => 'application/json', 'User-Agent' => 'webtrees GOV Places/0.2'], 'http_errors' => false, 'timeout' => 6.0]);
+            // GOV currently requires a broad Accept header.  The Vesta GOV
+            // module uses */* here as well; with application/json GOV may
+            // return its anti-bot challenge instead of the JSON payload.
+            $response = $this->httpClient->request('GET', $url, $query, ['Accept' => '*/*', 'User-Agent' => 'webtrees GOV Places/0.2'], 30.0);
+            if ($response === null) { return null; }
             $body = $response->getBody()->getContents();
             $data = json_decode($body, true, 24, JSON_THROW_ON_ERROR);
             return $response->getStatusCode() === 200 && is_array($data) ? $data : null;
-        } catch (GuzzleException|JsonException) { return null; }
+        } catch (JsonException) { return null; }
     }
 
     /** @param array<string,mixed>|null $payload @return list<array{id:string,label:string,description:?string,distanceKm:?float}> */
@@ -97,10 +104,9 @@ final class GovProvider implements ExternalProvider
         foreach (array_slice($items, 0, 20) as $item) {
             if (!is_array($item)) { continue; }
             $id = $item['id'] ?? $item['govId'] ?? $item['itemId'] ?? $item['value'] ?? null;
-            $label = $item['name'] ?? $item['label'] ?? $item['title'] ?? $id;
-            if (is_array($label)) { $label = $label['value'] ?? $label['name'] ?? $label['label'] ?? $id; }
+            $label = $this->firstString($item, ['name', 'label', 'title']) ?? $id;
             if (!is_string($id) || $this->identifier($id) === null || !is_string($label)) { continue; }
-            $out[] = ['id' => $id, 'label' => $label, 'description' => is_string($item['type'] ?? null) ? $item['type'] : null, 'distanceKm' => is_numeric($item['distance'] ?? null) ? (float) $item['distance'] : null];
+            $out[] = ['id' => $id, 'label' => trim(strip_tags($label)), 'description' => $this->firstString($item, ['type', 'description', 'objectType']), 'distanceKm' => is_numeric($item['distance'] ?? null) ? (float) $item['distance'] : null];
         }
         return $out;
     }
@@ -142,8 +148,9 @@ final class GovProvider implements ExternalProvider
             $value = $data[$provider] ?? ($data[strtoupper($provider)] ?? null);
             if (is_string($value) && preg_match('/^Q[1-9][0-9]*$/', trim($value)) === 1) { $references[$provider] = [trim($value)]; }
         }
-        foreach ((array) ($data['extRef'] ?? []) as $externalReference) {
-            if (!is_string($externalReference) || preg_match('/^(wikidata|factgrid):((?:Q[1-9][0-9]*)$)/i', trim($externalReference), $match) !== 1) { continue; }
+        foreach ((array) ($data['externalReference'] ?? $data['extRef'] ?? []) as $externalReference) {
+            $value = is_array($externalReference) ? ($externalReference['value'] ?? null) : $externalReference;
+            if (!is_string($value) || preg_match('/^(wikidata|factgrid):((?:Q[1-9][0-9]*)$)/i', trim($value), $match) !== 1) { continue; }
             $references[strtolower($match[1])][] = $match[2];
         }
         foreach (['genwiki', 'genWiki', 'genwikiUrl', 'genWikiUrl'] as $key) {
@@ -170,9 +177,10 @@ final class GovProvider implements ExternalProvider
             $value = is_array($name) ? ($name['value'] ?? $name['name'] ?? null) : $name;
             if (is_string($value) && trim($value) !== '') { $details[] = ['label' => 'Name', 'value' => trim(strip_tags($value))]; }
         }
-        foreach ((array) ($data['extRef'] ?? []) as $reference) {
-            if (is_string($reference) && trim($reference) !== '') {
-                $details[] = ['label' => 'External identifier', 'value' => trim($reference)];
+        foreach ((array) ($data['externalReference'] ?? $data['extRef'] ?? []) as $reference) {
+            $value = is_array($reference) ? ($reference['value'] ?? null) : $reference;
+            if (is_string($value) && trim($value) !== '') {
+                $details[] = ['label' => 'External identifier', 'value' => trim($value)];
             }
         }
         foreach (['population' => 'Population', 'populationCount' => 'Population', 'inhabitants' => 'Population', 'inhabitantCount' => 'Population', 'populationHistory' => 'Population'] as $key => $label) {
@@ -181,8 +189,10 @@ final class GovProvider implements ExternalProvider
                 $details[] = ['label' => $label, 'value' => (string) $value];
             } elseif (is_array($value)) {
                 foreach (array_slice($value, 0, 10) as $item) {
-                    if (is_scalar($item) && trim((string) $item) !== '') {
-                        $details[] = ['label' => $label, 'value' => (string) $item];
+                    $population = is_array($item) ? ($item['value'] ?? null) : $item;
+                    if (is_scalar($population) && trim((string) $population) !== '') {
+                        $year = is_array($item) ? ($item['year'] ?? null) : null;
+                        $details[] = ['label' => $label, 'value' => trim((string) $population) . (is_scalar($year) ? ' (' . $year . ')' : '')];
                     }
                 }
             }

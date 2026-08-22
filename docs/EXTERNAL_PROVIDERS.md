@@ -26,15 +26,24 @@ is used. Unknown authorities are preserved, but are not fetched by this module.
 
 ## Provider mappings
 
-Wikidata uses `P31` for type, `P18` for a Wikimedia Commons image and `P8168`
-for a FactGrid item ID. FactGrid uses `P2` for type, `P189` for a Wikimedia
-Commons image, `P771` for a Wikidata item ID and `P1073` for a GOV ID. These
+Wikidata uses `P31` for type, `P18` for a Wikimedia Commons image, `P8168`
+for a FactGrid item ID and `P2503` for a GOV ID. FactGrid uses `P2` for type,
+`P189` for a Wikimedia Commons image, `P771` for a Wikidata item ID and `P1073` for a GOV ID. These
 properties are configured per provider; equal property numbers must not be
 assumed across Wikibase installations.
 
-GOV is read through its public REST endpoint `/api/data/{id}`. The module only
-uses the fixed GOV host and a validated ID. The service is read-only and has a
+GOV is read through its public REST endpoint `/api/getObject?itemId={id}`;
+`/api/data/{id}` is retained as a compatibility fallback. The module only uses
+the fixed GOV host and a validated ID. The service is read-only and has a
 bounded response size and timeout.
+
+## HTTP transport
+
+External requests use the module's transport boundary. On webtrees 2.3 it
+uses the PSR-18 client supplied by webtrees; on older installations it falls
+back to Guzzle when that client is available. Provider code therefore does not
+depend on a particular HTTP implementation. TLS certificate verification is
+always enabled and must be correctly configured in the PHP environment.
 
 ## Consistency display
 

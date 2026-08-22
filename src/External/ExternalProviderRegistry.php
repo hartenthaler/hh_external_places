@@ -21,7 +21,7 @@ final class ExternalProviderRegistry
     public function all(): array
     {
         return [
-            new WikibaseProvider('wikidata', ['authority' => 'https://www.wikidata.org/entity/', 'label' => 'Wikidata', 'type' => 'P31', 'image' => 'P18', 'factgrid' => 'P8168', 'wikidata' => null, 'gov' => null]),
+            new WikibaseProvider('wikidata', ['authority' => 'https://www.wikidata.org/entity/', 'label' => 'Wikidata', 'type' => 'P31', 'image' => 'P18', 'factgrid' => 'P8168', 'wikidata' => null, 'gov' => 'P2503']),
             new WikibaseProvider('factgrid', ['authority' => 'https://database.factgrid.de/entity/', 'label' => 'FactGrid', 'type' => 'P2', 'image' => 'P189', 'factgrid' => null, 'wikidata' => 'P771', 'gov' => 'P1073']),
             new GovProvider(),
         ];
