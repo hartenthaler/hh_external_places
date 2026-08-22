@@ -2,15 +2,19 @@
 
 All notable user-facing changes are documented here.
 
+## 2.2.6.1 - 2026-08-23
+
+- External searches now use webtrees' modern HTTP connection when available,
+  while older webtrees installations continue to work through a fallback.
+  This prepares the module for webtrees 2.3 and keeps secure TLS verification.
+
+- GOV access now follows the same endpoint and request behavior as the Vesta
+  GOV module, improving compatibility with the public GOV service.
+
+- Provider results and external details are interpreted more reliably, including
+  multilingual GOV names, external references and population data.
+
 ## Next release
-
-- Use webtrees' PSR-18 HTTP client when available, with a compatibility
-  fallback for older installations. This keeps external searches compatible
-  with webtrees 2.3 while retaining secure TLS verification.
-
-- Added shared read-only provider infrastructure for Wikidata, FactGrid and GOV,
-  including cross-reference consistency indicators and explicit entry of missing
-  external identifiers.
 
 - Version 2 will add optional research workflows without automatic GEDCOM changes.
 
