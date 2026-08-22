@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikidata;
 
-use GuzzleHttp\Client;
-use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Exception\GuzzleException;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\WikidataIdentifier;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Http\HttpTransport;
 use JsonException;
+use Throwable;
 
 /**
  * Small, read-only client for the public Wikidata entity endpoint.
@@ -25,10 +24,13 @@ final class WikidataClient
     private const MAX_NEARBY_RESULTS = 20;
 
     public function __construct(
-        private readonly ClientInterface $httpClient = new Client(),
+        ?HttpTransport $httpClient = null,
         private readonly WikidataEntityMapper $mapper = new WikidataEntityMapper(),
     ) {
+        $this->httpClient = $httpClient ?? HttpTransport::default();
     }
+
+    private readonly HttpTransport $httpClient;
 
     public function fetch(WikidataIdentifier $identifier, string $language): ?WikidataEntity
     {
@@ -53,11 +55,11 @@ final class WikidataClient
                 ],
                 'timeout'         => 6.0,
             ]);
-        } catch (GuzzleException) {
+        } catch (Throwable) {
             return null;
         }
 
-        if ($response->getStatusCode() !== 200) {
+        if ($response === null || $response->getStatusCode() !== 200) {
             return null;
         }
 
@@ -99,7 +101,7 @@ final class WikidataClient
                 'timeout'         => 6.0,
             ]);
             $payload = json_decode($response->getBody()->getContents(), true, 16, JSON_THROW_ON_ERROR);
-        } catch (GuzzleException|JsonException) {
+        } catch (Throwable) {
             return [];
         }
 
@@ -145,7 +147,7 @@ final class WikidataClient
                     continue;
                 }
                 $payload = json_decode($body, true, 16, JSON_THROW_ON_ERROR);
-            } catch (GuzzleException|JsonException) {
+            } catch (Throwable) {
                 continue;
             }
 
@@ -198,7 +200,7 @@ final class WikidataClient
                 return [];
             }
             $payload = json_decode($body, true, 16, JSON_THROW_ON_ERROR);
-        } catch (GuzzleException|JsonException) {
+        } catch (Throwable) {
             return [];
         }
 
@@ -253,7 +255,7 @@ final class WikidataClient
                 return [];
             }
             $payload = json_decode($body, true, 32, JSON_THROW_ON_ERROR);
-        } catch (GuzzleException|JsonException) {
+        } catch (Throwable) {
             return [];
         }
 
@@ -347,7 +349,7 @@ final class WikidataClient
                 return $results;
             }
             $payload = json_decode($body, true, 16, JSON_THROW_ON_ERROR);
-        } catch (GuzzleException|JsonException) {
+        } catch (Throwable) {
             return $results;
         }
 

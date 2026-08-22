@@ -4,6 +4,10 @@ All notable user-facing changes are documented here.
 
 ## Next release
 
+- Use webtrees' PSR-18 HTTP client when available, with a compatibility
+  fallback for older installations. This keeps external searches compatible
+  with webtrees 2.3 while retaining secure TLS verification.
+
 - Added shared read-only provider infrastructure for Wikidata, FactGrid and GOV,
   including cross-reference consistency indicators and explicit entry of missing
   external identifiers.

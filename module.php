@@ -15,6 +15,7 @@ if (is_file($vestaAutoload)) {
 require __DIR__ . '/src/MoreI18N.php';
 require __DIR__ . '/src/Domain/ExternalIdentifier.php';
 require __DIR__ . '/src/Domain/FactGridIdentifier.php';
+require __DIR__ . '/src/Http/HttpTransport.php';
 require __DIR__ . '/src/Wikibase/ReadOnlyWikibaseClient.php';
 require __DIR__ . '/src/External/ExternalInformation.php';
 require __DIR__ . '/src/External/ExternalProviderCache.php';

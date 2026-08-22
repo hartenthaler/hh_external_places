@@ -248,7 +248,8 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                         break;
                     }
                 }
-                $html .= '<br><small>' . e(I18N::translate('Reference to %s', ucfirst($provider))) . ': '
+                $providerLabel = ['wikidata' => 'Wikidata', 'factgrid' => 'FactGrid', 'gov' => 'GOV'][$provider] ?? $provider;
+                $html .= '<br><small>' . e(I18N::translate('Reference to %s', $providerLabel)) . ': '
                     . e($value) . ' — ' . e($matching ? I18N::translate('consistent') : I18N::translate('not present in this shared place')) . '</small>';
             }
         }
