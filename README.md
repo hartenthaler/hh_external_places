@@ -16,6 +16,7 @@ External Places is a [webtrees](https://www.webtrees.net) module for enriching [
 * [Privacy](#privacy)
 * [Requirements](#requirements)
 * [Installation](#installation)
+* [Usage](#usage)
 * [Documentation](#documentation)
 * [Translation](#translation)
 * [Credits](#credits)
@@ -77,9 +78,7 @@ When the optional Legal Notice module is active, it includes the selected extern
 4. In the webtrees control panel, enable **External Places**.
 5. In the Vesta Shared Places configuration, enable **External Places** as a place-information provider.
 
-The directory and technical module ID are still named `hh_external_places` for
-upgrade compatibility. The public name is **External Places**; see the
-[naming proposal](docs/RENAME_PROPOSAL.md) for the planned repository migration.
+## Usage
 
 An editor can use **Assign external identifier** on the shared-place page. The provider-specific sections offer search and, where supported, nearby search; the editor must explicitly choose the result. The module stores a Wikidata item as an external identifier with its authority URI:
 
@@ -90,7 +89,7 @@ An editor can use **Assign external identifier** on the shared-place page. The p
 
 If an existing item has been merged or redirected by Wikidata, the assignment page shows the replacement QID and lets the editor apply it explicitly.
 
-For a shared place with GEDCOM `MAP`, `LATI` and `LONG` coordinates, editors can also use **Search nearby**. The module shows at most 20 candidates inside the configured radius. It ranks suggestions by matching name and distance, but never creates a link automatically. Administrators can choose the radius independently for every family tree in the module's configuration.
+For a shared place with GEDCOM `MAP`, `LATI` and `LONG` coordinates, editors can also use **Search nearby**. The module shows at most 20 candidates inside the configured radius. It ranks suggestions by matching name and distance, but never creates a link automatically. Administrators can choose the radius independently for every family tree in the module's configuration; the selected value is used consistently for nearby searches in Wikidata, FactGrid and GOV.
 
 Search results use a compact table. They show the provider label and identifier, the description and—where applicable—distance. Opening a result uses the provider's public page; **Assign** remains an explicit editor action.
 

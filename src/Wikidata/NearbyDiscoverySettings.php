@@ -9,7 +9,11 @@ use Fisharebest\Webtrees\Tree;
 /** Per-tree, bounded settings for the editor-only nearby discovery. */
 final class NearbyDiscoverySettings
 {
-    public const PREFERENCE = 'HH_WIKIDATA_PLACES_NEARBY_RADIUS_KM';
+    /**
+     * Keep this preference name below webtrees' setting_name column limit.
+     * The same bounded value is used by every provider's nearby search.
+     */
+    public const PREFERENCE = 'HH_EXTERNAL_PLACES_RADIUS_KM';
     public const DEFAULT_RADIUS_KM = 5.0;
 
     public static function radius(Tree $tree): float
