@@ -60,3 +60,9 @@ validated `_EXID`/`TYPE` block and updates the normal webtrees change stamp.
 The providers expose public research data and are not used to match or alter
 webtrees persons. Every displayed value retains its provider label and link.
 External failures do not block the shared-place page.
+
+For Wikidata place relationships, displayed owners and occupants link to their
+Wikidata item. If a person has a valid WikiTree identifier (`P2924`), the
+module also provides a WikiTree link. FactGrid place records are currently
+read for place-level information and cross-references; owner/occupant
+relationships from FactGrid are not yet part of the read model.
