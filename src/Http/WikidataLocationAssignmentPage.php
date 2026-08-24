@@ -11,6 +11,7 @@ use Fisharebest\Webtrees\Registry;
 use Fisharebest\Webtrees\Validator;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Gedcom\ExternalIdService;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalProviderRegistry;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\ExternalPlacesModule;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\MoreI18N;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikidata\WikidataClient;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikidata\LocationCoordinates;
@@ -21,8 +22,6 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
 use function parse_str;
-use function route;
-
 /** Search and review Wikidata items before explicitly assigning one to a shared place. */
 final class WikidataLocationAssignmentPage implements RequestHandlerInterface
 {
@@ -61,7 +60,7 @@ final class WikidataLocationAssignmentPage implements RequestHandlerInterface
         $entity  = $current === null ? null : $client->fetch($current, $language);
 
         return $this->viewResponse('hh_external_places::assignment', [
-            'assignment_url' => route('hh-external-places.assignment-page', ['tree' => $tree->name(), 'xref' => $location->xref()]),
+            'assignment_url' => ExternalPlacesModule::assignmentUrl(['tree' => $tree->name(), 'xref' => $location->xref()]),
             'provider_key'   => $providerKey,
             'candidates'     => $providerKey === 'wikidata' && $submittedSearch !== '' ? $client->search($submittedSearch, $language) : [],
             'external_candidates' => $providerKey === 'gov' && $submittedSearch !== '' && $govProvider !== null && method_exists($govProvider, 'search') ? $govProvider->search($submittedSearch, $language) : [],

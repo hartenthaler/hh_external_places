@@ -47,6 +47,8 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
     private const MODULE_NAME = 'hh_external_places';
     private const GITHUB_USER = 'hartenthaler';
     private const CACHE_SCHEMA_VERSION_PREFERENCE = 'wikidata_cache_schema_version';
+    private const ASSIGNMENT_ROUTE_NAME = 'hh-external-places.assignment-page';
+    private const ASSIGNMENT_ROUTE_PATH = '/tree/{tree}/external-place/{xref}/assignment';
 
     public function boot(): void
     {
@@ -59,11 +61,32 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
 
         View::registerNamespace(self::MODULE_NAME, $this->resourcesFolder() . 'views/');
         $router = Registry::routeFactory()->routeMap();
-        $router->get(
-            'hh-external-places.assignment-page',
-            '/tree/{tree}/external-place/{xref}/assignment',
-            WikidataLocationAssignmentPage::class,
-        )->allows(['GET', 'POST']);
+        if (method_exists($router, 'add')) {
+            // webtrees 2.3 identifies routes by their request-handler class.
+            $router->add(self::ASSIGNMENT_ROUTE_PATH, WikidataLocationAssignmentPage::class);
+        } else {
+            // webtrees 2.2 uses an explicit route name and HTTP verb map.
+            $router->get(
+                self::ASSIGNMENT_ROUTE_NAME,
+                self::ASSIGNMENT_ROUTE_PATH,
+                WikidataLocationAssignmentPage::class,
+            )->allows(['GET', 'POST']);
+        }
+    }
+
+    /**
+     * Build a URL for the assignment page on both webtrees routing APIs.
+     *
+     * @param array<string, scalar> $parameters
+     */
+    public static function assignmentUrl(array $parameters): string
+    {
+        $routeMap = Registry::routeFactory()->routeMap();
+        $routeName = method_exists($routeMap, 'add')
+            ? WikidataLocationAssignmentPage::class
+            : self::ASSIGNMENT_ROUTE_NAME;
+
+        return route($routeName, $parameters);
     }
 
     public function plac2html(PlaceStructure $place): ?GenericViewElement
@@ -94,7 +117,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             $html = $this->externalInformationHtml($externalIdentifiers, $language = explode('-', str_replace('_', '-', I18N::languageTag()))[0] ?: 'en', '', $location->fullName());
             $html .= '<div class="d-flex gap-2 flex-wrap mt-2">';
             if ($location->canEdit()) {
-                $html .= '<a class="btn btn-primary btn-sm" href="' . e(route('hh-external-places.assignment-page', ['tree' => $location->tree()->name(), 'xref' => $location->xref()])) . '">' . e(I18N::translate('Assign external identifier')) . '</a>';
+                $html .= '<a class="btn btn-primary btn-sm" href="' . e(self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()])) . '">' . e(I18N::translate('Assign external identifier')) . '</a>';
             }
             if ($domusUrl !== '') {
                 $html .= '<a class="btn btn-primary btn-sm" href="' . e($domusUrl) . '" rel="noopener noreferrer" target="_blank">' . e(I18N::translate('Show in Domus')) . '</a>';
@@ -175,7 +198,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         }
 
         if ($location->canEdit()) {
-            $html .= '<a class="btn btn-primary btn-sm" href="' . e(route('hh-external-places.assignment-page', ['tree' => $location->tree()->name(), 'xref' => $location->xref()])) . '">' . e(I18N::translate('Assign external identifier')) . '</a>';
+            $html .= '<a class="btn btn-primary btn-sm" href="' . e(self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()])) . '">' . e(I18N::translate('Assign external identifier')) . '</a>';
         }
         $html .= '</div>';
 
@@ -270,7 +293,11 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         foreach ($relations as $relation) {
             $person = $people[$relation->qid] ?? null;
             $label = $person?->label ?? $relation->qid;
-            $html .= '<tr><td><a href="https://www.wikidata.org/entity/' . e($relation->qid) . '" rel="noopener noreferrer" target="_blank">' . e($label) . '</a> <small>(' . e($relation->qid) . ')</small></td>'
+            $personLinks = '';
+            foreach ($person?->externalLinks ?? [] as $linkLabel => $linkUrl) {
+                $personLinks .= ' · <a href="' . e($linkUrl) . '" rel="noopener noreferrer" target="_blank">' . e($linkLabel) . '</a>';
+            }
+            $html .= '<tr><td><a href="https://www.wikidata.org/entity/' . e($relation->qid) . '" rel="noopener noreferrer" target="_blank">' . e($label) . '</a> <small>(' . e($relation->qid) . ')</small>' . $personLinks . '</td>'
                 . '<td>' . $this->displayWikidataDate($person?->birthDate) . '</td><td>' . $this->displayWikidataDate($person?->deathDate) . '</td>'
                 . '<td>' . $this->displayWikidataDate($relation->from) . '</td><td>' . $this->displayWikidataDate($relation->until) . '</td></tr>';
         }

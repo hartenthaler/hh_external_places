@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Fisharebest\Webtrees\I18N;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\MoreI18N;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\ExternalPlacesModule;
 
 /** @var string $assignment_url */
 /** @var list<Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikidata\WikidataSearchResult> $candidates */
@@ -37,7 +38,7 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\MoreI18N;
 
 <nav class="mb-3" aria-label="<?= e(I18N::translate('External providers')) ?>">
     <?php foreach (['wikidata' => 'Wikidata', 'factgrid' => 'FactGrid', 'gov' => 'GOV'] as $key => $label) : ?>
-        <a class="btn <?= $provider_key === $key ? 'btn-primary' : 'btn-outline-primary' ?> btn-sm me-1" href="<?= e(route('hh-external-places.assignment-page', ['tree' => $tree->name(), 'xref' => $location->xref(), 'provider' => $key])) ?>"><?= e(I18N::translate('Assign %s identifier', $label)) ?></a>
+        <a class="btn <?= $provider_key === $key ? 'btn-primary' : 'btn-outline-primary' ?> btn-sm me-1" href="<?= e(ExternalPlacesModule::assignmentUrl(['tree' => $tree->name(), 'xref' => $location->xref(), 'provider' => $key])) ?>"><?= e(I18N::translate('Assign %s identifier', $label)) ?></a>
     <?php endforeach ?>
 </nav>
 

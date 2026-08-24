@@ -162,11 +162,43 @@ final class WikidataClient
                     is_string($label) ? $label : null,
                     $this->claimDate($claims['P569'] ?? []),
                     $this->claimDate($claims['P570'] ?? []),
+                    $this->personExternalLinks($claims),
                 );
             }
         }
 
         return $people;
+    }
+
+    /**
+     * Build links for deliberately supported external person identifiers.
+     * Values are validated before being appended to a fixed provider URL.
+     *
+     * @param array<string,mixed> $claims
+     * @return array<string,string>
+     */
+    private function personExternalLinks(array $claims): array
+    {
+        $links = [];
+        $wikitree = $this->claimString($claims['P2924'] ?? [], '/^[A-Za-z0-9][A-Za-z0-9._-]{0,119}$/');
+        if ($wikitree !== null) {
+            $links['WikiTree'] = 'https://www.wikitree.com/wiki/' . rawurlencode($wikitree);
+        }
+
+        return $links;
+    }
+
+    /** @param mixed $statements */
+    private function claimString(mixed $statements, string $pattern): ?string
+    {
+        foreach (is_array($statements) ? $statements : [] as $statement) {
+            $value = $statement['mainsnak']['datavalue']['value'] ?? null;
+            if (is_string($value) && preg_match($pattern, $value) === 1) {
+                return $value;
+            }
+        }
+
+        return null;
     }
 
     /** @return list<WikidataSearchResult> */

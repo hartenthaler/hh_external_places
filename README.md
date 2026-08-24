@@ -49,6 +49,7 @@ The current release provides:
 * a read-only outbound link to Domus, using its documented QID deep link where available.
 * provider-specific searches and nearby searches for Wikidata, FactGrid and GOV;
 * historical addresses, owners and occupants from Wikidata, when the linked item actually provides them;
+* links from displayed Wikidata owners and occupants to Wikidata and, when available, their WikiTree identifier (`P2924`);
 * public provider cross-references and consistency information without modifying GEDCOM data.
 
 ## 🖼️ Screenshot
