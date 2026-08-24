@@ -66,6 +66,32 @@ final class ReadOnlyWikibaseClient
         return is_array($payload) ? $payload : null;
     }
 
+    /** @param list<string> $itemIds @return array<string,array<string,mixed>> */
+    public function entities(string $provider, array $itemIds, string $language): array
+    {
+        $endpoint = self::ENDPOINTS[$provider] ?? null;
+        $itemIds = array_values(array_unique(array_filter(array_slice($itemIds, 0, 20), static fn (string $id): bool => preg_match('/^Q[1-9][0-9]*$/', $id) === 1)));
+        if ($endpoint === null || $itemIds === []) { return []; }
+
+        try {
+            $response = $this->httpClient->request('GET', $endpoint, [
+                'action' => 'wbgetentities', 'format' => 'json', 'formatversion' => '2',
+                'ids' => implode('|', $itemIds), 'languages' => $this->language($language) . '|en',
+                'props' => 'labels|claims',
+            ], ['Accept' => 'application/json', 'User-Agent' => 'webtrees External Places/0.3'], 6.0);
+            if ($response === null || $response->getStatusCode() !== 200) { return []; }
+            $body = $response->getBody()->getContents();
+            if (strlen($body) > self::MAX_RESPONSE_BYTES) { return []; }
+            $payload = json_decode($body, true, 32, JSON_THROW_ON_ERROR);
+        } catch (Throwable) { return []; }
+
+        $entities = [];
+        foreach ($payload['entities'] ?? [] as $id => $entity) {
+            if (is_string($id) && is_array($entity) && !array_key_exists('missing', $entity)) { $entities[$id] = $entity; }
+        }
+        return $entities;
+    }
+
     /** @return list<array{qid:string,label:string,description:?string}> */
     public function search(string $provider, string $term, string $language): array
     {

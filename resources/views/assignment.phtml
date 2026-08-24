@@ -21,6 +21,7 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\ExternalPlacesModule;
 /** @var string $search_url */
 /** @var string|null $route_parameter */
 /** @var string $provider_key */
+/** @var list<string> $enabled_providers */
 /** @var list<array{id:string,label:string,description:?string,distanceKm:?float}> $external_candidates */
 /** @var list<array{id:string,label:string,description:?string,distanceKm:?float}> $external_nearby_candidates */
 /** @var list<array{qid:string,label:string,description:?string}> $factgrid_candidates */
@@ -37,7 +38,7 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\ExternalPlacesModule;
 <?php endif ?>
 
 <nav class="mb-3" aria-label="<?= e(I18N::translate('External providers')) ?>">
-    <?php foreach (['wikidata' => 'Wikidata', 'factgrid' => 'FactGrid', 'gov' => 'GOV'] as $key => $label) : ?>
+    <?php foreach (array_intersect_key(['wikidata' => 'Wikidata', 'factgrid' => 'FactGrid', 'gov' => 'GOV'], array_flip($enabled_providers)) as $key => $label) : ?>
         <a class="btn <?= $provider_key === $key ? 'btn-primary' : 'btn-outline-primary' ?> btn-sm me-1" href="<?= e(ExternalPlacesModule::assignmentUrl(['tree' => $tree->name(), 'xref' => $location->xref(), 'provider' => $key])) ?>"><?= e(I18N::translate('Assign %s identifier', $label)) ?></a>
     <?php endforeach ?>
 </nav>

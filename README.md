@@ -5,7 +5,7 @@
 [![Downloads](https://img.shields.io/github/downloads/hartenthaler/hh_external_places/total?label=downloads)](https://github.com/hartenthaler/hh_external_places/releases)
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-External Places is a [webtrees](https://www.webtrees.net) module for enriching [Vesta Shared Places](https://github.com/vesta-webtrees-2-custom-modules/vesta_shared_places) (`_LOC`) with public, read-only information from Wikidata, FactGrid and GOV. Editors can assign and compare external place identifiers, search each provider and inspect cached details without copying external research into genealogical data.
+External Places is a [webtrees](https://www.webtrees.net) module for enriching [Vesta Shared Places](https://github.com/vesta-webtrees-2-custom-modules/vesta_shared_places) (`_LOC`) with public, read-only information from Wikidata, FactGrid, GOV and optionally GeoNames. Administrators can enable or disable providers and configure a global nearby-search radius with per-tree exceptions. Editors can assign and compare external place identifiers, search each provider and inspect cached details without copying external research into genealogical data.
 
 ## 📚 Contents
 
@@ -48,7 +48,7 @@ The current release provides:
 * an editor-only nearby search for shared places with coordinates, ordered by name similarity and distance; and
 * a read-only outbound link to Domus, using its documented QID deep link where available.
 * provider-specific searches and nearby searches for Wikidata, FactGrid and GOV;
-* historical addresses, owners and occupants from Wikidata, when the linked item actually provides them;
+* historical addresses, owners and occupants from Wikidata or FactGrid, when the linked item actually provides them;
 * links from displayed Wikidata owners and occupants to Wikidata and, when available, their WikiTree identifier (`P2924`);
 * public provider cross-references and consistency information without modifying GEDCOM data.
 

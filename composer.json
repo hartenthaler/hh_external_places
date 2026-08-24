@@ -1,0 +1,29 @@
+{
+    "name": "hartenthaler/hh-external-places",
+    "description": "A webtrees module for read-only information from Wikidata, FactGrid and GOV.",
+    "license": "GPL-3.0-or-later",
+    "keywords": [
+        "webtrees",
+        "custom module",
+        "places",
+        "wikidata",
+        "factgrid",
+        "gov"
+    ],
+    "homepage": "https://github.com/hartenthaler/hh_external_places",
+    "support": {
+        "issues": "https://github.com/hartenthaler/hh_external_places/issues"
+    },
+    "conflict": {
+        "fisharebest/webtrees": "<2.3"
+    },
+    "extra": {
+        "webtrees-custom-module": {
+            "title": "External Places",
+            "description": "Links shared places to Wikidata, FactGrid and GOV and displays read-only external place information.",
+            "github-repo": "https://github.com/hartenthaler/hh_external_places",
+            "tag-prefix": "v",
+            "category": "places"
+        }
+    }
+}

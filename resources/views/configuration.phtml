@@ -11,23 +11,29 @@ use Illuminate\Support\Collection;
 
 /** @var Collection<int,Tree> $all_trees */
 /** @var float $default_radius_km */
-/** @var string $preference */
+/** @var array<string,float> $radius_exceptions */
+/** @var list<string> $enabled_providers */
+/** @var array<string,string> $provider_labels */
 /** @var string $title */
 ?>
 
 <?= view('components/breadcrumbs', ['links' => [route(ControlPanel::class) => MoreI18N::xlate('Control panel'), route(ModulesAllPage::class) => MoreI18N::xlate('Modules'), $title]]) ?>
 
 <h1><?= e($title) ?></h1>
-<p><?= I18N::translate('Choose how far the editor-only nearby search may look around a shared place.') ?></p>
+<p><?= I18N::translate('Choose which external providers are used and how far the editor-only nearby search may look around a shared place.') ?></p>
 
 <form method="post">
+    <h2><?= I18N::translate('External information providers') ?></h2>
+    <?php foreach ($provider_labels as $key => $label) : ?>
+        <div class="form-check"><input class="form-check-input" id="provider-<?= e($key) ?>" name="providers[]" type="checkbox" value="<?= e($key) ?>" <?= in_array($key, $enabled_providers, true) ? 'checked' : '' ?>><label class="form-check-label" for="provider-<?= e($key) ?>"><?= e($label) ?></label></div>
+    <?php endforeach ?>
+
+    <h2 class="mt-4"><?= I18N::translate('Nearby-search radius') ?></h2>
+    <div class="row mb-3"><label class="col-sm-3 col-form-label" for="global-radius-km"><?= I18N::translate('Default radius for all family trees (km)') ?></label><div class="col-sm-3"><input class="form-control" id="global-radius-km" max="100" min="0.1" name="global-radius-km" step="0.1" type="number" value="<?= e($default_radius_km) ?>"></div></div>
+    <p class="text-muted"><?= I18N::translate('The following family trees may override the default radius.') ?></p>
     <?php foreach ($all_trees as $tree) : ?>
-        <h2><?= e($tree->title()) ?></h2>
         <div class="row mb-3">
-            <label class="col-sm-3 col-form-label" for="nearby-radius-<?= $tree->id() ?>"><?= I18N::translate('Nearby-search radius (km)') ?></label>
-            <div class="col-sm-3">
-                <input class="form-control" id="nearby-radius-<?= $tree->id() ?>" max="100" min="0.1" name="nearby-radius-<?= $tree->id() ?>" step="0.1" type="number" value="<?= e($tree->getPreference($preference, (string) $default_radius_km)) ?>">
-            </div>
+            <label class="col-sm-3 col-form-label" for="radius-exception-<?= $tree->id() ?>"><?= e($tree->title()) ?></label><div class="col-sm-3"><input class="form-control" id="radius-exception-<?= $tree->id() ?>" max="100" min="0.1" name="radius-exceptions[<?= $tree->id() ?>]" step="0.1" type="number" value="<?= isset($radius_exceptions[(string) $tree->id()]) ? e($radius_exceptions[(string) $tree->id()]) : '' ?>" placeholder="<?= e(I18N::translate('Use default')) ?>"></div>
         </div>
     <?php endforeach ?>
     <div class="row mb-3"><div class="offset-sm-3 col-sm-9"><button class="btn btn-primary" type="submit"><?= view('icons/save') ?> <?= MoreI18N::xlate('save') ?></button></div></div>
