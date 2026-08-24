@@ -23,6 +23,8 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Infrastructure\WikidataCac
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Gedcom\ExternalIdService;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalInformation;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalProviderRegistry;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalProviderSettings;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\GeoNamesProvider;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domus\DomusMapLinkProvider;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Http\WikidataLocationAssignmentPage;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikidata\WikidataClient;
@@ -102,19 +104,23 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             FlashMessages::addMessage(I18N::translate($error), 'danger');
         }
         $lookup = (new ExternalIdService())->wikidataIdentifiers($location->gedcom());
-        if ($lookup->isAmbiguous()) {
+        $wikidataEnabled = ExternalProviderSettings::isEnabled('wikidata');
+        if ($wikidataEnabled && $lookup->isAmbiguous()) {
             return GenericViewElement::create('<div class="alert alert-warning">' . e(I18N::translate('Several Wikidata identifiers are configured for this shared place.')) . '</div>');
         }
 
         $identifier = $lookup->identifier();
         $coordinates = LocationCoordinates::fromGedcom($location->gedcom());
-        $domusUrl = (new DomusMapLinkProvider())->url($identifier, $coordinates);
-        if ($identifier === null) {
-            if ($externalIdentifiers === [] && !$location->canEdit()) {
+        $domusUrl = $wikidataEnabled ? (new DomusMapLinkProvider())->url($identifier, $coordinates) : '';
+        if ($identifier === null || !$wikidataEnabled) {
+            $language = explode('-', str_replace('_', '-', I18N::languageTag()))[0] ?: 'en';
+            $geoNamesHtml = $this->geoNamesHtml($location->fullName(), $language);
+            if ($externalIdentifiers === [] && !$location->canEdit() && $geoNamesHtml === '') {
                 return null;
             }
 
-            $html = $this->externalInformationHtml($externalIdentifiers, $language = explode('-', str_replace('_', '-', I18N::languageTag()))[0] ?: 'en', '', $location->fullName());
+            $html = $this->externalInformationHtml($externalIdentifiers, $language, '', $location->fullName());
+            $html .= $geoNamesHtml;
             $html .= '<div class="d-flex gap-2 flex-wrap mt-2">';
             if ($location->canEdit()) {
                 $html .= '<a class="btn btn-primary btn-sm" href="' . e(self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()])) . '">' . e(I18N::translate('Assign external identifier')) . '</a>';
@@ -192,6 +198,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         }
         $html .= '<br><small>' . e(MoreI18N::xlate('Source')) . ': Wikidata</small>';
         $html .= $this->externalInformationHtml($externalIdentifiers, $language, 'wikidata', $location->fullName());
+        $html .= $this->geoNamesHtml($location->fullName(), $language);
         $html .= '<div class="d-flex gap-2 flex-wrap mt-2">';
         if ($domusUrl !== '') {
             $html .= '<a class="btn btn-primary btn-sm" href="' . e($domusUrl) . '" rel="noopener noreferrer" target="_blank">' . e(I18N::translate('Show in Domus')) . '</a>';
@@ -220,7 +227,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         $registry = new ExternalProviderRegistry();
         $html = '';
         foreach ($registry->all() as $provider) {
-            if ($provider->key() === $skip) {
+            if ($provider->key() === $skip || !ExternalProviderSettings::isEnabled($provider->key())) {
                 continue;
             }
             foreach ($identifiers as $identifier) {
@@ -250,9 +257,47 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                         $html .= '<br><small>' . e(I18N::translate('Article in GenWiki')) . ': <a href="' . e($genwikiUrl) . '" rel="noopener noreferrer" target="_blank">' . e($genwikiUrl) . '</a></small>';
                     }
                     $html .= $this->crossReferenceHtml($information, $identifiers);
+                    $html .= $this->externalPersonRelationsHtml($information);
                 }
                 $html .= '<br><small>' . e(MoreI18N::xlate('Source')) . ': ' . e($provider->label()) . '</small></section>';
             }
+        }
+        return $html;
+    }
+
+    private function geoNamesHtml(string $placeName, string $language): string
+    {
+        if (!ExternalProviderSettings::isEnabled('geonames')) { return ''; }
+        $information = (new GeoNamesProvider())->lookup($placeName, $language);
+        if ($information === null) { return ''; }
+        $html = '<section class="mt-3"><strong>' . e(I18N::translate('GeoNames')) . ':</strong> <a href="' . e($information['url']) . '" rel="noopener noreferrer" target="_blank">' . e($information['label']) . '</a>';
+        foreach ($information['details'] as $detail) {
+            $html .= '<br><small>' . e($detail['label']) . ': ' . e($detail['value']) . '</small>';
+        }
+        return $html . '<br><small>' . e(MoreI18N::xlate('Source')) . ': GeoNames</small></section>';
+    }
+
+    private function externalPersonRelationsHtml(ExternalInformation $information): string
+    {
+        if ($information->owners === [] && $information->occupants === []) {
+            return '';
+        }
+
+        $html = '';
+        foreach ([MoreI18N::xlate('Owner') => $information->owners, I18N::translate('Occupants') => $information->occupants] as $heading => $relations) {
+            if ($relations === []) { continue; }
+            $html .= '<h5 class="mt-3">' . e($heading) . '</h5><div class="table-responsive"><table class="table table-sm"><thead><tr>'
+                . '<th>' . e(MoreI18N::xlate('Name')) . '</th><th>' . e(MoreI18N::xlate('Birth')) . '</th><th>' . e(MoreI18N::xlate('Death')) . '</th><th>' . e(MoreI18N::xlate('From')) . '</th><th>' . e(I18N::translate('Until')) . '</th></tr></thead><tbody>';
+            foreach ($relations as $relation) {
+                $person = $information->people[$relation->id] ?? null;
+                $label = $person?->label ?? $relation->id;
+                $html .= '<tr><td><a href="' . e($person?->url ?? '#') . '" rel="noopener noreferrer" target="_blank">' . e($label) . '</a> <small>(' . e($relation->id) . ')</small>';
+                foreach ($person?->externalLinks ?? [] as $linkLabel => $linkUrl) {
+                    $html .= ' · <a href="' . e($linkUrl) . '" rel="noopener noreferrer" target="_blank">' . e($linkLabel) . '</a>';
+                }
+                $html .= '</td><td>' . $this->displayWikidataDate($person?->birthDate) . '</td><td>' . $this->displayWikidataDate($person?->deathDate) . '</td><td>' . $this->displayWikidataDate($relation->from) . '</td><td>' . $this->displayWikidataDate($relation->until) . '</td></tr>';
+            }
+            $html .= '</tbody></table></div>';
         }
         return $html;
     }
@@ -345,27 +390,43 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
 
     public function description(): string
     {
-        return I18N::translate('Links shared places to Wikidata, FactGrid and GOV and displays read-only external place information.');
+        return I18N::translate('Links shared places to Wikidata, FactGrid and GOV and displays read-only external place information, optionally including GeoNames context.');
     }
 
     public function getAdminAction(): ResponseInterface
     {
         $this->layout = 'layouts/administration';
+        $trees = Registry::container()->get(TreeService::class)->all();
+        $radiusExceptions = NearbyDiscoverySettings::exceptions();
+        // Preserve legacy per-tree values as visible exceptions until the
+        // administrator saves the new site-wide settings.
+        if ($radiusExceptions === []) {
+            foreach ($trees as $tree) {
+                $legacy = $tree->getPreference(NearbyDiscoverySettings::PREFERENCE, '');
+                if ($legacy !== '' && NearbyDiscoverySettings::normalise($legacy) !== NearbyDiscoverySettings::globalRadius()) {
+                    $radiusExceptions[(string) $tree->id()] = NearbyDiscoverySettings::normalise($legacy);
+                }
+            }
+        }
 
         return $this->viewResponse(self::MODULE_NAME . '::configuration', [
-            'all_trees' => Registry::container()->get(TreeService::class)->all(),
-            'default_radius_km' => NearbyDiscoverySettings::DEFAULT_RADIUS_KM,
-            'preference' => NearbyDiscoverySettings::PREFERENCE,
+            'all_trees' => $trees,
+            'default_radius_km' => NearbyDiscoverySettings::globalRadius(),
+            'radius_exceptions' => $radiusExceptions,
+            'enabled_providers' => ExternalProviderSettings::enabled(),
+            'provider_labels' => ExternalProviderSettings::labels(),
             'title' => $this->title(),
         ]);
     }
 
     public function postAdminAction(ServerRequestInterface $request): ResponseInterface
     {
-        foreach (Registry::container()->get(TreeService::class)->all() as $tree) {
-            $radius = Validator::parsedBody($request)->string('nearby-radius-' . $tree->id(), (string) NearbyDiscoverySettings::DEFAULT_RADIUS_KM);
-            $tree->setPreference(NearbyDiscoverySettings::PREFERENCE, (string) NearbyDiscoverySettings::normalise($radius));
-        }
+        $body = is_array($request->getParsedBody()) ? $request->getParsedBody() : [];
+        $providers = is_array($body['providers'] ?? null) ? array_map('strval', $body['providers']) : [];
+        ExternalProviderSettings::save($providers);
+        $globalRadius = is_numeric($body['global-radius-km'] ?? null) ? (float) $body['global-radius-km'] : NearbyDiscoverySettings::DEFAULT_RADIUS_KM;
+        $exceptions = is_array($body['radius-exceptions'] ?? null) ? array_map('strval', $body['radius-exceptions']) : [];
+        NearbyDiscoverySettings::save($globalRadius, $exceptions);
 
         FlashMessages::addMessage(I18N::translate('Nearby search settings have been updated.'), 'success');
 
@@ -423,6 +484,14 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                 'privacy_url' => 'https://www.genealogy.net/impressum/',
                 'description' => I18N::translate('The module retrieves public place information from GOV when a shared place has a typed GOV identifier.'),
                 'data'        => [I18N::translate('GOV identifiers and the requested display language.')],
+            ], [
+                'service_id'  => 'geonames',
+                'name'        => 'GeoNames',
+                'url'         => 'https://www.geonames.org/',
+                'country'     => 'International',
+                'privacy_url' => 'https://www.geonames.org/terms-of-service.html',
+                'description' => I18N::translate('The module retrieves public contextual place information from GeoNames when the provider is enabled and a GeoNames username is configured.'),
+                'data'        => [I18N::translate('The shared-place name, requested display language and the server IP address.')],
             ]],
             'security_measures' => [
                 I18N::translate('Wikidata responses are cached locally to reduce external requests.'),

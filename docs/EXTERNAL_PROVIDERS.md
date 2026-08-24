@@ -8,6 +8,11 @@ The module uses one provider-neutral read model for public place information.
 Each adapter has a fixed endpoint, identifier validator and reviewed property
 mapping. GEDCOM values are never used as arbitrary URLs.
 
+GeoNames is an optional contextual provider. It uses the existing webtrees
+GeoNames username and looks up the shared-place name; it does not add an
+external identifier to GEDCOM. Provider enablement is site-wide. Nearby
+searches use one global default radius, with optional per-tree exceptions.
+
 ## Supported identifiers
 
 ```gedcom
@@ -64,5 +69,6 @@ External failures do not block the shared-place page.
 For Wikidata place relationships, displayed owners and occupants link to their
 Wikidata item. If a person has a valid WikiTree identifier (`P2924`), the
 module also provides a WikiTree link. FactGrid place records are currently
-read for place-level information and cross-references; owner/occupant
-relationships from FactGrid are not yet part of the read model.
+read for place-level information and cross-references. Where present, FactGrid
+owner and resident claims (`P126`/`P239`) are displayed as read-only person
+tables.

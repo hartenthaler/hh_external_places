@@ -10,7 +10,7 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikibase\ReadOnlyWikibaseC
 /** Provider adapter for Wikidata-like, read-only Wikibase installations. */
 final class WikibaseProvider implements ExternalProvider
 {
-    /** @param array{authority:string, label:string, type:string, image:string, factgrid:?string, wikidata:?string, gov:?string} $definition */
+    /** @param array{authority:string, label:string, type:string, image:string, factgrid:?string, wikidata:?string, gov:?string, wikitree:string, owner:string, occupant:string, begin:string, end:string} $definition */
     public function __construct(private readonly string $key, private readonly array $definition, private readonly ReadOnlyWikibaseClient $client = new ReadOnlyWikibaseClient(), private readonly ExternalProviderCache $cache = new ExternalProviderCache())
     {
     }
@@ -67,6 +67,9 @@ final class WikibaseProvider implements ExternalProvider
                 }
             }
         }
+        $owners = $this->relations($claims[$this->definition['owner']] ?? []);
+        $occupants = $this->relations($claims[$this->definition['occupant']] ?? []);
+        $people = $this->people($owners, $occupants, $language);
 
         return new ExternalInformation(
             $this->key(),
@@ -77,7 +80,62 @@ final class WikibaseProvider implements ExternalProvider
             $this->imageUrl($claims[$this->definition['image']] ?? []),
             $this->claimEntityIds($claims[$this->definition['type']] ?? []),
             $references,
+            [],
+            $people,
+            $owners,
+            $occupants,
         );
+    }
+
+    /** @return list<ExternalPersonRelation> */
+    private function relations(mixed $statements): array
+    {
+        $relations = [];
+        foreach (is_array($statements) ? $statements : [] as $statement) {
+            $id = $statement['mainsnak']['datavalue']['value']['id'] ?? null;
+            if (!is_string($id) || preg_match('/^Q[1-9][0-9]*$/', $id) !== 1) { continue; }
+            $qualifiers = is_array($statement['qualifiers'] ?? null) ? $statement['qualifiers'] : [];
+            $relations[] = new ExternalPersonRelation($id, $this->claimDate($qualifiers[$this->definition['begin']] ?? []), $this->claimDate($qualifiers[$this->definition['end']] ?? []));
+        }
+        return $relations;
+    }
+
+    /** @param list<ExternalPersonRelation> $owners @param list<ExternalPersonRelation> $occupants @return array<string,ExternalPerson> */
+    private function people(array $owners, array $occupants, string $language): array
+    {
+        $ids = array_values(array_unique(array_merge(array_map(static fn (ExternalPersonRelation $r): string => $r->id, $owners), array_map(static fn (ExternalPersonRelation $r): string => $r->id, $occupants))));
+        $entities = $this->client->entities($this->key, $ids, $language);
+        $people = [];
+        foreach ($entities as $id => $entity) {
+            $claims = is_array($entity['claims'] ?? null) ? $entity['claims'] : [];
+            $links = [];
+            foreach (['wikidata' => $this->definition['wikidata'], 'gov' => $this->definition['gov'], 'wikitree' => $this->definition['wikitree']] as $provider => $property) {
+                if ($property === null) { continue; }
+                foreach ($this->claimStrings($claims[$property] ?? [], $provider) as $value) {
+                    $baseUrl = match ($provider) {
+                        'wikidata' => 'https://www.wikidata.org/entity/',
+                        'gov' => 'https://gov.genealogy.net/item/show/',
+                        default => 'https://www.wikitree.com/wiki/',
+                    };
+                    $links[$provider === 'wikitree' ? 'WikiTree' : ucfirst($provider)] = $baseUrl . rawurlencode($value);
+                }
+            }
+            $label = $this->languageValue($entity['labels'] ?? [], $language);
+            $people[$id] = new ExternalPerson($this->key, $id, $this->entityUrl($id), $label, $this->claimDate($claims['P569'] ?? []), $this->claimDate($claims['P570'] ?? []), $links);
+        }
+        return $people;
+    }
+
+    /** @param mixed $statements */
+    private function claimDate(mixed $statements): ?string
+    {
+        foreach (is_array($statements) ? $statements : [] as $statement) {
+            $time = $statement['datavalue']['value']['time'] ?? $statement['mainsnak']['datavalue']['value']['time'] ?? null;
+            if (is_string($time) && preg_match('/^[+-](\d{4,})-(\d{2})-(\d{2})T/', $time, $m) === 1) {
+                return $m[2] === '00' ? $m[1] : ($m[1] . '-' . $m[2] . ($m[3] === '00' ? '' : '-' . $m[3]));
+            }
+        }
+        return null;
     }
 
     private function entityUrl(string $value): string
@@ -104,7 +162,11 @@ final class WikibaseProvider implements ExternalProvider
         foreach (is_array($statements) ? $statements : [] as $statement) {
             $value = $statement['mainsnak']['datavalue']['value'] ?? null;
             if (!is_string($value)) { continue; }
-            $valid = $provider === 'gov' ? preg_match('/^[A-Z][A-Z0-9_]{2,63}$/', $value) === 1 : preg_match('/^Q[1-9][0-9]*$/', $value) === 1;
+            $valid = match ($provider) {
+                'gov' => preg_match('/^[A-Z][A-Z0-9_]{2,63}$/', $value) === 1,
+                'wikitree' => preg_match('/^[A-Za-z0-9][A-Za-z0-9._-]{0,119}$/', $value) === 1,
+                default => preg_match('/^Q[1-9][0-9]*$/', $value) === 1,
+            };
             if ($valid) { $values[] = $value; }
         }
         return array_values(array_unique($values));

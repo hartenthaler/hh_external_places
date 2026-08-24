@@ -12,6 +12,7 @@ use Fisharebest\Webtrees\Validator;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Gedcom\ExternalIdService;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalProviderRegistry;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\ExternalPlacesModule;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalProviderSettings;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\MoreI18N;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikidata\WikidataClient;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikidata\LocationCoordinates;
@@ -39,8 +40,9 @@ final class WikidataLocationAssignmentPage implements RequestHandlerInterface
         $language        = explode('-', str_replace('_', '-', I18N::languageTag()))[0] ?: 'en';
         $submittedSearch = trim(Validator::queryParams($request)->string('search', ''));
         $providerKey      = Validator::queryParams($request)->string('provider', 'wikidata');
-        if (!in_array($providerKey, ['wikidata', 'factgrid', 'gov'], true)) {
-            $providerKey = 'wikidata';
+        $enabledProviders = array_values(array_intersect(['wikidata', 'factgrid', 'gov'], ExternalProviderSettings::enabled()));
+        if (!in_array($providerKey, $enabledProviders, true)) {
+            $providerKey = $enabledProviders[0] ?? 'wikidata';
         }
         $nameFact        = $location->facts(['NAME'])->first();
         $locationName    = $nameFact === null ? $location->xref() : trim(strip_tags($nameFact->value()));
@@ -62,6 +64,7 @@ final class WikidataLocationAssignmentPage implements RequestHandlerInterface
         return $this->viewResponse('hh_external_places::assignment', [
             'assignment_url' => ExternalPlacesModule::assignmentUrl(['tree' => $tree->name(), 'xref' => $location->xref()]),
             'provider_key'   => $providerKey,
+            'enabled_providers' => $enabledProviders,
             'candidates'     => $providerKey === 'wikidata' && $submittedSearch !== '' ? $client->search($submittedSearch, $language) : [],
             'external_candidates' => $providerKey === 'gov' && $submittedSearch !== '' && $govProvider !== null && method_exists($govProvider, 'search') ? $govProvider->search($submittedSearch, $language) : [],
             'factgrid_candidates' => $providerKey === 'factgrid' && $submittedSearch !== '' ? $wikibaseClient->search('factgrid', $submittedSearch, $language) : [],
