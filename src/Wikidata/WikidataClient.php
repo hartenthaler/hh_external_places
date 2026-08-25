@@ -180,7 +180,9 @@ final class WikidataClient
     private function personExternalLinks(array $claims): array
     {
         $links = [];
-        $wikitree = $this->claimString($claims['P2924'] ?? [], '/^[A-Za-z0-9][A-Za-z0-9._-]{0,119}$/');
+        // WikiTree IDs are usually ASCII, but valid IDs may preserve
+        // diacritics from a surname (for example Baumgärtner-1891).
+        $wikitree = $this->claimString($claims['P2949'] ?? [], '/^[\p{L}][\p{L}\p{M}0-9._-]{0,119}$/u');
         if ($wikitree !== null) {
             $links['WikiTree'] = 'https://www.wikitree.com/wiki/' . rawurlencode($wikitree);
         }
@@ -193,7 +195,17 @@ final class WikidataClient
     {
         foreach (is_array($statements) ? $statements : [] as $statement) {
             $value = $statement['mainsnak']['datavalue']['value'] ?? null;
-            if (is_string($value) && preg_match($pattern, $value) === 1) {
+            if (!is_string($value)) {
+                continue;
+            }
+            // Wikibase normally returns an external identifier as plain text.
+            // Accept a formatter URL as well, since older/imported statements
+            // can contain the canonical WikiTree URL instead.
+            $value = trim($value);
+            if (preg_match('~^https?://(?:www\\.)?wikitree\\.com/wiki/(.+)$~i', $value, $match) === 1) {
+                $value = rawurldecode($match[1]);
+            }
+            if (preg_match($pattern, $value) === 1) {
                 return $value;
             }
         }

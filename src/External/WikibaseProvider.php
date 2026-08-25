@@ -10,7 +10,7 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikibase\ReadOnlyWikibaseC
 /** Provider adapter for Wikidata-like, read-only Wikibase installations. */
 final class WikibaseProvider implements ExternalProvider
 {
-    /** @param array{authority:string, label:string, type:string, image:string, factgrid:?string, wikidata:?string, gov:?string, wikitree:string, owner:string, occupant:string, begin:string, end:string} $definition */
+    /** @param array{authority:string, label:string, type:string, image:string, factgrid:?string, wikidata:?string, gov:?string, geonames:?string, wikitree:string, owner:string, occupant:string, begin:string, end:string} $definition */
     public function __construct(private readonly string $key, private readonly array $definition, private readonly ReadOnlyWikibaseClient $client = new ReadOnlyWikibaseClient(), private readonly ExternalProviderCache $cache = new ExternalProviderCache())
     {
     }
@@ -45,7 +45,8 @@ final class WikibaseProvider implements ExternalProvider
 
     public function fetch(ExternalIdentifier $identifier, string $language): ?ExternalInformation
     {
-        $cacheKey = $identifier->value . '|' . $language;
+        // v2 invalidates payloads cached before sitelinks were requested.
+        $cacheKey = 'v2|' . $identifier->value . '|' . $language;
         $payload = $this->cache->read($this->key(), $cacheKey);
         if ($payload === null) {
             $payload = $this->client->entity($this->key(), $identifier->value, $language);
@@ -58,13 +59,23 @@ final class WikibaseProvider implements ExternalProvider
 
         $claims = is_array($entity['claims'] ?? null) ? $entity['claims'] : [];
         $references = [];
-        foreach (['factgrid', 'wikidata', 'gov'] as $provider) {
+        foreach (['factgrid', 'wikidata', 'gov', 'geonames'] as $provider) {
             $property = $this->definition[$provider];
             if ($property !== null) {
                 $values = $this->claimStrings($claims[$property] ?? [], $provider);
                 if ($values !== []) {
                     $references[$provider] = $values;
                 }
+            }
+        }
+        // FactGrid can link back to Wikidata through the special sitelink
+        // "wikidatawiki" instead of a dedicated claim.  Treat only a plain
+        // Wikidata Q-ID as an external reference; never turn arbitrary page
+        // titles into outbound identifiers.
+        if ($this->key === 'factgrid' && !isset($references['wikidata'])) {
+            $sitelink = $entity['sitelinks']['wikidatawiki']['title'] ?? null;
+            if (is_string($sitelink) && preg_match('/^Q[1-9][0-9]*$/', $sitelink) === 1) {
+                $references['wikidata'] = [$sitelink];
             }
         }
         $owners = $this->relations($claims[$this->definition['owner']] ?? []);
@@ -162,9 +173,14 @@ final class WikibaseProvider implements ExternalProvider
         foreach (is_array($statements) ? $statements : [] as $statement) {
             $value = $statement['mainsnak']['datavalue']['value'] ?? null;
             if (!is_string($value)) { continue; }
+            $value = trim($value);
+            if ($provider === 'wikitree' && preg_match('~^https?://(?:www\\.)?wikitree\\.com/wiki/(.+)$~i', $value, $match) === 1) {
+                $value = rawurldecode($match[1]);
+            }
             $valid = match ($provider) {
                 'gov' => preg_match('/^[A-Z][A-Z0-9_]{2,63}$/', $value) === 1,
-                'wikitree' => preg_match('/^[A-Za-z0-9][A-Za-z0-9._-]{0,119}$/', $value) === 1,
+                'geonames' => preg_match('/^[1-9][0-9]{0,11}$/', $value) === 1,
+                'wikitree' => preg_match('/^[\p{L}][\p{L}\p{M}0-9._-]{0,119}$/u', $value) === 1,
                 default => preg_match('/^Q[1-9][0-9]*$/', $value) === 1,
             };
             if ($valid) { $values[] = $value; }

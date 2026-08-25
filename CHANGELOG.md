@@ -2,7 +2,19 @@
 
 All notable user-facing changes are documented here.
 
-## 2.2.6.1 - 2026-08-23
+## 2.2.6.2 - 2026-08-25
+
+- Added FactGrid, GOV and GeoNames as selectable external place providers.
+- Editors can search providers, search nearby where supported, and assign or
+  remove validated external identifiers from a shared place.
+- Shared-place summaries now show provider cross-references and indicate when
+  identifiers agree across Wikidata, FactGrid, GOV and GeoNames.
+- Added read-only FactGrid place data, including addresses, owners,
+  occupants and public cross-references.
+- Added WikiTree links for external people when Wikidata provides a WikiTree
+  identifier, including names with diacritics.
+- Added administrator controls for enabled providers and a global nearby-search
+  radius with optional family-tree exceptions.
 
 - External searches now use webtrees' modern HTTP connection when available,
   while older webtrees installations continue to work through a fallback.
@@ -14,7 +26,7 @@ All notable user-facing changes are documented here.
 - Provider results and external details are interpreted more reliably, including
   multilingual GOV names, external references and population data.
 
-## Next release
+## Unreleased
 
 - Version 2 will add optional research workflows without automatic GEDCOM changes.
 

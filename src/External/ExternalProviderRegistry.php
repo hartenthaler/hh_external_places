@@ -21,9 +21,10 @@ final class ExternalProviderRegistry
     public function all(): array
     {
         return [
-            new WikibaseProvider('wikidata', ['authority' => 'https://www.wikidata.org/entity/', 'label' => 'Wikidata', 'type' => 'P31', 'image' => 'P18', 'factgrid' => 'P8168', 'wikidata' => null, 'gov' => 'P2503', 'wikitree' => 'P2924', 'owner' => 'P127', 'occupant' => 'P466', 'begin' => 'P580', 'end' => 'P582']),
-            new WikibaseProvider('factgrid', ['authority' => 'https://database.factgrid.de/entity/', 'label' => 'FactGrid', 'type' => 'P2', 'image' => 'P189', 'factgrid' => null, 'wikidata' => 'P771', 'gov' => 'P1073', 'wikitree' => 'P2949', 'owner' => 'P126', 'occupant' => 'P239', 'begin' => 'P49', 'end' => 'P50']),
+            new WikibaseProvider('wikidata', ['authority' => 'https://www.wikidata.org/entity/', 'label' => 'Wikidata', 'type' => 'P31', 'image' => 'P18', 'factgrid' => 'P8168', 'wikidata' => null, 'gov' => 'P2503', 'geonames' => 'P1566', 'wikitree' => 'P2949', 'owner' => 'P127', 'occupant' => 'P466', 'begin' => 'P580', 'end' => 'P582']),
+            new WikibaseProvider('factgrid', ['authority' => 'https://database.factgrid.de/entity/', 'label' => 'FactGrid', 'type' => 'P2', 'image' => 'P189', 'factgrid' => null, 'wikidata' => 'P771', 'gov' => 'P1073', 'geonames' => 'P418', 'wikitree' => 'P2949', 'owner' => 'P126', 'occupant' => 'P239', 'begin' => 'P49', 'end' => 'P50']),
             new GovProvider(),
+            new GeoNamesProvider(),
         ];
     }
 

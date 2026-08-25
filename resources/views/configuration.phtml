@@ -30,12 +30,27 @@ use Illuminate\Support\Collection;
 
     <h2 class="mt-4"><?= I18N::translate('Nearby-search radius') ?></h2>
     <div class="row mb-3"><label class="col-sm-3 col-form-label" for="global-radius-km"><?= I18N::translate('Default radius for all family trees (km)') ?></label><div class="col-sm-3"><input class="form-control" id="global-radius-km" max="100" min="0.1" name="global-radius-km" step="0.1" type="number" value="<?= e($default_radius_km) ?>"></div></div>
-    <p class="text-muted"><?= I18N::translate('The following family trees may override the default radius.') ?></p>
-    <?php foreach ($all_trees as $tree) : ?>
+    <?php if ($radius_exceptions === []) : ?>
+        <p class="text-muted"><?= I18N::translate('This radius applies to all family trees.') ?></p>
+    <?php else : ?>
+        <p class="text-muted"><?= I18N::translate('This radius applies to all family trees except the following:') ?></p>
+        <?php foreach ($radius_exceptions as $treeId => $radius) : ?>
+            <?php $tree = $all_trees->first(static fn (Tree $candidate): bool => (string) $candidate->id() === (string) $treeId) ?>
+            <div class="row mb-3">
+                <label class="col-sm-3 col-form-label" for="radius-exception-<?= e($treeId) ?>"><?= e($tree instanceof Tree ? $tree->title() : $treeId) ?></label><div class="col-sm-3"><input class="form-control" id="radius-exception-<?= e($treeId) ?>" max="100" min="0.1" name="radius-exceptions[<?= e($treeId) ?>]" step="0.1" type="number" value="<?= e($radius) ?>"></div>
+            </div>
+        <?php endforeach ?>
+    <?php endif ?>
+
+    <?php $availableTrees = $all_trees->filter(static fn (Tree $tree): bool => !array_key_exists((string) $tree->id(), $radius_exceptions)) ?>
+    <?php if ($availableTrees->isNotEmpty()) : ?>
         <div class="row mb-3">
-            <label class="col-sm-3 col-form-label" for="radius-exception-<?= $tree->id() ?>"><?= e($tree->title()) ?></label><div class="col-sm-3"><input class="form-control" id="radius-exception-<?= $tree->id() ?>" max="100" min="0.1" name="radius-exceptions[<?= $tree->id() ?>]" step="0.1" type="number" value="<?= isset($radius_exceptions[(string) $tree->id()]) ? e($radius_exceptions[(string) $tree->id()]) : '' ?>" placeholder="<?= e(I18N::translate('Use default')) ?>"></div>
+            <label class="col-sm-3 col-form-label" for="radius-exception-tree"><?= I18N::translate('Add an exception for a family tree') ?></label>
+            <div class="col-sm-3"><select class="form-select" id="radius-exception-tree" name="radius_exception_tree"><option value=""><?= I18N::translate('Select a family tree') ?></option><?php foreach ($availableTrees as $tree) : ?><option value="<?= e($tree->id()) ?>"><?= e($tree->title()) ?></option><?php endforeach ?></select></div>
+            <div class="col-sm-3"><input class="form-control" max="100" min="0.1" name="radius_exception_value" step="0.1" type="number" placeholder="<?= e(I18N::translate('Radius in km')) ?>"></div>
+            <div class="col-sm-3"><button class="btn btn-secondary" name="radius_exception_action" type="submit" value="add"><?= I18N::translate('Add exception') ?></button></div>
         </div>
-    <?php endforeach ?>
+    <?php endif ?>
     <div class="row mb-3"><div class="offset-sm-3 col-sm-9"><button class="btn btn-primary" type="submit"><?= view('icons/save') ?> <?= MoreI18N::xlate('save') ?></button></div></div>
     <?= csrf_field() ?>
 </form>

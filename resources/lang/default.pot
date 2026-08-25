@@ -23,6 +23,45 @@ msgstr ""
 msgid "Assign external identifier"
 msgstr ""
 
+msgid "GeoNames information"
+msgstr ""
+
+msgid "GeoNames search"
+msgstr ""
+
+msgid "Search GeoNames for this shared place."
+msgstr ""
+
+msgid "Administrative area"
+msgstr ""
+
+msgid "Feature"
+msgstr ""
+
+msgid "Elevation"
+msgstr ""
+
+msgid "Search GeoNames for contextual information about this shared place."
+msgstr ""
+
+msgid "Search GeoNames"
+msgstr ""
+
+msgid "GeoNames result"
+msgstr ""
+
+msgid "GeoNames search results"
+msgstr ""
+
+msgid "GeoNames ID"
+msgstr ""
+
+msgid "No GeoNames places were found."
+msgstr ""
+
+msgid "m above sea level"
+msgstr ""
+
 #: C:\Users\harte\Documents\Codex\webtrees-modules\hh_external_places\resources\views\assignment.phtml:33
 msgid "Existing external identifiers"
 msgstr ""
@@ -313,4 +352,51 @@ msgstr ""
 
 #: C:\Users\harte\Documents\Codex\webtrees-modules\hh_external_places\src\ExternalPlacesModule.php:400
 msgid "Wikidata responses are cached locally to reduce external requests."
+msgstr ""
+
+msgid "Choose which external providers are used and how far the editor-only nearby search may look around a shared place."
+msgstr ""
+
+msgid "External information providers"
+msgstr ""
+
+msgid "Nearby-search radius"
+msgstr ""
+
+msgid "Default radius for all family trees (km)"
+msgstr ""
+
+msgid "This radius applies to all family trees."
+msgstr ""
+
+msgid "This radius applies to all family trees except the following:"
+msgstr ""
+
+msgid "Add an exception for a family tree"
+msgstr ""
+
+msgid "Select a family tree"
+msgstr ""
+
+msgid "Radius in km"
+msgstr ""
+
+msgid "Add exception"
+msgstr ""
+
+msgid "Select a family tree and enter a radius before adding an exception."
+msgstr ""
+
+#, php-format
+msgid "The exception for family tree %s was removed. The default radius of %s km applies."
+msgstr ""
+
+#, php-format
+msgid "The nearby-search radius for family tree %s is now %s km."
+msgstr ""
+
+msgid "GeoNames"
+msgstr ""
+
+msgid "Links shared places to Wikidata, FactGrid and GOV and displays read-only external place information, optionally including GeoNames context."
 msgstr ""
