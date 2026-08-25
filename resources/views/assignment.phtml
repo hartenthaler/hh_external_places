@@ -23,6 +23,7 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\ExternalPlacesModule;
 /** @var string $provider_key */
 /** @var list<string> $enabled_providers */
 /** @var list<array{id:string,label:string,description:?string,distanceKm:?float}> $external_candidates */
+/** @var list<array{id:string,label:string,url:string,description:?string,distanceKm:?float,details:list<array{label:string,value:string}>}> $geonames_candidates */
 /** @var list<array{id:string,label:string,description:?string,distanceKm:?float}> $external_nearby_candidates */
 /** @var list<array{qid:string,label:string,description:?string}> $factgrid_candidates */
 /** @var list<array{qid:string,label:string,description:?string,distanceKm:float}> $factgrid_nearby_candidates */
@@ -33,24 +34,32 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\ExternalPlacesModule;
 
 <?php if ($external_identifiers !== []) : ?>
     <div class="alert alert-info"><strong><?= I18N::translate('Existing external identifiers') ?></strong><ul class="mb-0">
-        <?php foreach ($external_identifiers as $external_identifier) : ?><li><?= e(['wikidata' => 'Wikidata', 'factgrid' => 'FactGrid', 'gov' => 'GOV'][$external_identifier->provider] ?? $external_identifier->provider) ?>: <a href="<?= e($external_identifier->url) ?>" target="_blank" rel="noopener noreferrer"><?= e($external_identifier->value) ?></a> <form method="post" action="<?= e($assignment_url) ?>" class="d-inline"><?= csrf_field() ?><input type="hidden" name="operation" value="remove-external-id"><input type="hidden" name="provider" value="<?= e($external_identifier->provider) ?>"><input type="hidden" name="external_id" value="<?= e($external_identifier->value) ?>"><button class="btn btn-sm btn-outline-danger" type="submit"><?= I18N::translate('Remove') ?></button></form></li><?php endforeach ?>
+        <?php foreach ($external_identifiers as $external_identifier) : ?><li><?= e(['wikidata' => 'Wikidata', 'factgrid' => 'FactGrid', 'gov' => 'GOV', 'geonames' => 'GeoNames'][$external_identifier->provider] ?? $external_identifier->provider) ?>: <a href="<?= e($external_identifier->url) ?>" target="_blank" rel="noopener noreferrer"><?= e($external_identifier->value) ?></a> <form method="post" action="<?= e($assignment_url) ?>" class="d-inline"><?= csrf_field() ?><input type="hidden" name="operation" value="remove-external-id"><input type="hidden" name="provider" value="<?= e($external_identifier->provider) ?>"><input type="hidden" name="external_id" value="<?= e($external_identifier->value) ?>"><button class="btn btn-sm btn-outline-danger" type="submit"><?= I18N::translate('Remove') ?></button></form></li><?php endforeach ?>
     </ul></div>
 <?php endif ?>
 
 <nav class="mb-3" aria-label="<?= e(I18N::translate('External providers')) ?>">
-    <?php foreach (array_intersect_key(['wikidata' => 'Wikidata', 'factgrid' => 'FactGrid', 'gov' => 'GOV'], array_flip($enabled_providers)) as $key => $label) : ?>
+    <?php foreach (array_intersect_key(['wikidata' => 'Wikidata', 'factgrid' => 'FactGrid', 'gov' => 'GOV', 'geonames' => 'GeoNames'], array_flip($enabled_providers)) as $key => $label) : ?>
         <a class="btn <?= $provider_key === $key ? 'btn-primary' : 'btn-outline-primary' ?> btn-sm me-1" href="<?= e(ExternalPlacesModule::assignmentUrl(['tree' => $tree->name(), 'xref' => $location->xref(), 'provider' => $key])) ?>"><?= e(I18N::translate('Assign %s identifier', $label)) ?></a>
     <?php endforeach ?>
 </nav>
 
-<h2><?= e(I18N::translate('%s search', ['wikidata' => 'Wikidata', 'factgrid' => 'FactGrid', 'gov' => 'GOV'][$provider_key] ?? $provider_key)) ?></h2>
+<h2><?= e($provider_key === 'geonames' ? I18N::translate('GeoNames search') : I18N::translate('%s search', ['wikidata' => 'Wikidata', 'factgrid' => 'FactGrid', 'gov' => 'GOV'][$provider_key] ?? $provider_key)) ?></h2>
 
 <p>
     <?= I18N::translate('Choose the external identifier that describes this shared place.') ?>
     <a href="<?= e($location->url()) ?>"><?= e($location_name) ?></a>
 </p>
 
-<?php if ($provider_key === 'wikidata') : ?>
+<?php if ($provider_key === 'geonames') : ?>
+<form method="get" action="<?= e($search_url) ?>" class="row g-2 mb-4">
+    <?php if ($route_parameter !== null) : ?><input type="hidden" name="route" value="<?= e($route_parameter) ?>"><?php endif ?>
+    <input type="hidden" name="provider" value="geonames">
+    <div class="col-sm-8"><label class="visually-hidden" for="geonames-search"><?= I18N::translate('Search GeoNames') ?></label><input class="form-control" id="geonames-search" maxlength="120" minlength="2" name="search" required type="search" value="<?= e($search) ?>" placeholder="<?= e(I18N::translate('Search GeoNames')) ?>"></div>
+    <div class="col-sm-4"><button class="btn btn-outline-secondary" type="submit"><?= MoreI18N::xlate('Search') ?></button></div>
+</form>
+<?php if ($geonames_candidates !== []) : ?><h3><?= I18N::translate('GeoNames search results') ?></h3><div class="table-responsive"><table class="table table-sm table-hover"><thead><tr><th><?= I18N::translate('Place') ?></th><th><?= I18N::translate('Type') ?></th><th><?= I18N::translate('GeoNames ID') ?></th><th></th></tr></thead><tbody><?php foreach ($geonames_candidates as $candidate) : ?><?php $isAssigned = in_array($candidate['id'], array_map(static fn ($id): string => $id->value, array_filter($external_identifiers, static fn ($id): bool => $id->provider === 'geonames')), true) ?><tr<?= $isAssigned ? ' class="table-success"' : '' ?>><td><a href="<?= e($candidate['url']) ?>" target="_blank" rel="noopener noreferrer"><?= e($candidate['label']) ?></a></td><td><?= e($candidate['description'] ?? '') ?></td><td><?= e($candidate['id']) ?></td><td><form method="post" action="<?= e($assignment_url) ?>"><?= csrf_field() ?><input type="hidden" name="operation" value="add-external-id"><input type="hidden" name="provider" value="geonames"><input type="hidden" name="external_id" value="<?= e($candidate['id']) ?>"><button class="btn btn-sm btn-primary" type="submit"><?= I18N::translate('Assign') ?></button></form></td></tr><?php endforeach ?></tbody></table></div><?php elseif ($has_search) : ?><div class="alert alert-secondary"><?= I18N::translate('No GeoNames places were found.') ?></div><?php endif ?>
+<?php elseif ($provider_key === 'wikidata') : ?>
 <form method="get" action="<?= e($search_url) ?>" class="row g-2 mb-4">
     <?php if ($route_parameter !== null) : ?>
         <input type="hidden" name="route" value="<?= e($route_parameter) ?>">

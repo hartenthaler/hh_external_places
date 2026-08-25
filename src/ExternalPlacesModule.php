@@ -247,7 +247,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                     $html .= ' — ' . e($information->description);
                 }
                 foreach ($information?->details ?? [] as $detail) {
-                    $html .= '<br><small>' . e($detail['label']) . ': ' . e($detail['value']) . '</small>';
+                    $html .= '<br><small>' . e($this->externalDetailLabel($detail['label'])) . ': ' . e($this->externalDetailValue($detail['label'], $detail['value'])) . '</small>';
                 }
                 if ($information?->imageUrl !== null) {
                     $html .= '<br><img src="' . e($information->imageUrl) . '" alt="" loading="lazy" style="max-width:500px;max-height:500px;width:auto;height:auto">';
@@ -272,9 +272,29 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         if ($information === null) { return ''; }
         $html = '<section class="mt-3"><strong>' . e(I18N::translate('GeoNames')) . ':</strong> <a href="' . e($information['url']) . '" rel="noopener noreferrer" target="_blank">' . e($information['label']) . '</a>';
         foreach ($information['details'] as $detail) {
-            $html .= '<br><small>' . e($detail['label']) . ': ' . e($detail['value']) . '</small>';
+            $html .= '<br><small>' . e($this->externalDetailLabel($detail['label'])) . ': ' . e($this->externalDetailValue($detail['label'], $detail['value'])) . '</small>';
         }
         return $html . '<br><small>' . e(MoreI18N::xlate('Source')) . ': GeoNames</small></section>';
+    }
+
+    private function externalDetailLabel(string $label): string
+    {
+        return match ($label) {
+            'Country', 'Region', 'Population' => MoreI18N::xlate($label),
+            'Administrative area' => I18N::translate('Administrative area'),
+            'Feature' => I18N::translate('Feature'),
+            'Elevation' => I18N::translate('Elevation'),
+            default => $label,
+        };
+    }
+
+    private function externalDetailValue(string $label, string $value): string
+    {
+        if ($label !== 'Elevation' || trim($value) === '') {
+            return $value;
+        }
+
+        return $value . ' ' . I18N::translate('m above sea level');
     }
 
     private function externalPersonRelationsHtml(ExternalInformation $information): string
@@ -316,7 +336,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                         break;
                     }
                 }
-                $providerLabel = ['wikidata' => 'Wikidata', 'factgrid' => 'FactGrid', 'gov' => 'GOV'][$provider] ?? $provider;
+                $providerLabel = ['wikidata' => 'Wikidata', 'factgrid' => 'FactGrid', 'gov' => 'GOV', 'geonames' => 'GeoNames'][$provider] ?? $provider;
                 $html .= '<br><small>' . e(I18N::translate('Reference to %s', $providerLabel)) . ': '
                     . e($value) . ' — ' . e($matching ? I18N::translate('consistent') : I18N::translate('not present in this shared place')) . '</small>';
             }
@@ -398,16 +418,6 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         $this->layout = 'layouts/administration';
         $trees = Registry::container()->get(TreeService::class)->all();
         $radiusExceptions = NearbyDiscoverySettings::exceptions();
-        // Preserve legacy per-tree values as visible exceptions until the
-        // administrator saves the new site-wide settings.
-        if ($radiusExceptions === []) {
-            foreach ($trees as $tree) {
-                $legacy = $tree->getPreference(NearbyDiscoverySettings::PREFERENCE, '');
-                if ($legacy !== '' && NearbyDiscoverySettings::normalise($legacy) !== NearbyDiscoverySettings::globalRadius()) {
-                    $radiusExceptions[(string) $tree->id()] = NearbyDiscoverySettings::normalise($legacy);
-                }
-            }
-        }
 
         return $this->viewResponse(self::MODULE_NAME . '::configuration', [
             'all_trees' => $trees,
@@ -424,11 +434,43 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         $body = is_array($request->getParsedBody()) ? $request->getParsedBody() : [];
         $providers = is_array($body['providers'] ?? null) ? array_map('strval', $body['providers']) : [];
         ExternalProviderSettings::save($providers);
-        $globalRadius = is_numeric($body['global-radius-km'] ?? null) ? (float) $body['global-radius-km'] : NearbyDiscoverySettings::DEFAULT_RADIUS_KM;
+        $globalInput = str_replace(',', '.', trim((string) ($body['global-radius-km'] ?? '')));
+        $globalRadius = is_numeric($globalInput) ? (float) $globalInput : NearbyDiscoverySettings::DEFAULT_RADIUS_KM;
         $exceptions = is_array($body['radius-exceptions'] ?? null) ? array_map('strval', $body['radius-exceptions']) : [];
+
+        // A selected tree can be added without requiring a long form row for
+        // every tree.  Values equal to the global radius are deliberately not
+        // stored: they are not exceptions.
+        // Accept the previous hyphenated field names as well, so a cached
+        // configuration page cannot silently discard an added exception.
+        $exceptionAction = (string) ($body['radius_exception_action'] ?? $body['radius-exception-action'] ?? '');
+        $exceptionTree = trim((string) ($body['radius_exception_tree'] ?? $body['radius-exception-tree'] ?? ''));
+        $exceptionValue = trim((string) ($body['radius_exception_value'] ?? $body['radius-exception-value'] ?? ''));
+        $exceptionRemoved = false;
+        $parsedExceptionValue = NearbyDiscoverySettings::parse($exceptionValue);
+        if (($exceptionAction === 'add' || ($exceptionTree !== '' && $exceptionValue !== '')) && $exceptionTree !== '' && $parsedExceptionValue !== null) {
+            if ($parsedExceptionValue === NearbyDiscoverySettings::normalise((string) $globalRadius)) {
+                unset($exceptions[$exceptionTree]);
+                $exceptionRemoved = true;
+            } else {
+                $exceptions[$exceptionTree] = (string) $parsedExceptionValue;
+            }
+        } elseif ($exceptionAction === 'add') {
+            FlashMessages::addMessage(I18N::translate('Select a family tree and enter a radius before adding an exception.'), 'warning');
+        }
         NearbyDiscoverySettings::save($globalRadius, $exceptions);
 
-        FlashMessages::addMessage(I18N::translate('Nearby search settings have been updated.'), 'success');
+        if ($exceptionTree !== '' && $parsedExceptionValue !== null) {
+            $trees = Registry::container()->get(TreeService::class)->all();
+            $tree = $trees->first(static fn (Tree $candidate): bool => (string) $candidate->id() === $exceptionTree);
+            $treeTitle = $tree instanceof Tree ? $tree->title() : $exceptionTree;
+            $message = $exceptionRemoved
+                ? I18N::translate('The exception for family tree %s was removed. The default radius of %s km applies.', $treeTitle, number_format($globalRadius, 1))
+                : I18N::translate('The nearby-search radius for family tree %s is now %s km.', $treeTitle, number_format($parsedExceptionValue, 1));
+            FlashMessages::addMessage($message, 'success');
+        } else {
+            FlashMessages::addMessage(I18N::translate('Nearby search settings have been updated.'), 'success');
+        }
 
         return redirect($this->getConfigLink());
     }

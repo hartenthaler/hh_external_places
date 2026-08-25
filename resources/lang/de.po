@@ -353,3 +353,89 @@ msgstr ""
 
 #~ msgid "Description"
 #~ msgstr "Beschreibung"
+
+msgid "Choose which external providers are used and how far the editor-only nearby search may look around a shared place."
+msgstr "Wählen Sie die externen Informationsanbieter und den Radius, den die Suche in der Nähe eines gemeinsamen Ortes verwenden darf."
+
+msgid "External information providers"
+msgstr "Externe Informationsanbieter"
+
+msgid "Nearby-search radius"
+msgstr "Suchradius in der Nähe"
+
+msgid "Default radius for all family trees (km)"
+msgstr "Standardradius für alle Stammbäume (km)"
+
+msgid "This radius applies to all family trees."
+msgstr "Dieser Radius gilt für alle Stammbäume."
+
+msgid "This radius applies to all family trees except the following:"
+msgstr "Dieser Radius gilt für alle Stammbäume außer den folgenden:"
+
+msgid "Add an exception for a family tree"
+msgstr "Ausnahme für einen Stammbaum hinzufügen"
+
+msgid "Select a family tree"
+msgstr "Stammbaum auswählen"
+
+msgid "Radius in km"
+msgstr "Radius in km"
+
+msgid "Add exception"
+msgstr "Ausnahme hinzufügen"
+
+msgid "Select a family tree and enter a radius before adding an exception."
+msgstr "Wählen Sie vor dem Hinzufügen einer Ausnahme einen Stammbaum aus und geben Sie einen Radius ein."
+
+#, php-format
+msgid "The exception for family tree %s was removed. The default radius of %s km applies."
+msgstr "Die Ausnahme für den Stammbaum %s wurde entfernt. Es gilt der Standardradius von %s km."
+
+#, php-format
+msgid "The nearby-search radius for family tree %s is now %s km."
+msgstr "Der Suchradius in der Nähe für den Stammbaum %s beträgt jetzt %s km."
+
+msgid "GeoNames"
+msgstr "GeoNames"
+
+msgid "Links shared places to Wikidata, FactGrid and GOV and displays read-only external place information, optionally including GeoNames context."
+msgstr "Verknüpft gemeinsame Orte mit Wikidata, FactGrid und GOV und zeigt schreibgeschützte externe Ortsinformationen an, optional ergänzt um GeoNames-Kontext."
+
+msgid "GeoNames information"
+msgstr "GeoNames-Informationen"
+
+msgid "GeoNames search"
+msgstr "GeoNames-Suche"
+
+msgid "Search GeoNames for this shared place."
+msgstr "GeoNames nach diesem gemeinsamen Ort durchsuchen."
+
+msgid "Administrative area"
+msgstr "Verwaltungsgebiet"
+
+msgid "Feature"
+msgstr "Merkmal"
+
+msgid "Elevation"
+msgstr "Höhe"
+
+msgid "Search GeoNames for contextual information about this shared place."
+msgstr "Durchsuchen Sie GeoNames nach Kontextinformationen zu diesem gemeinsamen Ort."
+
+msgid "Search GeoNames"
+msgstr "GeoNames durchsuchen"
+
+msgid "GeoNames result"
+msgstr "GeoNames-Ergebnis"
+
+msgid "GeoNames search results"
+msgstr "GeoNames-Suchergebnisse"
+
+msgid "GeoNames ID"
+msgstr "GeoNames-ID"
+
+msgid "No GeoNames places were found."
+msgstr "Es wurden keine GeoNames-Orte gefunden."
+
+msgid "m above sea level"
+msgstr "m über NN"

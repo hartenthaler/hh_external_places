@@ -47,7 +47,9 @@ final class ReadOnlyWikibaseClient
                     'formatversion' => '2',
                     'ids'           => $itemId,
                     'languages'     => $language . '|en',
-                    'props'         => 'labels|descriptions|claims',
+                    // Sitelinks are needed for FactGrid's wikidatawiki link,
+                    // which is the canonical cross-reference on some items.
+                    'props'         => 'labels|descriptions|claims|sitelinks',
                 ], ['Accept' => 'application/json', 'User-Agent' => 'webtrees Wikibase Places/0.2 (https://github.com/hartenthaler/hh_external_places)'], 6.0);
         } catch (Throwable) { return null; }
 
