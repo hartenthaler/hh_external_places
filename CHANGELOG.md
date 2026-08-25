@@ -28,6 +28,13 @@ All notable user-facing changes are documented here.
 
 ## Unreleased
 
+- GOV population history is now shown as a year-sorted table with a compact
+  line chart; the population label is translated.
+- GOV cross-references to Wikidata and GeoNames are shown through the common
+  consistency display; additional GND and LEO-BW identifiers are translated
+  and linked directly.
+- GOV external-reference prefixes are maintained in a configuration file so
+  additional identifiers can be displayed consistently and translated.
 - Version 2 will add optional research workflows without automatic GEDCOM changes.
 
 ## 2.2.6.0 - 2026-08-19

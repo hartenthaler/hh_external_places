@@ -93,9 +93,12 @@ Search results use a compact table. They show the provider label and identifier,
 When Wikidata provides address statements, the shared-place page shows a read-only address table with house number, street, postal code, place and optional validity dates. It is intentionally omitted for items without address data, such as most settlements or administrative areas.
 
 Where Wikidata or FactGrid contains them, the same panel also shows public owners and occupants. These are external facts: no webtrees person is linked, changed or created. The table gives the public name and provider link, known birth/death dates, the period of the relationship and available WikiTree links.
+GOV may provide several historical population figures. They are displayed as a
+chronologically sorted table with a compact line chart. Additional GOV
+external identifiers are shown with their configured meaning and, where a
+public URL template is known, as links.
 
 ## 📖 Documentation
-
 * [Concept: Wikidata and Domus integration](docs/WIKIDATA_DOMUS_CONCEPT.md)
 * [External providers and identifier consistency](docs/EXTERNAL_PROVIDERS.md)
 * [Module and repository naming proposal](docs/RENAME_PROPOSAL.md)

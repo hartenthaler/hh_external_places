@@ -117,7 +117,7 @@ final class GovProvider implements ExternalProvider
         $label = $this->firstString($data, ['name', 'label', 'title', 'placeName']);
         if ($label !== null) { $label = trim(strip_tags($label)); }
         $description = $this->firstString($data, ['description', 'type', 'objectType']);
-        return new ExternalInformation('gov', $identifier->value, $identifier->url, $label, $description, null, [], $this->references($data), $this->details($data));
+        return new ExternalInformation('gov', $identifier->value, $identifier->url, $label, $description, null, [], $this->references($data), $this->details($data), [], [], [], $this->population($data));
     }
 
     /** @param array<string,mixed> $data @param list<string> $keys */
@@ -150,7 +150,7 @@ final class GovProvider implements ExternalProvider
         }
         foreach ((array) ($data['externalReference'] ?? $data['extRef'] ?? []) as $externalReference) {
             $value = is_array($externalReference) ? ($externalReference['value'] ?? null) : $externalReference;
-            if (!is_string($value) || preg_match('/^(wikidata|factgrid):((?:Q[1-9][0-9]*)$)/i', trim($value), $match) !== 1) { continue; }
+            if (!is_string($value) || preg_match('/^(wikidata|factgrid|geonames):((?:Q[1-9][0-9]*|[1-9][0-9]{0,11})$)/i', trim($value), $match) !== 1) { continue; }
             $references[strtolower($match[1])][] = $match[2];
         }
         foreach (['genwiki', 'genWiki', 'genwikiUrl', 'genWikiUrl'] as $key) {
@@ -180,23 +180,31 @@ final class GovProvider implements ExternalProvider
         foreach ((array) ($data['externalReference'] ?? $data['extRef'] ?? []) as $reference) {
             $value = is_array($reference) ? ($reference['value'] ?? null) : $reference;
             if (is_string($value) && trim($value) !== '') {
+                if (preg_match('/^(wikidata|factgrid|geonames):/i', trim($value)) === 1) { continue; }
                 $details[] = ['label' => 'External identifier', 'value' => trim($value)];
             }
         }
-        foreach (['population' => 'Population', 'populationCount' => 'Population', 'inhabitants' => 'Population', 'inhabitantCount' => 'Population', 'populationHistory' => 'Population'] as $key => $label) {
+        return $details;
+    }
+
+    /** @param array<string,mixed> $data @return array<int,int|float> */
+    private function population(array $data): array
+    {
+        $result = [];
+        foreach (['population', 'populationCount', 'inhabitants', 'inhabitantCount', 'populationHistory'] as $key) {
             $value = $data[$key] ?? null;
-            if (is_scalar($value) && trim((string) $value) !== '') {
-                $details[] = ['label' => $label, 'value' => (string) $value];
-            } elseif (is_array($value)) {
-                foreach (array_slice($value, 0, 10) as $item) {
-                    $population = is_array($item) ? ($item['value'] ?? null) : $item;
-                    if (is_scalar($population) && trim((string) $population) !== '') {
-                        $year = is_array($item) ? ($item['year'] ?? null) : null;
-                        $details[] = ['label' => $label, 'value' => trim((string) $population) . (is_scalar($year) ? ' (' . $year . ')' : '')];
-                    }
+            if (is_array($value)) {
+                foreach ($value as $index => $item) {
+                    $year = is_array($item) ? ($item['year'] ?? $item['date'] ?? $item['from'] ?? $index) : $index;
+                    $amount = is_array($item) ? ($item['value'] ?? $item['count'] ?? $item['population'] ?? null) : $item;
+                    if (!is_scalar($year) || !is_scalar($amount)) { continue; }
+                    $year = (int) preg_replace('/[^0-9-].*$/', '', (string) $year);
+                    if ($year < 1 || !is_numeric($amount)) { continue; }
+                    $result[$year] = (float) $amount == (int) (float) $amount ? (int) $amount : (float) $amount;
                 }
             }
         }
-        return $details;
+        ksort($result, SORT_NUMERIC);
+        return $result;
     }
 }

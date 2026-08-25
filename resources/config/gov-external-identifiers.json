@@ -1,0 +1,21 @@
+{
+  "Bezirksnummer": {"description": "District number in the former GDR", "url": null},
+  "BLO": {"description": "Location or municipality identifier of the Bavarian State Library Online", "url": "https://www.bavarikon.de/search?terms={0}"},
+  "geonames": {"description": "Municipality or populated place in GeoNames", "url": "https://www.geonames.org/{0}/"},
+  "GND": {"description": "Geographic entry in the Integrated Authority File of the German National Library", "url": "https://d-nb.info/gnd/{0}"},
+  "INSEE": {"description": "INSEE code", "url": null},
+  "Kreisnummer": {"description": "District number in the former GDR", "url": null},
+  "leobw": {"description": "Standardized place data for Baden-Württemberg in LEO-BW", "url": "https://www.leo-bw.de/web/guest/detail-gis/-/Detail/details/ORT/labw_ortslexikon/{0}/ort"},
+  "nima": {"description": "National Imagery and Mapping Agency unique feature identifier", "url": null},
+  "NUTS1999": {"description": "Nomenclature of Territorial Units for Statistics 1999", "url": null},
+  "NUTS2003": {"description": "Nomenclature of Territorial Units for Statistics 2003", "url": "https://ec.europa.eu/eurostat/de/web/nuts/nuts-maps"},
+  "opengeodb": {"description": "Municipality in OpenGeoDB", "url": null},
+  "osm-boundary": {"description": "OpenStreetMap municipal boundary", "url": "https://www.openstreetmap.org/?relation={0}"},
+  "SCB": {"description": "Statistics Sweden", "url": null},
+  "SIMC": {"description": "Official Polish national register of populated places", "url": null},
+  "TERYT": {"description": "Official Polish national register of territorial units", "url": null},
+  "UN/LOCODE": {"description": "United Nations Code for Trade and Transport Locations", "url": "https://service.unece.org/trade/locode/{0}.htm"},
+  "viaf": {"description": "Virtual International Authority File identifier", "url": "https://viaf.org/viaf/{0}/"},
+  "westpreussen.de": {"description": "Identifier at westpreussen.de", "url": "http://www.westpreussen.de/cms/ct/ortsverzeichnis/details.php?ID={0}"},
+  "wikidata": {"description": "Unique identifier in Wikidata", "url": "https://www.wikidata.org/wiki/{0}"}
+}
