@@ -30,6 +30,10 @@ final class WikidataLocationAssignmentAction implements RequestHandlerInterface
 
         // This both checks the tree-bound record and acquires webtrees' edit lock.
         $location = Auth::checkLocationAccess(Registry::locationFactory()->make($xref, $tree), true);
+        if (!$location->canEdit()) {
+            FlashMessages::addMessage(I18N::translate('You are not authorized to modify this shared place.'), 'danger');
+            return redirect($location->url());
+        }
         $operation = Validator::parsedBody($request)->string('operation', 'assign');
         $service   = new WikidataLocationAssignmentService();
 

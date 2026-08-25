@@ -29,6 +29,18 @@ final class GeoNamesProvider implements ExternalProvider
 
     public function label(): string { return 'GeoNames'; }
 
+    /** @return array{active:bool,username:bool} */
+    public function configurationStatus(): array
+    {
+        $active = false;
+        try {
+            $active = Registry::container()->get(ModuleService::class)->findByName('map-location-geonames', true) !== null;
+        } catch (Throwable) {
+            $active = false;
+        }
+        return ['active' => $active, 'username' => $this->username() !== ''];
+    }
+
     public function authorityUri(): string { return self::AUTHORITY_URI; }
 
     public function identifier(string $value): ?ExternalIdentifier
@@ -57,7 +69,7 @@ final class GeoNamesProvider implements ExternalProvider
     }
 
     /** @return list<array{id:string,label:string,url:string,description:?string,distanceKm:?float,details:list<array{label:string,value:string}>}> */
-    public function search(string $place, string $language): array
+    public function search(string $place, string $language, bool $houseOnly = false): array
     {
         $username = $this->username();
         $place = trim($place);
@@ -79,6 +91,8 @@ final class GeoNamesProvider implements ExternalProvider
             $identifier = $this->identifier((string) $row['geonameId']);
             $label = is_string($row['name'] ?? null) ? trim($row['name']) : '';
             if ($identifier === null || $label === '') { continue; }
+            $featureCode = strtoupper(trim((string) ($row['fclass'] ?? '') . '.' . (string) ($row['fcode'] ?? '')));
+            if ($houseOnly && !in_array($featureCode, PlaceTypeFilterSettings::all()['geonames'] ?? [], true)) { continue; }
             $results[] = [
                 'id' => $identifier->value,
                 'label' => $label,

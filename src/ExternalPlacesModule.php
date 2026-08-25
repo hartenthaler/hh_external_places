@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Hartenthaler\Webtrees\Module\ExternalPlacesModule;
 
+// Keep the settings value available when webtrees loads this class through
+// its module loader instead of the legacy module.php bootstrap sequence.
+require_once __DIR__ . '/External/PlaceTypeFilterSettings.php';
+
 use Fisharebest\Localization\Translation;
 use Fisharebest\Webtrees\I18N;
 use Fisharebest\Webtrees\Date;
@@ -25,6 +29,8 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalInformati
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalProviderRegistry;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalProviderSettings;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\GeoNamesProvider;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\PlaceTypeFilterSettings;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikibase\ReadOnlyWikibaseClient;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domus\DomusMapLinkProvider;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Http\WikidataLocationAssignmentPage;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikidata\WikidataClient;
@@ -119,7 +125,8 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                 return null;
             }
 
-            $html = $this->externalInformationHtml($externalIdentifiers, $language, '', $location->fullName());
+            $assignmentUrl = $location->canEdit() ? self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]) : null;
+            $html = $this->externalInformationHtml($externalIdentifiers, $language, '', $location->fullName(), $assignmentUrl);
             $html .= $geoNamesHtml;
             $html .= '<div class="d-flex gap-2 flex-wrap mt-2">';
             if ($location->canEdit()) {
@@ -194,18 +201,19 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             $language,
         );
         if ($wikidataReference !== null) {
-            $html .= $this->crossReferenceHtml($wikidataReference, $externalIdentifiers);
+                    $assignmentUrl = $location->canEdit() ? self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]) : null;
+                    $html .= $this->crossReferenceHtml($wikidataReference, $externalIdentifiers, $assignmentUrl);
         }
         $html .= '<br><small>' . e(MoreI18N::xlate('Source')) . ': Wikidata</small>';
-        $html .= $this->externalInformationHtml($externalIdentifiers, $language, 'wikidata', $location->fullName());
+        $assignmentUrl = $location->canEdit() ? self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]) : null;
+        $html .= $this->externalInformationHtml($externalIdentifiers, $language, 'wikidata', $location->fullName(), $assignmentUrl);
         $html .= $this->geoNamesHtml($location->fullName(), $language);
         $html .= '<div class="d-flex gap-2 flex-wrap mt-2">';
-        if ($domusUrl !== '') {
-            $html .= '<a class="btn btn-primary btn-sm" href="' . e($domusUrl) . '" rel="noopener noreferrer" target="_blank">' . e(I18N::translate('Show in Domus')) . '</a>';
-        }
-
         if ($location->canEdit()) {
             $html .= '<a class="btn btn-primary btn-sm" href="' . e(self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()])) . '">' . e(I18N::translate('Assign external identifier')) . '</a>';
+        }
+        if ($domusUrl !== '') {
+            $html .= '<a class="btn btn-primary btn-sm" href="' . e($domusUrl) . '" rel="noopener noreferrer" target="_blank">' . e(I18N::translate('Show in Domus')) . '</a>';
         }
         $html .= '</div>';
 
@@ -218,7 +226,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
      *
      * @param list<\Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\ExternalIdentifier> $identifiers
      */
-    private function externalInformationHtml(array $identifiers, string $language, string $skip = '', string $placeName = ''): string
+    private function externalInformationHtml(array $identifiers, string $language, string $skip = '', string $placeName = '', ?string $assignmentUrl = null): string
     {
         if ($identifiers === []) {
             return '';
@@ -250,8 +258,8 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                     $value = $this->externalDetailValue($detail['label'], $detail['value']);
                     $html .= '<br><small>' . e($this->externalDetailLabel($detail['label'])) . ': ' . ($detail['label'] === 'External identifier' ? $this->externalIdentifierHtml($value) : e($value)) . '</small>';
                 }
-                if ($information?->population !== []) {
-                    $html .= $this->populationHtml($information->population);
+                if (($information?->population ?? []) !== []) {
+                    $html .= $this->populationHtml($information->population ?? []);
                 }
                 if ($information?->imageUrl !== null) {
                     $html .= '<br><img src="' . e($information->imageUrl) . '" alt="" loading="lazy" style="max-width:500px;max-height:500px;width:auto;height:auto">';
@@ -260,7 +268,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                     foreach ($information->references['genwiki'] ?? [] as $genwikiUrl) {
                         $html .= '<br><small>' . e(I18N::translate('Article in GenWiki')) . ': <a href="' . e($genwikiUrl) . '" rel="noopener noreferrer" target="_blank">' . e($genwikiUrl) . '</a></small>';
                     }
-                    $html .= $this->crossReferenceHtml($information, $identifiers);
+                    $html .= $this->crossReferenceHtml($information, $identifiers, $assignmentUrl);
                     $html .= $this->externalPersonRelationsHtml($information);
                 }
                 $html .= '<br><small>' . e(MoreI18N::xlate('Source')) . ': ' . e($provider->label()) . '</small></section>';
@@ -301,7 +309,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         ksort($population, SORT_NUMERIC);
         $html = '<div class="d-flex flex-wrap gap-3 align-items-start mt-2"><div><strong>' . e(I18N::translate('Population')) . '</strong><table class="table table-sm mb-0"><thead><tr><th>' . e(MoreI18N::xlate('Year')) . '</th><th>' . e(I18N::translate('Population')) . '</th></tr></thead><tbody>';
         foreach ($population as $year => $value) {
-            $html .= '<tr><td>' . e((string) $year) . '</td><td>' . e((string) $value) . '</td></tr>';
+            $html .= '<tr><td>' . e((string) $year) . '</td><td>' . e(I18N::number($value)) . '</td></tr>';
         }
         $html .= '</tbody></table></div>' . $this->populationChartHtml($population) . '</div>';
         return $html;
@@ -323,13 +331,17 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         $svg = '<svg viewBox="0 0 320 180" width="320" height="180" role="img" aria-label="' . e(I18N::translate('Population')) . '"><line x1="35" y1="145" x2="305" y2="145" stroke="currentColor" stroke-opacity=".35"/><line x1="35" y1="20" x2="35" y2="145" stroke="currentColor" stroke-opacity=".35"/><polyline fill="none" stroke="currentColor" stroke-width="2" points="' . e(implode(' ', $coordinates)) . '"/>';
         foreach ($values as $index => $value) {
             [$x, $y] = explode(',', $coordinates[$index]);
-            $svg .= '<circle cx="' . e($x) . '" cy="' . e($y) . '" r="3" fill="currentColor"><title>' . e((string) $points[$index] . ': ' . (string) $value) . '</title></circle>';
+            $svg .= '<circle cx="' . e($x) . '" cy="' . e($y) . '" r="3" fill="currentColor"><title>' . e((string) $points[$index] . ': ' . I18N::number($value)) . '</title></circle>';
         }
         return '<div>' . $svg . '</svg></div>';
     }
 
     private function externalDetailValue(string $label, string $value): string
     {
+        if ($label === 'Population' && is_numeric(trim($value))) {
+            return I18N::number((float) $value);
+        }
+
         if ($label !== 'Elevation' || trim($value) === '') {
             return $value;
         }
@@ -375,7 +387,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
     }
 
     /** @param list<\Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\ExternalIdentifier> $identifiers */
-    private function crossReferenceHtml(ExternalInformation $information, array $identifiers): string
+    private function crossReferenceHtml(ExternalInformation $information, array $identifiers, ?string $assignmentUrl = null): string
     {
         $html = '';
         foreach ($information->references as $provider => $values) {
@@ -389,8 +401,17 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                     }
                 }
                 $providerLabel = ['wikidata' => 'Wikidata', 'factgrid' => 'FactGrid', 'gov' => 'GOV', 'geonames' => 'GeoNames'][$provider] ?? $provider;
-                $html .= '<br><small>' . e(I18N::translate('Reference to %s', $providerLabel)) . ': '
-                    . e($value) . ' — ' . e($matching ? I18N::translate('consistent') : I18N::translate('not present in this shared place')) . '</small>';
+                $html .= '<br><span class="small">' . e(I18N::translate('Reference to %s', $providerLabel)) . ': '
+                    . e($value) . ' — ' . e($matching ? I18N::translate('consistent') : I18N::translate('not present in this shared place'));
+                $html .= '</span>';
+                if (!$matching && $assignmentUrl !== null) {
+                    $html .= ' <form method="post" action="' . e($assignmentUrl) . '" class="d-inline ms-1">'
+                        . csrf_field()
+                        . '<input type="hidden" name="operation" value="add-external-id">'
+                        . '<input type="hidden" name="provider" value="' . e($provider) . '">'
+                        . '<input type="hidden" name="external_id" value="' . e($value) . '">'
+                        . '<button class="btn btn-sm btn-outline-primary py-0" type="submit">' . e(I18N::translate('Assign')) . '</button></form>';
+                }
             }
         }
         return $html;
@@ -470,6 +491,24 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         $this->layout = 'layouts/administration';
         $trees = Registry::container()->get(TreeService::class)->all();
         $radiusExceptions = NearbyDiscoverySettings::exceptions();
+        $houseTypeFilters = PlaceTypeFilterSettings::all();
+        $houseTypeLabels = ['wikidata' => [], 'factgrid' => [], 'gov' => [], 'geonames' => []];
+        $language = explode('-', str_replace('_', '-', I18N::languageTag()))[0] ?: 'en';
+        $wikibaseClient = new ReadOnlyWikibaseClient();
+        foreach (['wikidata', 'factgrid'] as $provider) {
+            foreach ($wikibaseClient->entities($provider, $houseTypeFilters[$provider] ?? [], $language) as $qid => $entity) {
+                $label = $entity['labels'][$language]['value'] ?? $entity['labels']['en']['value'] ?? null;
+                $houseTypeLabels[$provider][$qid] = is_string($label) && $label !== '' ? $label : $qid;
+            }
+        }
+        // GOV values are numeric vocabulary identifiers; their English labels
+        // are translated like all other module-owned strings.
+        foreach (['gov', 'geonames'] as $provider) {
+            foreach ($houseTypeFilters[$provider] ?? [] as $value) {
+                $label = $provider === 'geonames' ? PlaceTypeFilterSettings::geonamesLabel($value) : PlaceTypeFilterSettings::govLabel($value);
+                $houseTypeLabels[$provider][$value] = I18N::translate($label);
+            }
+        }
 
         return $this->viewResponse(self::MODULE_NAME . '::configuration', [
             'all_trees' => $trees,
@@ -477,6 +516,8 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             'radius_exceptions' => $radiusExceptions,
             'enabled_providers' => ExternalProviderSettings::enabled(),
             'provider_labels' => ExternalProviderSettings::labels(),
+            'house_type_filters' => PlaceTypeFilterSettings::all(),
+            'house_type_labels' => $houseTypeLabels,
             'title' => $this->title(),
         ]);
     }
@@ -486,6 +527,28 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         $body = is_array($request->getParsedBody()) ? $request->getParsedBody() : [];
         $providers = is_array($body['providers'] ?? null) ? array_map('strval', $body['providers']) : [];
         ExternalProviderSettings::save($providers);
+        if (in_array('geonames', $providers, true)) {
+            $geoNamesStatus = (new GeoNamesProvider())->configurationStatus();
+            if (!$geoNamesStatus['active']) {
+                FlashMessages::addMessage(I18N::translate('GeoNames is not enabled in webtrees. Enable it in Control panel / Geographical data / Geolocation / GeoNames.'), 'warning');
+            } elseif (!$geoNamesStatus['username']) {
+                FlashMessages::addMessage(I18N::translate('No GeoNames username is configured. Enter it in Control panel / Geographical data / Geolocation / GeoNames.'), 'warning');
+            }
+        }
+        $typeFilters = is_array($body['house-type-filters'] ?? null) ? $body['house-type-filters'] : [];
+        $resetProvider = trim((string) ($body['reset-house-type-filter'] ?? ''));
+        if ($resetProvider !== '') {
+            PlaceTypeFilterSettings::reset($resetProvider);
+            $providerLabel = [
+                'wikidata' => 'Wikidata',
+                'factgrid' => 'FactGrid',
+                'gov' => 'GOV',
+                'geonames' => 'GeoNames',
+            ][$resetProvider] ?? $resetProvider;
+            FlashMessages::addMessage(I18N::translate('The house filter types for %s were reset to their defaults.', $providerLabel), 'success');
+        } else {
+            PlaceTypeFilterSettings::save($typeFilters);
+        }
         $globalInput = str_replace(',', '.', trim((string) ($body['global-radius-km'] ?? '')));
         $globalRadius = is_numeric($globalInput) ? (float) $globalInput : NearbyDiscoverySettings::DEFAULT_RADIUS_KM;
         $exceptions = is_array($body['radius-exceptions'] ?? null) ? array_map('strval', $body['radius-exceptions']) : [];
@@ -520,7 +583,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                 ? I18N::translate('The exception for family tree %s was removed. The default radius of %s km applies.', $treeTitle, number_format($globalRadius, 1))
                 : I18N::translate('The nearby-search radius for family tree %s is now %s km.', $treeTitle, number_format($parsedExceptionValue, 1));
             FlashMessages::addMessage($message, 'success');
-        } else {
+        } elseif ($resetProvider === '') {
             FlashMessages::addMessage(I18N::translate('Nearby search settings have been updated.'), 'success');
         }
 

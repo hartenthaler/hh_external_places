@@ -56,7 +56,7 @@ final class GovProvider implements ExternalProvider
         return $this->map($identifier, $data);
     }
 
-    /** @return list<array{id:string,label:string,description:?string,distanceKm:?float}> */
+    /** @return list<array{id:string,label:string,description:?string,typeId:?string,distanceKm:?float}> */
     public function search(string $term, string $language = 'en'): array
     {
         $term = trim($term);
@@ -65,7 +65,7 @@ final class GovProvider implements ExternalProvider
         return $this->candidateList($payload);
     }
 
-    /** @return list<array{id:string,label:string,description:?string,distanceKm:?float}> */
+    /** @return list<array{id:string,label:string,description:?string,typeId:?string,distanceKm:?float}> */
     public function nearby(float $latitude, float $longitude, float $radiusKm): array
     {
         if ($latitude < -90 || $latitude > 90 || $longitude < -180 || $longitude > 180) { return []; }
@@ -94,7 +94,7 @@ final class GovProvider implements ExternalProvider
         } catch (JsonException) { return null; }
     }
 
-    /** @param array<string,mixed>|null $payload @return list<array{id:string,label:string,description:?string,distanceKm:?float}> */
+    /** @param array<string,mixed>|null $payload @return list<array{id:string,label:string,description:?string,typeId:?string,distanceKm:?float}> */
     private function candidateList(?array $payload): array
     {
         if ($payload === null) { return []; }
@@ -106,7 +106,8 @@ final class GovProvider implements ExternalProvider
             $id = $item['id'] ?? $item['govId'] ?? $item['itemId'] ?? $item['value'] ?? null;
             $label = $this->firstString($item, ['name', 'label', 'title']) ?? $id;
             if (!is_string($id) || $this->identifier($id) === null || !is_string($label)) { continue; }
-            $out[] = ['id' => $id, 'label' => trim(strip_tags($label)), 'description' => $this->firstString($item, ['type', 'description', 'objectType']), 'distanceKm' => is_numeric($item['distance'] ?? null) ? (float) $item['distance'] : null];
+            $typeId = $item['typeId'] ?? $item['govType'] ?? $item['objectTypeId'] ?? null;
+            $out[] = ['id' => $id, 'label' => trim(strip_tags($label)), 'description' => $this->firstString($item, ['type', 'description', 'objectType']), 'typeId' => is_scalar($typeId) ? (string) $typeId : null, 'distanceKm' => is_numeric($item['distance'] ?? null) ? (float) $item['distance'] : null];
         }
         return $out;
     }

@@ -78,6 +78,26 @@ is shown as missing; it is not silently imported.
 An editor may add a missing value explicitly. The module writes only a
 validated `_EXID`/`TYPE` block and updates the normal webtrees change stamp.
 
+The administrator can maintain provider-specific type identifiers for the
+optional house filter. The initial lists target the lowest inhabited-place
+level; Wikidata and FactGrid use type QIDs, GOV uses numeric type IDs from its
+official type vocabulary, and GeoNames uses feature codes. FactGrid defaults
+include Q701396 (residential building), Q16200 (real estate), Q545649
+(apartment), and Q1340072 (isolated settlement/farmstead). The GOV defaults
+are 8 (castle), 17 (building), 21 (manor), 24 (farm), 193 (alpine pasture),
+229 (group of houses), 231 (farms), 236 (houses), 261 (farm hamlet), 111
+(palace), 102 (forester's house), and 87 (mill). Labels are module strings
+and can be translated independently of the provider IDs. Each provider has a
+reset-to-default action. The editor activates the filter per provider, so an
+unfiltered search is always still available.
+
+GeoNames building and inhabited-place filters use the `S` (spot/building/farm)
+feature class. The initial codes and their English descriptions are maintained
+in `resources/config/geonames-feature-codes.json`, based on GeoNames'
+`featureCodes_en.txt`; the descriptions are passed through gettext so they can
+be translated without duplicating provider identifiers. Nearby-search controls
+remain disabled until the shared place has valid coordinates.
+
 ## Privacy and failures
 
 The providers expose public research data and are not used to match or alter
