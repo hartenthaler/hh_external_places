@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikibase;
 
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Http\HttpTransport;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\PlaceTypeFilterSettings;
 use JsonException;
 use Throwable;
 
@@ -95,7 +96,7 @@ final class ReadOnlyWikibaseClient
     }
 
     /** @return list<array{qid:string,label:string,description:?string}> */
-    public function search(string $provider, string $term, string $language): array
+    public function search(string $provider, string $term, string $language, bool $houseOnly = false): array
     {
         $endpoint = self::ENDPOINTS[$provider] ?? null;
         $term = trim($term);
@@ -113,16 +114,25 @@ final class ReadOnlyWikibaseClient
             if (!is_string($qid) || preg_match('/^Q[1-9][0-9]*$/', $qid) !== 1) { continue; }
             $results[] = ['qid' => $qid, 'label' => is_string($item['label'] ?? null) ? $item['label'] : $qid, 'description' => is_string($item['description'] ?? null) ? $item['description'] : null];
         }
-        return $results;
+        if (!$houseOnly || $results === []) {
+            return $results;
+        }
+
+        $entities = $this->entities($provider, array_column($results, 'qid'), $language);
+        return array_values(array_filter($results, function (array $result) use ($entities, $provider): bool {
+            return PlaceTypeFilterSettings::matchesWikibaseClaims($provider, (array) ($entities[$result['qid']]['claims'] ?? []));
+        }));
     }
 
     /** @return list<array{qid:string,label:string,description:?string,distanceKm:float}> */
-    public function nearby(string $provider, float $latitude, float $longitude, float $radiusKm, string $language): array
+    public function nearby(string $provider, float $latitude, float $longitude, float $radiusKm, string $language, bool $houseOnly = false): array
     {
         if ($provider !== 'factgrid' || $latitude < -90 || $latitude > 90 || $longitude < -180 || $longitude > 180) { return []; }
         $radiusKm = max(0.1, min(100.0, $radiusKm));
         $center = sprintf('Point(%.6F %.6F)', $longitude, $latitude);
-        $query = 'SELECT ?item ?itemLabel ?itemDescription ?coord WHERE { SERVICE wikibase:around { ?item wdt:P48 ?coord . bd:serviceParam wikibase:center "' . $center . '"^^geo:wktLiteral . bd:serviceParam wikibase:radius "' . number_format($radiusKm, 3, '.', '') . '" . } SERVICE wikibase:label { bd:serviceParam wikibase:language "' . $this->language($language) . ',en". } } LIMIT 20';
+        $houseTypes = array_values(array_filter(PlaceTypeFilterSettings::all()['factgrid'] ?? [], static fn (string $value): bool => preg_match('/^Q[1-9][0-9]*$/', $value) === 1));
+        $types = $houseOnly && $houseTypes !== [] ? ' VALUES ?houseType { ' . implode(' ', array_map(static fn (string $value): string => 'wd:' . $value, $houseTypes)) . ' } ?item wdt:P2 ?houseType .' : '';
+        $query = 'SELECT ?item ?itemLabel ?itemDescription ?coord WHERE {' . $types . ' SERVICE wikibase:around { ?item wdt:P48 ?coord . bd:serviceParam wikibase:center "' . $center . '"^^geo:wktLiteral . bd:serviceParam wikibase:radius "' . number_format($radiusKm, 3, '.', '') . '" . } SERVICE wikibase:label { bd:serviceParam wikibase:language "' . $this->language($language) . ',en". } } LIMIT 20';
         try {
             $response = $this->httpClient->request('GET', 'https://database.factgrid.de/query/sparql', ['format' => 'json', 'query' => $query], ['Accept' => 'application/sparql-results+json', 'User-Agent' => 'webtrees Wikibase Places/0.2'], 8.0);
             if ($response === null) { return []; }

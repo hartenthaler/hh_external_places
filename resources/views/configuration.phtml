@@ -14,6 +14,8 @@ use Illuminate\Support\Collection;
 /** @var array<string,float> $radius_exceptions */
 /** @var list<string> $enabled_providers */
 /** @var array<string,string> $provider_labels */
+/** @var array<string,list<string>> $house_type_filters */
+/** @var array<string,array<string,string>> $house_type_labels */
 /** @var string $title */
 ?>
 
@@ -27,6 +29,10 @@ use Illuminate\Support\Collection;
     <?php foreach ($provider_labels as $key => $label) : ?>
         <div class="form-check"><input class="form-check-input" id="provider-<?= e($key) ?>" name="providers[]" type="checkbox" value="<?= e($key) ?>" <?= in_array($key, $enabled_providers, true) ? 'checked' : '' ?>><label class="form-check-label" for="provider-<?= e($key) ?>"><?= e($label) ?></label></div>
     <?php endforeach ?>
+
+    <h2 class="mt-4"><?= I18N::translate('House filter types') ?></h2>
+    <p><?= I18N::translate('Enter one provider-specific type identifier per line. These initial values describe the lowest level of inhabited places: apartments, houses, farms, castles and palaces. Editors can optionally apply this filter to a search.') ?></p>
+    <?php foreach ($provider_labels as $key => $label) : ?><div class="row mb-3"><label class="col-sm-3 col-form-label" for="house-types-<?= e($key) ?>"><?= e($label) ?></label><div class="col-sm-6"><textarea class="form-control" id="house-types-<?= e($key) ?>" name="house-type-filters[<?= e($key) ?>][]" rows="4"><?= e(implode("\n", $house_type_filters[$key] ?? [])) ?></textarea><small class="text-muted"><?= I18N::translate('One value per line; the exact meaning depends on the provider.') ?></small><?php if (($house_type_filters[$key] ?? []) !== []) : ?><ul class="small text-muted mb-0 mt-1"><?php foreach ($house_type_filters[$key] as $type) : ?><li><code><?= e($type) ?></code> — <?= e($house_type_labels[$key][$type] ?? $type) ?></li><?php endforeach ?></ul><?php endif ?></div><div class="col-sm-3"><button class="btn btn-outline-secondary" name="reset-house-type-filter" type="submit" value="<?= e($key) ?>"><?= I18N::translate('Reset to default') ?></button></div></div><?php endforeach ?>
 
     <h2 class="mt-4"><?= I18N::translate('Nearby-search radius') ?></h2>
     <div class="row mb-3"><label class="col-sm-3 col-form-label" for="global-radius-km"><?= I18N::translate('Default radius for all family trees (km)') ?></label><div class="col-sm-3"><input class="form-control" id="global-radius-km" max="100" min="0.1" name="global-radius-km" step="0.1" type="number" value="<?= e($default_radius_km) ?>"></div></div>

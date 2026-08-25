@@ -41,6 +41,108 @@ msgstr ""
 msgid "External identifier"
 msgstr ""
 
+msgid "House filter types"
+msgstr ""
+
+msgid "Enter one provider-specific type identifier per line. These initial values describe the lowest level of inhabited places: apartments, houses, farms, castles and palaces. Editors can optionally apply this filter to a search."
+msgstr ""
+
+msgid "One value per line; the exact meaning depends on the provider."
+msgstr ""
+
+msgid "Filter house"
+msgstr ""
+
+msgid "Remove house filter"
+msgstr ""
+
+msgid "GeoNames is not enabled in webtrees. Enable it in Control panel / Geographical data / Geolocation / GeoNames."
+msgstr ""
+
+msgid "No GeoNames username is configured. Enter it in Control panel / Geographical data / Geolocation / GeoNames."
+msgstr ""
+
+msgid "apartment building"
+msgstr ""
+
+msgid "building(s)"
+msgstr ""
+
+msgid "barracks"
+msgstr ""
+
+msgid "church"
+msgstr ""
+
+msgid "Castle"
+msgstr ""
+
+msgid "customs house"
+msgstr ""
+
+msgid "estate(s)"
+msgstr ""
+
+msgid "farm"
+msgstr ""
+
+msgid "abandoned farm"
+msgstr ""
+
+msgid "farms"
+msgstr ""
+
+msgid "farmstead"
+msgstr ""
+
+msgid "guest house"
+msgstr ""
+
+msgid "house(s)"
+msgstr ""
+
+msgid "country house"
+msgstr ""
+
+msgid "hotel"
+msgstr ""
+
+msgid "hut"
+msgstr ""
+
+msgid "huts"
+msgstr ""
+
+msgid "lighthouse"
+msgstr ""
+
+msgid "mill"
+msgstr ""
+
+msgid "palace"
+msgstr ""
+
+msgid "prison"
+msgstr ""
+
+msgid "ranch"
+msgstr ""
+
+msgid "resort"
+msgstr ""
+
+msgid "ruin(s)"
+msgstr ""
+
+msgid "sanatorium"
+msgstr ""
+
+msgid "convent"
+msgstr ""
+
+msgid "mission"
+msgstr ""
+
 msgid "District number in the former GDR"
 msgstr ""
 
@@ -459,4 +561,55 @@ msgid "GeoNames"
 msgstr ""
 
 msgid "Links shared places to Wikidata, FactGrid and GOV and displays read-only external place information, optionally including GeoNames context."
+msgstr ""
+
+msgid "Castle"
+msgstr ""
+
+msgid "castle"
+msgstr ""
+
+msgid "Building"
+msgstr ""
+
+msgid "Manor (building)"
+msgstr ""
+
+msgid "Farm"
+msgstr ""
+
+msgid "Alpine pasture"
+msgstr ""
+
+msgid "Group of houses"
+msgstr ""
+
+msgid "Farms"
+msgstr ""
+
+msgid "Houses"
+msgstr ""
+
+msgid "Farm hamlet"
+msgstr ""
+
+msgid "Palace"
+msgstr ""
+
+msgid "Forester's house"
+msgstr ""
+
+msgid "Mill"
+msgstr ""
+
+msgid "You are not authorized to modify this shared place."
+msgstr ""
+
+msgid "Reset to default"
+msgstr ""
+
+msgid "The house filter types for %s were reset to their defaults."
+msgstr ""
+
+msgid "Coordinates must be defined for this shared place before nearby search can be used."
 msgstr ""

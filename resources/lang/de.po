@@ -419,6 +419,108 @@ msgstr "Einwohnerzahl"
 msgid "External identifier"
 msgstr "Externe Kennung"
 
+msgid "House filter types"
+msgstr "Typen für den Hausfilter"
+
+msgid "Enter one provider-specific type identifier per line. These initial values describe the lowest level of inhabited places: apartments, houses, farms, castles and palaces. Editors can optionally apply this filter to a search."
+msgstr "Geben Sie pro Zeile eine anbieterspezifische Typkennung ein. Diese Ausgangswerte beschreiben die unterste Ebene bewohnter Orte: Wohnungen, Häuser, Höfe, Burgen und Schlösser. Redakteure können diesen Filter bei einer Suche optional anwenden."
+
+msgid "One value per line; the exact meaning depends on the provider."
+msgstr "Ein Wert pro Zeile; die genaue Bedeutung hängt vom Anbieter ab."
+
+msgid "Filter house"
+msgstr "Filter Haus"
+
+msgid "Remove house filter"
+msgstr "Hausfilter entfernen"
+
+msgid "GeoNames is not enabled in webtrees. Enable it in Control panel / Geographical data / Geolocation / GeoNames."
+msgstr "GeoNames ist in webtrees nicht aktiviert. Aktivieren Sie es unter Verwaltung / Geografische Daten / Geolokalisierung / GeoNames."
+
+msgid "No GeoNames username is configured. Enter it in Control panel / Geographical data / Geolocation / GeoNames."
+msgstr "Es ist kein GeoNames-Nutzername hinterlegt. Tragen Sie ihn unter Verwaltung / Geografische Daten / Geolokalisierung / GeoNames ein."
+
+msgid "apartment building"
+msgstr "Mehrfamilienhaus"
+
+msgid "building(s)"
+msgstr "Gebäude"
+
+msgid "barracks"
+msgstr "Kaserne"
+
+msgid "church"
+msgstr "Kirche"
+
+msgid "castle"
+msgstr "Burg/Schloss"
+
+msgid "customs house"
+msgstr "Zollhaus"
+
+msgid "estate(s)"
+msgstr "Gut"
+
+msgid "farm"
+msgstr "Bauernhof"
+
+msgid "abandoned farm"
+msgstr "Verlassener Bauernhof"
+
+msgid "farms"
+msgstr "Bauernhöfe"
+
+msgid "farmstead"
+msgstr "Hofstelle"
+
+msgid "guest house"
+msgstr "Gästehaus"
+
+msgid "house(s)"
+msgstr "Haus/Häuser"
+
+msgid "country house"
+msgstr "Landhaus"
+
+msgid "hotel"
+msgstr "Hotel"
+
+msgid "hut"
+msgstr "Hütte"
+
+msgid "huts"
+msgstr "Hütten"
+
+msgid "lighthouse"
+msgstr "Leuchtturm"
+
+msgid "mill"
+msgstr "Mühle"
+
+msgid "palace"
+msgstr "Palast"
+
+msgid "prison"
+msgstr "Gefängnis"
+
+msgid "ranch"
+msgstr "Ranch"
+
+msgid "resort"
+msgstr "Ferienanlage"
+
+msgid "ruin(s)"
+msgstr "Ruine(n)"
+
+msgid "sanatorium"
+msgstr "Sanatorium"
+
+msgid "convent"
+msgstr "Kloster"
+
+msgid "mission"
+msgstr "Missionsstation"
+
 msgid "District number in the former GDR"
 msgstr "Bezirksnummer in der ehemaligen DDR"
 
@@ -499,3 +601,51 @@ msgstr "Es wurden keine GeoNames-Orte gefunden."
 
 msgid "m above sea level"
 msgstr "m über NN"
+
+msgid "Building"
+msgstr "Gebäude"
+
+msgid "Manor (building)"
+msgstr "Gut (Gebäude)"
+
+msgid "Alpine pasture"
+msgstr "Alm"
+
+msgid "Group of houses"
+msgstr "Häusergruppe"
+
+msgid "Houses"
+msgstr "Häuser"
+
+msgid "Farm hamlet"
+msgstr "Hofschaft"
+
+msgid "Forester's house"
+msgstr "Forsthaus"
+
+msgid "Castle"
+msgstr "Burg"
+
+msgid "Farm"
+msgstr "Hof"
+
+msgid "Farms"
+msgstr "Höfe"
+
+msgid "Palace"
+msgstr "Schloss"
+
+msgid "Mill"
+msgstr "Mühle"
+
+msgid "You are not authorized to modify this shared place."
+msgstr "Sie sind nicht berechtigt, diesen gemeinsamen Ort zu ändern."
+
+msgid "Reset to default"
+msgstr "Auf Standard zurücksetzen"
+
+msgid "The house filter types for %s were reset to their defaults."
+msgstr "Die Typen des Hausfilters für %s wurden auf die Standardwerte zurückgesetzt."
+
+msgid "Coordinates must be defined for this shared place before nearby search can be used."
+msgstr "Für die Umkreissuche müssen zuerst Koordinaten für diesen gemeinsamen Ort festgelegt werden."

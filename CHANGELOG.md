@@ -26,8 +26,24 @@ All notable user-facing changes are documented here.
 - Provider results and external details are interpreted more reliably, including
   multilingual GOV names, external references and population data.
 
+## 2.2.6.3 - 2026-08-26
+
+- Nearby-search buttons now clearly indicate when coordinates are still
+  missing, instead of inviting an action that cannot work.
+- Administrators can reset each provider's house/building filter list to its
+  defaults; the confirmation message now describes the actual reset action.
+- FactGrid house filtering now starts with documented residential-building,
+  real-estate, apartment and isolated-settlement types.
+- Population values use the user's webtrees number formatting.
+- Visitors can search and review results but cannot see or submit assignment
+  actions; editors can assign missing cross-provider identifiers directly from
+  the consistency message.
+
 ## Unreleased
 
+- Administrators can maintain provider-specific house/building type lists and
+  editors can optionally apply a **Filter house** action to Wikidata, FactGrid,
+  GOV and GeoNames searches.
 - GOV population history is now shown as a year-sorted table with a compact
   line chart; the population label is translated.
 - GOV cross-references to Wikidata and GeoNames are shown through the common
