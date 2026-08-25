@@ -17,7 +17,7 @@ webtrees individual records.
 FactGrid relationship dates use `P49` (begin date) and `P50` (end date).
 FactGrid person records are loaded in one bounded batch and remain read-only.
 FactGrid `P2949` (**WikiTree person ID**) is rendered as a WikiTree link when
-present; Wikidata uses the corresponding `P2924` property.
+present; Wikidata uses the corresponding `P2949` property.
 
 All usable statements are shown, including historical statements and statements
 marked as deprecated in Wikidata. Historical information is the purpose of this

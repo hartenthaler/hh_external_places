@@ -13,6 +13,7 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Gedcom\ExternalIdService;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalProviderRegistry;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\ExternalPlacesModule;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalProviderSettings;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\GeoNamesProvider;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\MoreI18N;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikidata\WikidataClient;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikidata\LocationCoordinates;
@@ -40,7 +41,7 @@ final class WikidataLocationAssignmentPage implements RequestHandlerInterface
         $language        = explode('-', str_replace('_', '-', I18N::languageTag()))[0] ?: 'en';
         $submittedSearch = trim(Validator::queryParams($request)->string('search', ''));
         $providerKey      = Validator::queryParams($request)->string('provider', 'wikidata');
-        $enabledProviders = array_values(array_intersect(['wikidata', 'factgrid', 'gov'], ExternalProviderSettings::enabled()));
+        $enabledProviders = array_values(array_intersect(['wikidata', 'factgrid', 'gov', 'geonames'], ExternalProviderSettings::enabled()));
         if (!in_array($providerKey, $enabledProviders, true)) {
             $providerKey = $enabledProviders[0] ?? 'wikidata';
         }
@@ -49,6 +50,7 @@ final class WikidataLocationAssignmentPage implements RequestHandlerInterface
         $search          = $submittedSearch === '' ? $locationName : $submittedSearch;
         $client          = new WikidataClient();
         $govProvider      = (new ExternalProviderRegistry())->byKey('gov');
+        $geoNamesProvider = new GeoNamesProvider();
         $wikibaseClient   = new ReadOnlyWikibaseClient();
         $nearbyRequested = ($request->getQueryParams()['nearby'] ?? '') === '1';
         $coordinates     = LocationCoordinates::fromGedcom($location->gedcom());
@@ -68,6 +70,7 @@ final class WikidataLocationAssignmentPage implements RequestHandlerInterface
             'candidates'     => $providerKey === 'wikidata' && $submittedSearch !== '' ? $client->search($submittedSearch, $language) : [],
             'external_candidates' => $providerKey === 'gov' && $submittedSearch !== '' && $govProvider !== null && method_exists($govProvider, 'search') ? $govProvider->search($submittedSearch, $language) : [],
             'factgrid_candidates' => $providerKey === 'factgrid' && $submittedSearch !== '' ? $wikibaseClient->search('factgrid', $submittedSearch, $language) : [],
+            'geonames_candidates' => $providerKey === 'geonames' && $submittedSearch !== '' ? $geoNamesProvider->search($submittedSearch, $language) : [],
             'factgrid_nearby_candidates' => $providerKey === 'factgrid' && $nearbyRequested && $coordinates !== null ? $wikibaseClient->nearby('factgrid', $coordinates['latitude'], $coordinates['longitude'], $radiusKm, $language) : [],
             'coordinates'    => $coordinates,
             'current'        => $current,

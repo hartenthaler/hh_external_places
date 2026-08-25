@@ -8,10 +8,13 @@ The module uses one provider-neutral read model for public place information.
 Each adapter has a fixed endpoint, identifier validator and reviewed property
 mapping. GEDCOM values are never used as arbitrary URLs.
 
-GeoNames is an optional contextual provider. It uses the existing webtrees
-GeoNames username and looks up the shared-place name; it does not add an
-external identifier to GEDCOM. Provider enablement is site-wide. Nearby
-searches use one global default radius, with optional per-tree exceptions.
+GeoNames is an optional provider. It uses the existing webtrees GeoNames
+username, offers a multi-result name search and can be explicitly assigned
+like the other providers. A selected GeoNames identifier is stored in GEDCOM
+as a typed `_EXID` block. Provider enablement is site-wide. Nearby
+searches use one global default radius. Only trees with an explicitly
+different radius are stored and displayed as exceptions; entering the global
+default for an exception removes that exception.
 
 ## Supported identifiers
 
@@ -32,10 +35,12 @@ is used. Unknown authorities are preserved, but are not fetched by this module.
 ## Provider mappings
 
 Wikidata uses `P31` for type, `P18` for a Wikimedia Commons image, `P8168`
-for a FactGrid item ID and `P2503` for a GOV ID. FactGrid uses `P2` for type,
-`P189` for a Wikimedia Commons image, `P771` for a Wikidata item ID and `P1073` for a GOV ID. These
-properties are configured per provider; equal property numbers must not be
-assumed across Wikibase installations.
+for a FactGrid item ID, `P2503` for a GOV ID and `P1566` for a GeoNames ID.
+FactGrid uses `P2` for type, `P189` for a Wikimedia Commons image, `P771`
+for a Wikidata item ID, `P1073` for a GOV ID and `P418` for a GeoNames ID.
+FactGrid's `wikidatawiki` sitelink is also accepted as a Wikidata reference.
+These properties are configured per provider; equal property numbers must not
+be assumed across Wikibase installations.
 
 GOV is read through its public REST endpoint `/api/getObject?itemId={id}`;
 `/api/data/{id}` is retained as a compatibility fallback. The module only uses
@@ -67,8 +72,8 @@ webtrees persons. Every displayed value retains its provider label and link.
 External failures do not block the shared-place page.
 
 For Wikidata place relationships, displayed owners and occupants link to their
-Wikidata item. If a person has a valid WikiTree identifier (`P2924`), the
-module also provides a WikiTree link. FactGrid place records are currently
-read for place-level information and cross-references. Where present, FactGrid
-owner and resident claims (`P126`/`P239`) are displayed as read-only person
-tables.
+Wikidata item. If a person has a valid WikiTree identifier (`P2949`), including
+Unicode names, the module also provides a WikiTree link. FactGrid place records
+are read for place-level information and cross-references. Where present,
+FactGrid owner and resident claims (`P126`/`P239`) are displayed as read-only
+person tables.

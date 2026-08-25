@@ -16,7 +16,12 @@ final class NearbyDiscoverySettings
      * The same bounded value is used by every provider's nearby search.
      */
     public const PREFERENCE = 'HH_EXTERNAL_PLACES_RADIUS_KM';
-    public const EXCEPTIONS_PREFERENCE = 'HH_EXTERNAL_PLACES_RADIUS_EXCEPTIONS';
+    // Keep this below webtrees' setting_name column limit.
+    public const EXCEPTIONS_PREFERENCE = 'HH_EP_RAD_EX';
+    private const LEGACY_EXCEPTIONS_PREFERENCES = [
+        'HH_EXT_PLACES_RAD_EXCEPTIONS',
+        'HH_EXTERNAL_PLACES_RADIUS_EXCEPTIONS',
+    ];
     public const DEFAULT_RADIUS_KM = 5.0;
 
     public static function radius(Tree $tree): float
@@ -37,12 +42,22 @@ final class NearbyDiscoverySettings
     public static function exceptions(): array
     {
         $raw = trim(Site::getPreference(self::EXCEPTIONS_PREFERENCE));
+        if ($raw === '') {
+            foreach (self::LEGACY_EXCEPTIONS_PREFERENCES as $preference) {
+                $raw = trim(Site::getPreference($preference));
+                if ($raw !== '') {
+                    break;
+                }
+            }
+        }
         if ($raw === '') { return []; }
         try { $decoded = json_decode($raw, true, 8, JSON_THROW_ON_ERROR); } catch (JsonException) { return []; }
         if (!is_array($decoded)) { return []; }
         $exceptions = [];
         foreach ($decoded as $key => $value) {
-            if (is_string($key) && is_numeric($value)) { $exceptions[$key] = self::normalise((string) $value); }
+            if ((is_int($key) || is_string($key)) && is_numeric($value)) {
+                $exceptions[(string) $key] = self::normalise((string) $value);
+            }
         }
         return $exceptions;
     }
@@ -50,17 +65,31 @@ final class NearbyDiscoverySettings
     /** @param array<string,string> $exceptions */
     public static function save(float $global, array $exceptions): void
     {
+        $global = self::normalise((string) $global);
         $normalised = [];
         foreach ($exceptions as $key => $value) {
             $key = trim((string) $key);
-            if ($key !== '' && is_numeric($value)) { $normalised[$key] = self::normalise($value); }
+            $parsed = self::parse((string) $value);
+            if ($key !== '' && $parsed !== null) {
+                $value = $parsed;
+                if ($value !== $global) {
+                    $normalised[$key] = $value;
+                }
+            }
         }
-        Site::setPreference(self::PREFERENCE, (string) self::normalise((string) $global));
+        Site::setPreference(self::PREFERENCE, (string) $global);
         Site::setPreference(self::EXCEPTIONS_PREFERENCE, (string) json_encode($normalised, JSON_UNESCAPED_SLASHES));
     }
 
     public static function normalise(string $radius): float
     {
+        $radius = str_replace(',', '.', trim($radius));
         return is_numeric($radius) ? max(0.1, min(100.0, (float) $radius)) : self::DEFAULT_RADIUS_KM;
+    }
+
+    public static function parse(string $radius): ?float
+    {
+        $radius = str_replace(',', '.', trim($radius));
+        return is_numeric($radius) ? self::normalise($radius) : null;
     }
 }
