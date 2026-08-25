@@ -47,6 +47,19 @@ GOV is read through its public REST endpoint `/api/getObject?itemId={id}`;
 the fixed GOV host and a validated ID. The service is read-only and has a
 bounded response size and timeout.
 
+GOV external-reference prefixes are described in
+`resources/config/gov-external-identifiers.json`. Each entry contains a
+translatable description and, where available, a URL template. The `{0}`
+placeholder is replaced with the validated identifier value. Wikidata,
+GeoNames and other provider references are additionally checked by the
+shared consistency display; unrecognised prefixes remain visible without a
+link.
+
+When GOV supplies historical population figures, the module normalizes them
+into a year-indexed `population` object. The shared-place summary presents
+these values in chronological order in a two-column table and a compact line
+chart; no external data is written back to GOV.
+
 ## HTTP transport
 
 External requests use the module's transport boundary. On webtrees 2.3 it

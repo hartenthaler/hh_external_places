@@ -247,7 +247,11 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                     $html .= ' — ' . e($information->description);
                 }
                 foreach ($information?->details ?? [] as $detail) {
-                    $html .= '<br><small>' . e($this->externalDetailLabel($detail['label'])) . ': ' . e($this->externalDetailValue($detail['label'], $detail['value'])) . '</small>';
+                    $value = $this->externalDetailValue($detail['label'], $detail['value']);
+                    $html .= '<br><small>' . e($this->externalDetailLabel($detail['label'])) . ': ' . ($detail['label'] === 'External identifier' ? $this->externalIdentifierHtml($value) : e($value)) . '</small>';
+                }
+                if ($information?->population !== []) {
+                    $html .= $this->populationHtml($information->population);
                 }
                 if ($information?->imageUrl !== null) {
                     $html .= '<br><img src="' . e($information->imageUrl) . '" alt="" loading="lazy" style="max-width:500px;max-height:500px;width:auto;height:auto">';
@@ -280,12 +284,48 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
     private function externalDetailLabel(string $label): string
     {
         return match ($label) {
-            'Country', 'Region', 'Population' => MoreI18N::xlate($label),
+            'Country', 'Region' => MoreI18N::xlate($label),
+            'Population' => I18N::translate('Population'),
+            'External identifier' => I18N::translate('External identifier'),
             'Administrative area' => I18N::translate('Administrative area'),
             'Feature' => I18N::translate('Feature'),
             'Elevation' => I18N::translate('Elevation'),
             default => $label,
         };
+    }
+
+    /** @param array<int,int|float> $population */
+    private function populationHtml(array $population): string
+    {
+        if ($population === []) { return ''; }
+        ksort($population, SORT_NUMERIC);
+        $html = '<div class="d-flex flex-wrap gap-3 align-items-start mt-2"><div><strong>' . e(I18N::translate('Population')) . '</strong><table class="table table-sm mb-0"><thead><tr><th>' . e(MoreI18N::xlate('Year')) . '</th><th>' . e(I18N::translate('Population')) . '</th></tr></thead><tbody>';
+        foreach ($population as $year => $value) {
+            $html .= '<tr><td>' . e((string) $year) . '</td><td>' . e((string) $value) . '</td></tr>';
+        }
+        $html .= '</tbody></table></div>' . $this->populationChartHtml($population) . '</div>';
+        return $html;
+    }
+
+    /** @param array<int,int|float> $population */
+    private function populationChartHtml(array $population): string
+    {
+        $points = array_keys($population);
+        $values = array_values($population);
+        $min = min($values); $max = max($values); $range = $max - $min ?: 1;
+        $coordinates = [];
+        $last = max(1, count($values) - 1);
+        foreach ($values as $index => $value) {
+            $x = 35 + (270 * $index / $last);
+            $y = 145 - (115 * ((float) $value - $min) / $range);
+            $coordinates[] = round($x, 2) . ',' . round($y, 2);
+        }
+        $svg = '<svg viewBox="0 0 320 180" width="320" height="180" role="img" aria-label="' . e(I18N::translate('Population')) . '"><line x1="35" y1="145" x2="305" y2="145" stroke="currentColor" stroke-opacity=".35"/><line x1="35" y1="20" x2="35" y2="145" stroke="currentColor" stroke-opacity=".35"/><polyline fill="none" stroke="currentColor" stroke-width="2" points="' . e(implode(' ', $coordinates)) . '"/>';
+        foreach ($values as $index => $value) {
+            [$x, $y] = explode(',', $coordinates[$index]);
+            $svg .= '<circle cx="' . e($x) . '" cy="' . e($y) . '" r="3" fill="currentColor"><title>' . e((string) $points[$index] . ': ' . (string) $value) . '</title></circle>';
+        }
+        return '<div>' . $svg . '</svg></div>';
     }
 
     private function externalDetailValue(string $label, string $value): string
@@ -295,6 +335,18 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         }
 
         return $value . ' ' . I18N::translate('m above sea level');
+    }
+
+    private function externalIdentifierHtml(string $value): string
+    {
+        $value = trim($value);
+        $catalogEntry = GovExternalIdentifierCatalog::forValue($value);
+        $url = GovExternalIdentifierCatalog::url($value);
+        $display = $url === null ? e($value) : '<a href="' . e($url) . '" rel="noopener noreferrer" target="_blank">' . e($value) . '</a>';
+        if ($catalogEntry !== null) {
+            $display .= ' — ' . e(I18N::translate($catalogEntry['description']));
+        }
+        return $display;
     }
 
     private function externalPersonRelationsHtml(ExternalInformation $information): string

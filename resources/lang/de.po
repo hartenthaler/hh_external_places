@@ -413,6 +413,66 @@ msgstr "GeoNames nach diesem gemeinsamen Ort durchsuchen."
 msgid "Administrative area"
 msgstr "Verwaltungsgebiet"
 
+msgid "Population"
+msgstr "Einwohnerzahl"
+
+msgid "External identifier"
+msgstr "Externe Kennung"
+
+msgid "District number in the former GDR"
+msgstr "Bezirksnummer in der ehemaligen DDR"
+
+msgid "Location or municipality identifier of the Bavarian State Library Online"
+msgstr "Kennung eines Ortes oder einer Gemeinde der Bayerischen Landesbibliothek Online"
+
+msgid "Municipality or populated place in GeoNames"
+msgstr "Gemeinde oder Wohnplatz in GeoNames"
+
+msgid "Geographic entry in the Integrated Authority File of the German National Library"
+msgstr "Geografikum-Eintrag in der Gemeinsamen Normdatei der Deutschen Nationalbibliothek"
+
+msgid "INSEE code"
+msgstr "INSEE-Code"
+
+msgid "Standardized place data for Baden-Württemberg in LEO-BW"
+msgstr "Ortsnormdaten für Baden-Württemberg in LEO-BW"
+
+msgid "National Imagery and Mapping Agency unique feature identifier"
+msgstr "Eindeutige Objektkennung der National Imagery and Mapping Agency"
+
+msgid "Nomenclature of Territorial Units for Statistics 1999"
+msgstr "Systematik der Gebietseinheiten für die Statistik 1999"
+
+msgid "Nomenclature of Territorial Units for Statistics 2003"
+msgstr "Systematik der Gebietseinheiten für die Statistik 2003"
+
+msgid "Municipality in OpenGeoDB"
+msgstr "Gemeinde in OpenGeoDB"
+
+msgid "OpenStreetMap municipal boundary"
+msgstr "Gemeindegrenze in OpenStreetMap"
+
+msgid "Statistics Sweden"
+msgstr "Schwedisches Statistikamt"
+
+msgid "Official Polish national register of populated places"
+msgstr "Offizielles polnisches nationales Register der Wohnplätze"
+
+msgid "Official Polish national register of territorial units"
+msgstr "Offizielles polnisches nationales Register der Gebietseinheiten"
+
+msgid "United Nations Code for Trade and Transport Locations"
+msgstr "UN-Code für Handels- und Transportstandorte"
+
+msgid "Virtual International Authority File identifier"
+msgstr "Kennung der Virtual International Authority File"
+
+msgid "Identifier at westpreussen.de"
+msgstr "Kennung bei westpreussen.de"
+
+msgid "Unique identifier in Wikidata"
+msgstr "Eindeutige Kennung in Wikidata"
+
 msgid "Feature"
 msgstr "Merkmal"
 
