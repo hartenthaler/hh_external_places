@@ -563,9 +563,6 @@ msgstr ""
 msgid "Links shared places to Wikidata, FactGrid and GOV and displays read-only external place information, optionally including GeoNames context."
 msgstr ""
 
-msgid "Castle"
-msgstr ""
-
 msgid "castle"
 msgstr ""
 
