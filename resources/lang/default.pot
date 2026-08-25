@@ -35,6 +35,66 @@ msgstr ""
 msgid "Administrative area"
 msgstr ""
 
+msgid "Population"
+msgstr ""
+
+msgid "External identifier"
+msgstr ""
+
+msgid "District number in the former GDR"
+msgstr ""
+
+msgid "Location or municipality identifier of the Bavarian State Library Online"
+msgstr ""
+
+msgid "Municipality or populated place in GeoNames"
+msgstr ""
+
+msgid "Geographic entry in the Integrated Authority File of the German National Library"
+msgstr ""
+
+msgid "INSEE code"
+msgstr ""
+
+msgid "Standardized place data for Baden-Württemberg in LEO-BW"
+msgstr ""
+
+msgid "National Imagery and Mapping Agency unique feature identifier"
+msgstr ""
+
+msgid "Nomenclature of Territorial Units for Statistics 1999"
+msgstr ""
+
+msgid "Nomenclature of Territorial Units for Statistics 2003"
+msgstr ""
+
+msgid "Municipality in OpenGeoDB"
+msgstr ""
+
+msgid "OpenStreetMap municipal boundary"
+msgstr ""
+
+msgid "Statistics Sweden"
+msgstr ""
+
+msgid "Official Polish national register of populated places"
+msgstr ""
+
+msgid "Official Polish national register of territorial units"
+msgstr ""
+
+msgid "United Nations Code for Trade and Transport Locations"
+msgstr ""
+
+msgid "Virtual International Authority File identifier"
+msgstr ""
+
+msgid "Identifier at westpreussen.de"
+msgstr ""
+
+msgid "Unique identifier in Wikidata"
+msgstr ""
+
 msgid "Feature"
 msgstr ""
 
