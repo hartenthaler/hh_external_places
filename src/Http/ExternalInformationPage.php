@@ -5,12 +5,11 @@ declare(strict_types=1);
 namespace Hartenthaler\Webtrees\Module\ExternalPlacesModule\Http;
 
 use Fisharebest\Webtrees\Auth;
-use Fisharebest\Webtrees\Http\ViewResponseTrait;
+use Fisharebest\Webtrees\I18N;
 use Fisharebest\Webtrees\Module\ModuleConfigInterface;
 use Fisharebest\Webtrees\Registry;
 use Fisharebest\Webtrees\Services\ModuleService;
 use Fisharebest\Webtrees\Validator;
-use Fisharebest\Webtrees\View;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\ExternalPlacesModule;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -20,8 +19,6 @@ use Vesta\Model\PlaceStructure;
 /** Display external provider data on a dedicated shared-place page. */
 final class ExternalInformationPage implements RequestHandlerInterface
 {
-    use ViewResponseTrait;
-
     public function __construct(private readonly ModuleService $moduleService)
     {
     }
@@ -38,19 +35,13 @@ final class ExternalInformationPage implements RequestHandlerInterface
             return response('External Places module is not available.', 503);
         }
 
-        // Vesta can dispatch this route before the module's boot() method has
-        // registered its view namespace. Register it defensively here as well.
-        View::registerNamespace('hh_external_places', dirname(__DIR__, 2) . '/resources/views/');
-
         $canonical = $location->primaryPlace()->gedcomName();
         $place = PlaceStructure::fromNameAndLocNow($canonical, $location->xref(), $tree, 0, $location);
         $content = $place === null ? '' : ($module->externalInformationForPlace($place)?->getMain() ?? '');
 
-        return $this->viewResponse($module->name() . '::external-information', [
-            'content' => $content,
-            'location' => $location,
-            'title' => $location->fullName(),
-            'tree' => $tree,
-        ]);
+        // Return a self-contained response.  The shared-place route can be
+        // dispatched before webtrees has registered module view namespaces;
+        // rendering raw escaped HTML here avoids a namespace-dependent fatal.
+        return response('<main class="wt-page-content"><h2>' . e(I18N::translate('External information')) . '</h2>' . $content . '</main>');
     }
 }

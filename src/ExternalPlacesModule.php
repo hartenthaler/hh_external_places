@@ -84,6 +84,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         foreach (['vesta_shared_places', 'vesta_shared_places_20'] as $vestaModuleNamespace) {
             View::registerCustomView($vestaModuleNamespace . '::shared-place-page-links', self::MODULE_NAME . '::shared-place-page-links');
         }
+        View::registerCustomView('vesta_shared_places::shared-place-page_20', self::MODULE_NAME . '::shared-place-page_20');
         $router = Registry::routeFactory()->routeMap();
         if (method_exists($router, 'add')) {
             // webtrees 2.3 identifies routes by their request-handler class.
