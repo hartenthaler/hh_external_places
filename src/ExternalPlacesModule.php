@@ -13,6 +13,7 @@ use Fisharebest\Webtrees\I18N;
 use Fisharebest\Webtrees\Date;
 use Fisharebest\Webtrees\FlashMessages;
 use Fisharebest\Webtrees\Registry;
+use Fisharebest\Webtrees\Site;
 use Fisharebest\Webtrees\Tree;
 use Fisharebest\Webtrees\View;
 use Fisharebest\Webtrees\Module\AbstractModule;
@@ -60,6 +61,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
     private const ASSIGNMENT_ROUTE_NAME = 'hh-external-places.assignment-page';
     private const ASSIGNMENT_ROUTE_PATH = '/tree/{tree}/external-place/{xref}/assignment';
     private const EXTERNAL_INFORMATION_ROUTE_PATH = '/tree/{tree}/external-place/{xref}/information';
+    private const SHOW_CONSISTENT_REFERENCES_PREFERENCE = 'show_consistent_cross_references';
 
     public function boot(): void
     {
@@ -450,6 +452,9 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                         break;
                     }
                 }
+                if ($matching && !self::showConsistentReferences()) {
+                    continue;
+                }
                 $providerLabel = ['wikidata' => 'Wikidata', 'factgrid' => 'FactGrid', 'gov' => 'GOV', 'geonames' => 'GeoNames'][$provider] ?? $provider;
                 $html .= '<br><span class="small">' . e(I18N::translate('Reference to %s', $providerLabel)) . ': '
                     . e($value) . ' — ' . e($matching ? I18N::translate('consistent') : I18N::translate('not present in this shared place'));
@@ -465,6 +470,11 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             }
         }
         return $html;
+    }
+
+    private static function showConsistentReferences(): bool
+    {
+        return Site::getPreference(self::SHOW_CONSISTENT_REFERENCES_PREFERENCE, '1') === '1';
     }
 
     /** @param list<object{qid:string,from:?string,until:?string}> $relations @param array<string,object{qid:string,label:?string,birthDate:?string,deathDate:?string}> $people */
@@ -568,6 +578,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             'provider_labels' => ExternalProviderSettings::labels(),
             'house_type_filters' => PlaceTypeFilterSettings::all(),
             'house_type_labels' => $houseTypeLabels,
+            'show_consistent_references' => self::showConsistentReferences(),
             'title' => $this->title(),
         ]);
     }
@@ -577,6 +588,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         $body = is_array($request->getParsedBody()) ? $request->getParsedBody() : [];
         $providers = is_array($body['providers'] ?? null) ? array_map('strval', $body['providers']) : [];
         ExternalProviderSettings::save($providers);
+        Site::setPreference(self::SHOW_CONSISTENT_REFERENCES_PREFERENCE, isset($body['show-consistent-references']) ? '1' : '0');
         if (in_array('geonames', $providers, true)) {
             $geoNamesStatus = (new GeoNamesProvider())->configurationStatus();
             if (!$geoNamesStatus['active']) {

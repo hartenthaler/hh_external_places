@@ -368,6 +368,12 @@ msgstr "Wählen Sie die externen Informationsanbieter und den Radius, den die Su
 msgid "External information providers"
 msgstr "Externe Informationsanbieter"
 
+msgid "Cross-provider consistency"
+msgstr "Providerübergreifende Konsistenz"
+
+msgid "Show confirmations for consistent external identifiers"
+msgstr "Bestätigungen für konsistente externe Kennungen anzeigen"
+
 msgid "Nearby-search radius"
 msgstr "Suchradius in der Nähe"
 
