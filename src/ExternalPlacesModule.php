@@ -253,7 +253,10 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                     . '<a href="' . e($identifier->url) . '" rel="noopener noreferrer" target="_blank">'
                     . e($displayLabel) . '</a>' . ($showIdentifier ? ' <small>(' . e($identifier->value) . ')</small>' : '');
                 if ($information?->description !== null) {
-                    $html .= ' — ' . e($information->description);
+                    $description = $provider->key() === 'gov'
+                        ? I18N::translate($information->description)
+                        : $information->description;
+                    $html .= ' — ' . e($description);
                 }
                 foreach ($information?->details ?? [] as $detail) {
                     $value = $this->externalDetailValue($detail['label'], $detail['value']);
