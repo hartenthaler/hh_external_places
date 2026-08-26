@@ -2,6 +2,12 @@
 
 All notable user-facing changes are documented here.
 
+## 2.2.6.4 - 2026-08-26
+
+- Fixed a serious runtime error that prevented GOV external place information
+  from being displayed.
+- Numeric GOV type identifiers are now shown with readable, translatable names.
+
 ## 2.2.6.2 - 2026-08-25
 
 - Added FactGrid, GOV and GeoNames as selectable external place providers.

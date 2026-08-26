@@ -118,6 +118,12 @@ final class GovProvider implements ExternalProvider
         $label = $this->firstString($data, ['name', 'label', 'title', 'placeName']);
         if ($label !== null) { $label = trim(strip_tags($label)); }
         $description = $this->firstString($data, ['description', 'type', 'objectType']);
+        // GOV often returns the numeric vocabulary identifier as the type
+        // description (for example "24"). Present the configured, readable
+        // label instead; the label is translated at rendering time.
+        if ($description !== null && preg_match('/^\\d+$/', $description) === 1) {
+            $description = PlaceTypeFilterSettings::govLabel($description);
+        }
         return new ExternalInformation('gov', $identifier->value, $identifier->url, $label, $description, null, [], $this->references($data), $this->details($data), [], [], [], $this->population($data));
     }
 
