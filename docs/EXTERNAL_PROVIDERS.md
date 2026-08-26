@@ -16,6 +16,13 @@ searches use one global default radius. Only trees with an explicitly
 different radius are stored and displayed as exceptions; entering the global
 default for an exception removes that exception.
 
+## Dedicated external-information page
+
+The module provides a dedicated shared-place page at the **External
+information** link. It contains the complete provider output, consistency
+messages, population data and editor actions in one place. The compact link in
+the Vesta Shared Places summary remains for compatibility.
+
 ## Supported identifiers
 
 ```gedcom
