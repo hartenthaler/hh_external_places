@@ -5,5 +5,11 @@ use Fisharebest\Webtrees\I18N;
 /** @var string $content */
 /** @var string $title */
 ?>
-<h2><?= e(I18N::translate('External information')) ?></h2>
-<?= $content ?>
+<div class="wt-page-content">
+    <?php $placeName = e(strip_tags($location->fullName())); ?>
+    <?php $placeUrl = e($location->url()); ?>
+    <h2 class="wt-page-title mb-4">
+        <?= I18N::translate('External information for place: %s', '<a href="' . $placeUrl . '">' . $placeName . '</a>') ?>
+    </h2>
+    <?= $content ?>
+</div>

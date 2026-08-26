@@ -27,6 +27,11 @@ msgstr "Externe ID zuordnen"
 msgid "External information"
 msgstr "Externe Informationen"
 
+#: resources/views/external-information.phtml
+#, php-format
+msgid "External information for place: %s"
+msgstr "Externe Ortsinformationen zum Ort %s"
+
 #: C:\Users\harte\Documents\Codex\webtrees-modules\hh_external_places\resources\views\assignment.phtml:33
 msgid "Existing external identifiers"
 msgstr "Vorhandene externe Kennungen"
