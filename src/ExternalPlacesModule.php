@@ -647,8 +647,12 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             FlashMessages::addMessage(I18N::translate('Select a family tree and enter a radius before adding an exception.'), 'warning');
         }
         NearbyDiscoverySettings::save($globalRadius, $exceptions);
+        // Compare normalised values. Form fields contain strings, whereas
+        // persisted exceptions are read back as floats; comparing the raw
+        // arrays would report a false change on every save.
+        $savedExceptions = NearbyDiscoverySettings::exceptions();
         $radiusChanged = NearbyDiscoverySettings::normalise((string) $oldGlobalRadius) !== NearbyDiscoverySettings::normalise((string) $globalRadius)
-            || $oldExceptions !== $exceptions;
+            || $oldExceptions !== $savedExceptions;
 
         if ($exceptionTree !== '' && $parsedExceptionValue !== null) {
             $trees = Registry::container()->get(TreeService::class)->all();
