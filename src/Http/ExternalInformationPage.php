@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Hartenthaler\Webtrees\Module\ExternalPlacesModule\Http;
 
 use Fisharebest\Webtrees\Auth;
-use Fisharebest\Webtrees\I18N;
+use Fisharebest\Webtrees\Http\ViewResponseTrait;
 use Fisharebest\Webtrees\Module\ModuleConfigInterface;
 use Fisharebest\Webtrees\Registry;
 use Fisharebest\Webtrees\Services\ModuleService;
@@ -19,6 +19,8 @@ use Vesta\Model\PlaceStructure;
 /** Display external provider data on a dedicated shared-place page. */
 final class ExternalInformationPage implements RequestHandlerInterface
 {
+    use ViewResponseTrait;
+
     public function __construct(private readonly ModuleService $moduleService)
     {
     }
@@ -39,9 +41,19 @@ final class ExternalInformationPage implements RequestHandlerInterface
         $place = PlaceStructure::fromNameAndLocNow($canonical, $location->xref(), $tree, 0, $location);
         $content = $place === null ? '' : ($module->externalInformationForPlace($place)?->getMain() ?? '');
 
-        // Return a self-contained response.  The shared-place route can be
-        // dispatched before webtrees has registered module view namespaces;
-        // rendering raw escaped HTML here avoids a namespace-dependent fatal.
-        return response('<main class="wt-page-content"><h2>' . e(I18N::translate('External information')) . '</h2>' . $content . '</main>');
+        // Register the view namespace here as well as during module boot.  A
+        // request can reach this handler before the normal module boot order
+        // has registered custom namespaces (notably on webtrees 2.2).
+        \Fisharebest\Webtrees\View::registerNamespace(
+            'hh_external_places',
+            dirname(__DIR__, 2) . '/resources/views/',
+        );
+
+        return $this->viewResponse('hh_external_places::external-information', [
+            'content' => $content,
+            'location' => $location,
+            'title' => 'External information',
+            'tree' => $tree,
+        ]);
     }
 }
