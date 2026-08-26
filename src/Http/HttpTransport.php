@@ -100,7 +100,10 @@ final class HttpTransport
         try {
             return $this->guzzleClient->request($method, $url, [
                 'allow_redirects' => false,
-                'connect_timeout' => min(3.0, $timeout),
+                // Some FactGrid SPARQL requests need more than a few seconds
+                // to establish a connection.  Honour the caller's bounded
+                // timeout instead of imposing an unconditional 3-second cut.
+                'connect_timeout' => min(8.0, $timeout),
                 'headers' => $headers,
                 'http_errors' => false,
                 'query' => $query,
