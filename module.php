@@ -42,6 +42,7 @@ require __DIR__ . '/src/Wikidata/NearbyDiscoverySettings.php';
 require __DIR__ . '/src/Wikidata/WikidataNearbyCandidate.php';
 require __DIR__ . '/src/Http/WikidataLocationAssignmentAction.php';
 require __DIR__ . '/src/Http/WikidataLocationAssignmentPage.php';
+require __DIR__ . '/src/Http/ExternalInformationPage.php';
 require __DIR__ . '/src/Wikidata/HistoricAddress.php';
 require __DIR__ . '/src/Wikidata/HistoricPersonRelation.php';
 require __DIR__ . '/src/Wikidata/WikidataPerson.php';

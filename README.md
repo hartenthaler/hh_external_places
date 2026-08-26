@@ -77,6 +77,11 @@ When the optional Legal Notice module is active, it includes the selected extern
 
 ## Usage
 
+External provider data is available from the shared-place page through the
+**External information** link. This dedicated page keeps provider details,
+cross-reference checks, population data and assignment actions together. The
+summary link remains for compatibility with Vesta Shared Places.
+
 An editor can use **Assign external identifier** on the shared-place page. The provider-specific sections offer search and, where supported, nearby search; the editor must explicitly choose the result. The module stores a selected provider identifier as a typed external identifier. For example, a GeoNames assignment uses the numeric GeoNames ID:
 
 ```gedcom

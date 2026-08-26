@@ -34,6 +34,7 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\PlaceTypeFilterSe
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikibase\ReadOnlyWikibaseClient;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domus\DomusMapLinkProvider;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Http\WikidataLocationAssignmentPage;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Http\ExternalInformationPage;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikidata\WikidataClient;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikidata\NearbyDiscoverySettings;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikidata\LocationCoordinates;
@@ -58,6 +59,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
     private const CACHE_SCHEMA_VERSION_PREFERENCE = 'wikidata_cache_schema_version';
     private const ASSIGNMENT_ROUTE_NAME = 'hh-external-places.assignment-page';
     private const ASSIGNMENT_ROUTE_PATH = '/tree/{tree}/external-place/{xref}/assignment';
+    private const EXTERNAL_INFORMATION_ROUTE_PATH = '/tree/{tree}/external-place/{xref}/information';
 
     public function boot(): void
     {
@@ -69,10 +71,24 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         }
 
         View::registerNamespace(self::MODULE_NAME, $this->resourcesFolder() . 'views/');
+        if (class_exists('Vesta\\VestaUtils')) {
+            $vestaNamespace = \Vesta\VestaUtils::vestaViewsNamespace();
+            if (is_string($vestaNamespace) && $vestaNamespace !== '') {
+                View::registerCustomView($vestaNamespace . '::shared-place-page-links', self::MODULE_NAME . '::shared-place-page-links');
+                View::registerCustomView($vestaNamespace . '::shared-place-page-links_20', self::MODULE_NAME . '::shared-place-page-links');
+            }
+        }
+        // Shared Places renders its page through its own module namespace.
+        // Register both supported view variants without depending on the
+        // concrete Vesta module class name at compile time.
+        foreach (['vesta_shared_places', 'vesta_shared_places_20'] as $vestaModuleNamespace) {
+            View::registerCustomView($vestaModuleNamespace . '::shared-place-page-links', self::MODULE_NAME . '::shared-place-page-links');
+        }
         $router = Registry::routeFactory()->routeMap();
         if (method_exists($router, 'add')) {
             // webtrees 2.3 identifies routes by their request-handler class.
             $router->add(self::ASSIGNMENT_ROUTE_PATH, WikidataLocationAssignmentPage::class);
+            $router->add(self::EXTERNAL_INFORMATION_ROUTE_PATH, ExternalInformationPage::class);
         } else {
             // webtrees 2.2 uses an explicit route name and HTTP verb map.
             $router->get(
@@ -80,6 +96,11 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                 self::ASSIGNMENT_ROUTE_PATH,
                 WikidataLocationAssignmentPage::class,
             )->allows(['GET', 'POST']);
+            $router->get(
+                'hh-external-places.external-information',
+                self::EXTERNAL_INFORMATION_ROUTE_PATH,
+                ExternalInformationPage::class,
+            );
         }
     }
 
@@ -98,7 +119,31 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         return route($routeName, $parameters);
     }
 
+    /** Build the dedicated external-information URL on both routing APIs. */
+    public static function externalInformationUrl(array $parameters): string
+    {
+        $routeMap = Registry::routeFactory()->routeMap();
+        $routeName = method_exists($routeMap, 'add')
+            ? ExternalInformationPage::class
+            : 'hh-external-places.external-information';
+
+        return route($routeName, $parameters);
+    }
+
+    /** Keep the Vesta summary compact; the full output lives on its own page. */
     public function plac2html(PlaceStructure $place): ?GenericViewElement
+    {
+        $location = $place->getLocation();
+        if ($location === null) {
+            return null;
+        }
+
+        $url = self::externalInformationUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]);
+        return GenericViewElement::create('<a class="btn btn-outline-secondary btn-sm" href="' . e($url) . '">' . e(I18N::translate('External information')) . '</a>');
+    }
+
+    /** Render all external provider information for the dedicated page. */
+    public function externalInformationForPlace(PlaceStructure $place): ?GenericViewElement
     {
         $location = $place->getLocation();
         if ($location === null) {
@@ -249,7 +294,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                     $displayLabel = $placeName !== '' ? trim(strip_tags($placeName)) : $identifier->value;
                 }
                 $showIdentifier = $displayLabel !== $identifier->value;
-                $html .= '<section class="mt-3"><strong>' . e($provider->label()) . ':</strong> '
+                $html .= '<section class="mt-4"><h3 class="h4 mb-2">' . e($provider->label()) . '</h3>'
                     . '<a href="' . e($identifier->url) . '" rel="noopener noreferrer" target="_blank">'
                     . e($displayLabel) . '</a>' . ($showIdentifier ? ' <small>(' . e($identifier->value) . ')</small>' : '');
                 if ($information?->description !== null) {
