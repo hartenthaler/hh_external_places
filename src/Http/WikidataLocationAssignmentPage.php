@@ -73,6 +73,13 @@ final class WikidataLocationAssignmentPage implements RequestHandlerInterface
         $routeParameter = $query['route'] ?? null;
         $searchUrl      = (string) $request->getUri()->withQuery('');
 
+        $factgridNearbyCandidates = [];
+        $factgridNearbyDiagnostic = null;
+        if ($providerEnabled && $providerKey === 'factgrid' && $nearbyRequested && $coordinates !== null) {
+            $factgridNearbyCandidates = $wikibaseClient->nearby('factgrid', $coordinates['latitude'], $coordinates['longitude'], $radiusKm, $language, $houseOnly);
+            $factgridNearbyDiagnostic = $wikibaseClient->nearbyDiagnostic();
+        }
+
         $current = (new ExternalIdService())->wikidataIdentifiers($location->gedcom())->identifier();
         $entity  = $current === null ? null : $client->fetch($current, $language);
 
@@ -84,7 +91,8 @@ final class WikidataLocationAssignmentPage implements RequestHandlerInterface
             'external_candidates' => $providerEnabled && $providerKey === 'gov' && $submittedSearch !== '' && $govProvider !== null && method_exists($govProvider, 'search') ? array_values(array_filter($govProvider->search($submittedSearch, $language), static fn (array $candidate): bool => !$houseOnly || PlaceTypeFilterSettings::matches('gov', $candidate))) : [],
             'factgrid_candidates' => $providerEnabled && $providerKey === 'factgrid' && $submittedSearch !== '' ? $wikibaseClient->search('factgrid', $submittedSearch, $language, $houseOnly) : [],
             'geonames_candidates' => $providerEnabled && $providerKey === 'geonames' && $submittedSearch !== '' ? $geoNamesProvider->search($submittedSearch, $language, $houseOnly) : [],
-            'factgrid_nearby_candidates' => $providerEnabled && $providerKey === 'factgrid' && $nearbyRequested && $coordinates !== null ? $wikibaseClient->nearby('factgrid', $coordinates['latitude'], $coordinates['longitude'], $radiusKm, $language, $houseOnly) : [],
+            'factgrid_nearby_candidates' => $factgridNearbyCandidates,
+            'factgrid_nearby_diagnostic' => $factgridNearbyDiagnostic,
             'coordinates'    => $coordinates,
             'current'        => $current,
             'entity'         => $entity,
