@@ -129,15 +129,21 @@ final class ReadOnlyWikibaseClient
     {
         if ($provider !== 'factgrid' || $latitude < -90 || $latitude > 90 || $longitude < -180 || $longitude > 180) { return []; }
         $radiusKm = max(0.1, min(100.0, $radiusKm));
-        $center = sprintf('Point(%.6F %.6F)', $longitude, $latitude);
+        // FactGrid's query service supports the box service reliably for its
+        // P48 coordinate values.  Use a slightly enlarged bounding box and
+        // apply the exact great-circle distance below.
+        $latDelta = $radiusKm / 111.32;
+        $lonScale = max(0.01, cos(deg2rad($latitude)));
+        $lonDelta = $radiusKm / (111.32 * $lonScale);
+        $southWest = sprintf('Point(%.6F %.6F)', $longitude - $lonDelta, $latitude - $latDelta);
+        $northEast = sprintf('Point(%.6F %.6F)', $longitude + $lonDelta, $latitude + $latDelta);
         $houseTypes = array_values(array_filter(PlaceTypeFilterSettings::all()['factgrid'] ?? [], static fn (string $value): bool => preg_match('/^Q[1-9][0-9]*$/', $value) === 1));
         $types = $houseOnly && $houseTypes !== [] ? ' VALUES ?houseType { ' . implode(' ', array_map(static fn (string $value): string => 'wd:' . $value, $houseTypes)) . ' } ?item wdt:P2 ?houseType .' : '';
-        // FactGrid follows the Wikidata coordinate convention: P625 is the
-        // coordinate-location property used by the wikibase:around service.
-        // P48 is unrelated and returned no nearby place items.
-        $query = 'SELECT ?item ?itemLabel ?itemDescription ?coord WHERE {' . $types . ' SERVICE wikibase:around { ?item wdt:P625 ?coord . bd:serviceParam wikibase:center "' . $center . '"^^geo:wktLiteral . bd:serviceParam wikibase:radius "' . number_format($radiusKm, 3, '.', '') . '" . } SERVICE wikibase:label { bd:serviceParam wikibase:language "' . $this->language($language) . ',en". } } LIMIT 20';
+        // FactGrid calls its coordinate-location property P48 (the local
+        // equivalent of Wikidata's P625).
+        $query = 'SELECT ?item ?itemLabel ?itemDescription ?coord WHERE {' . $types . ' SERVICE wikibase:box { ?item wdt:P48 ?coord . bd:serviceParam wikibase:cornerSouthWest "' . $southWest . '"^^geo:wktLiteral . bd:serviceParam wikibase:cornerNorthEast "' . $northEast . '"^^geo:wktLiteral . } SERVICE wikibase:label { bd:serviceParam wikibase:language "' . $this->language($language) . ',en". } } LIMIT 100';
         try {
-            $response = $this->httpClient->request('GET', 'https://database.factgrid.de/query/sparql', ['format' => 'json', 'query' => $query], ['Accept' => 'application/sparql-results+json', 'User-Agent' => 'webtrees Wikibase Places/0.2'], 8.0);
+            $response = $this->httpClient->request('GET', 'https://database.factgrid.de/sparql', ['format' => 'json', 'query' => $query], ['Accept' => 'application/sparql-results+json', 'User-Agent' => 'webtrees Wikibase Places/0.2'], 8.0);
             if ($response === null) { return []; }
             $body = $response->getBody()->getContents();
             if ($response->getStatusCode() !== 200 || strlen($body) > self::MAX_RESPONSE_BYTES) { return []; }
@@ -147,8 +153,20 @@ final class ReadOnlyWikibaseClient
         foreach (array_slice($payload['results']['bindings'] ?? [], 0, 20) as $binding) {
             $uri = $binding['item']['value'] ?? null;
             $coord = $binding['coord']['value'] ?? null;
-            if (!is_string($uri) || !is_string($coord) || preg_match('~/Q([1-9][0-9]*)$~', $uri, $qid) !== 1 || preg_match('/Point\\(([-0-9.]+) ([-0-9.]+)\\)/', $coord, $point) !== 1) { continue; }
-            $distance = $this->distanceKm($latitude, $longitude, (float) $point[2], (float) $point[1]);
+            if (!is_string($uri) || !is_string($coord) || preg_match('~/Q([1-9][0-9]*)$~', $uri, $qid) !== 1) { continue; }
+            // Wikibase normally serializes coordinates as Point(lon lat);
+            // FactGrid exports may also use the compact @lat/lon notation.
+            if (preg_match('/Point\\(([-0-9.]+) ([-0-9.]+)\\)/', $coord, $point) === 1) {
+                $candidateLongitude = (float) $point[1];
+                $candidateLatitude = (float) $point[2];
+            } elseif (preg_match('/@([-0-9.]+)\\/([-0-9.]+)/', $coord, $point) === 1) {
+                $candidateLatitude = (float) $point[1];
+                $candidateLongitude = (float) $point[2];
+            } else {
+                continue;
+            }
+            $distance = $this->distanceKm($latitude, $longitude, $candidateLatitude, $candidateLongitude);
+            if ($distance > $radiusKm) { continue; }
             $results[] = ['qid' => 'Q' . $qid[1], 'label' => (string) ($binding['itemLabel']['value'] ?? ('Q' . $qid[1])), 'description' => isset($binding['itemDescription']['value']) ? (string) $binding['itemDescription']['value'] : null, 'distanceKm' => $distance];
         }
         usort($results, static fn (array $a, array $b): int => $a['distanceKm'] <=> $b['distanceKm']);
