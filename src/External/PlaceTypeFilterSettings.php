@@ -14,7 +14,7 @@ final class PlaceTypeFilterSettings
 
     /** @var array<string,list<string>> */
     private const DEFAULTS = [
-        'wikidata' => ['Q3947', 'Q41176', 'Q131596', 'Q16560', 'Q1802963'],
+        'wikidata' => ['Q23413', 'Q751876', 'Q3947', 'Q16560', 'Q41176', 'Q44613', 'Q365627', 'Q1802963', 'Q131596'],
         // FactGrid's documented buildings model uses Q701396 for residential
         // buildings and Q16200 for real estate. Q545649 is an apartment and
         // Q1340072 an isolated settlement/farmstead.

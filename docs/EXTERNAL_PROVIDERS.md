@@ -104,6 +104,9 @@ and can be translated independently of the provider IDs. Each provider has a
 reset-to-default action. The editor activates the filter per provider, so an
 unfiltered search is always still available.
 
+The initial Wikidata list includes Q23413, Q751876, Q3947, Q16560, Q41176,
+Q44613, Q365627, Q1802963 and Q131596; administrators can extend or reduce it.
+
 GeoNames building and inhabited-place filters use the `S` (spot/building/farm)
 feature class. The initial codes and their English descriptions are maintained
 in `resources/config/geonames-feature-codes.json`, based on GeoNames'
