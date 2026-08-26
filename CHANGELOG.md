@@ -2,6 +2,12 @@
 
 All notable user-facing changes are documented here.
 
+## Next release
+
+- Administrators can hide confirmations for external identifiers that are
+  already consistent across providers. Missing or conflicting identifiers are
+  still reported.
+
 ## 2.2.6.4 - 2026-08-26
 
 - Fixed a serious runtime error that prevented GOV external place information

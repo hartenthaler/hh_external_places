@@ -85,6 +85,9 @@ cross-provider properties in fetched external items. Matching values are shown
 as consistent. A referenced value that is not yet present in the shared place
 is shown as missing; it is not silently imported.
 
+Administrators may hide the informational messages for matching values. Missing
+or conflicting values remain visible regardless of this setting.
+
 An editor may add a missing value explicitly. The module writes only a
 validated `_EXID`/`TYPE` block and updates the normal webtrees change stamp.
 

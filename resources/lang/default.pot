@@ -530,6 +530,18 @@ msgstr ""
 msgid "External information providers"
 msgstr ""
 
+msgid "Cross-provider consistency"
+msgstr ""
+
+msgid "Show confirmations for consistent external information"
+msgstr ""
+
+msgid "External Places settings have been updated."
+msgstr ""
+
+msgid "At least one external information provider must be enabled in the module settings."
+msgstr ""
+
 msgid "Nearby-search radius"
 msgstr ""
 

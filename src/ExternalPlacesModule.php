@@ -13,6 +13,7 @@ use Fisharebest\Webtrees\I18N;
 use Fisharebest\Webtrees\Date;
 use Fisharebest\Webtrees\FlashMessages;
 use Fisharebest\Webtrees\Registry;
+use Fisharebest\Webtrees\Site;
 use Fisharebest\Webtrees\Tree;
 use Fisharebest\Webtrees\View;
 use Fisharebest\Webtrees\Module\AbstractModule;
@@ -60,6 +61,8 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
     private const ASSIGNMENT_ROUTE_NAME = 'hh-external-places.assignment-page';
     private const ASSIGNMENT_ROUTE_PATH = '/tree/{tree}/external-place/{xref}/assignment';
     private const EXTERNAL_INFORMATION_ROUTE_PATH = '/tree/{tree}/external-place/{xref}/information';
+    // Keep the site preference below webtrees' setting_name column limit.
+    private const SHOW_CONSISTENT_REFERENCES_PREFERENCE = 'HH_EP_SHOW_CONSISTENT';
 
     public function boot(): void
     {
@@ -139,6 +142,10 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             return null;
         }
 
+        if (ExternalProviderSettings::enabled() === []) {
+            return GenericViewElement::create('<div class="alert alert-warning">' . e(I18N::translate('At least one external information provider must be enabled in the module settings.')) . '</div>');
+        }
+
         $url = self::externalInformationUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]);
         return GenericViewElement::create('<a class="btn btn-outline-secondary btn-sm" href="' . e($url) . '">' . e(I18N::translate('External information')) . '</a>');
     }
@@ -149,6 +156,10 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         $location = $place->getLocation();
         if ($location === null) {
             return null;
+        }
+
+        if (ExternalProviderSettings::enabled() === []) {
+            return GenericViewElement::create('<div class="alert alert-warning">' . e(I18N::translate('At least one external information provider must be enabled in the module settings.')) . '</div>');
         }
 
         $providerRegistry = new ExternalProviderRegistry();
@@ -450,6 +461,9 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                         break;
                     }
                 }
+                if ($matching && !self::showConsistentReferences()) {
+                    continue;
+                }
                 $providerLabel = ['wikidata' => 'Wikidata', 'factgrid' => 'FactGrid', 'gov' => 'GOV', 'geonames' => 'GeoNames'][$provider] ?? $provider;
                 $html .= '<br><span class="small">' . e(I18N::translate('Reference to %s', $providerLabel)) . ': '
                     . e($value) . ' — ' . e($matching ? I18N::translate('consistent') : I18N::translate('not present in this shared place'));
@@ -465,6 +479,11 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             }
         }
         return $html;
+    }
+
+    private static function showConsistentReferences(): bool
+    {
+        return Site::getPreference(self::SHOW_CONSISTENT_REFERENCES_PREFERENCE, '1') === '1';
     }
 
     /** @param list<object{qid:string,from:?string,until:?string}> $relations @param array<string,object{qid:string,label:?string,birthDate:?string,deathDate:?string}> $people */
@@ -568,6 +587,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             'provider_labels' => ExternalProviderSettings::labels(),
             'house_type_filters' => PlaceTypeFilterSettings::all(),
             'house_type_labels' => $houseTypeLabels,
+            'show_consistent_references' => self::showConsistentReferences(),
             'title' => $this->title(),
         ]);
     }
@@ -577,6 +597,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         $body = is_array($request->getParsedBody()) ? $request->getParsedBody() : [];
         $providers = is_array($body['providers'] ?? null) ? array_map('strval', $body['providers']) : [];
         ExternalProviderSettings::save($providers);
+        Site::setPreference(self::SHOW_CONSISTENT_REFERENCES_PREFERENCE, isset($body['show-consistent-references']) ? '1' : '0');
         if (in_array('geonames', $providers, true)) {
             $geoNamesStatus = (new GeoNamesProvider())->configurationStatus();
             if (!$geoNamesStatus['active']) {
@@ -601,6 +622,8 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         }
         $globalInput = str_replace(',', '.', trim((string) ($body['global-radius-km'] ?? '')));
         $globalRadius = is_numeric($globalInput) ? (float) $globalInput : NearbyDiscoverySettings::DEFAULT_RADIUS_KM;
+        $oldGlobalRadius = NearbyDiscoverySettings::globalRadius();
+        $oldExceptions = NearbyDiscoverySettings::exceptions();
         $exceptions = is_array($body['radius-exceptions'] ?? null) ? array_map('strval', $body['radius-exceptions']) : [];
 
         // A selected tree can be added without requiring a long form row for
@@ -624,6 +647,12 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             FlashMessages::addMessage(I18N::translate('Select a family tree and enter a radius before adding an exception.'), 'warning');
         }
         NearbyDiscoverySettings::save($globalRadius, $exceptions);
+        // Compare normalised values. Form fields contain strings, whereas
+        // persisted exceptions are read back as floats; comparing the raw
+        // arrays would report a false change on every save.
+        $savedExceptions = NearbyDiscoverySettings::exceptions();
+        $radiusChanged = NearbyDiscoverySettings::normalise((string) $oldGlobalRadius) !== NearbyDiscoverySettings::normalise((string) $globalRadius)
+            || $oldExceptions !== $savedExceptions;
 
         if ($exceptionTree !== '' && $parsedExceptionValue !== null) {
             $trees = Registry::container()->get(TreeService::class)->all();
@@ -634,7 +663,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                 : I18N::translate('The nearby-search radius for family tree %s is now %s km.', $treeTitle, number_format($parsedExceptionValue, 1));
             FlashMessages::addMessage($message, 'success');
         } elseif ($resetProvider === '') {
-            FlashMessages::addMessage(I18N::translate('Nearby search settings have been updated.'), 'success');
+            FlashMessages::addMessage(I18N::translate($radiusChanged ? 'Nearby search settings have been updated.' : 'External Places settings have been updated.'), 'success');
         }
 
         return redirect($this->getConfigLink());

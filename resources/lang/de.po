@@ -368,6 +368,18 @@ msgstr "Wählen Sie die externen Informationsanbieter und den Radius, den die Su
 msgid "External information providers"
 msgstr "Externe Informationsanbieter"
 
+msgid "Cross-provider consistency"
+msgstr "Providerübergreifende Konsistenz"
+
+msgid "Show confirmations for consistent external information"
+msgstr "Bestätigungen für konsistente externe Informationen anzeigen"
+
+msgid "External Places settings have been updated."
+msgstr "Die Einstellungen für externe Orte wurden aktualisiert."
+
+msgid "At least one external information provider must be enabled in the module settings."
+msgstr "In den Moduleinstellungen muss mindestens ein Informations-Provider aktiviert werden!"
+
 msgid "Nearby-search radius"
 msgstr "Suchradius in der Nähe"
 

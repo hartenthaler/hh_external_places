@@ -33,6 +33,11 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\ExternalPlacesModule;
 ?>
 
 <h1><?= I18N::translate('Assign external identifier') ?></h1>
+<?php if ($enabled_providers === []) : ?>
+    <div class="alert alert-warning">
+        <?= I18N::translate('At least one external information provider must be enabled in the module settings.') ?>
+    </div>
+<?php else : ?>
 <?php if (!$can_edit) : ?><style>.external-places-readonly td form { display: none; }</style><?php endif ?>
 <div class="<?= $can_edit ? 'external-places-assignment' : 'external-places-assignment external-places-readonly' ?>">
 
@@ -126,3 +131,4 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\ExternalPlacesModule;
     <?php endforeach ?></tbody>
 </table></div><?php endif ?>
  </div>
+<?php endif ?>
