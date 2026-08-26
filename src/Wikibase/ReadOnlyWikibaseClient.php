@@ -155,7 +155,11 @@ final class ReadOnlyWikibaseClient
         $query = 'SELECT DISTINCT ?item ?coord WHERE {' . $types . ' SERVICE wikibase:box { ?item wdt:P48 ?coord . bd:serviceParam wikibase:cornerSouthWest "' . $southWest . '"^^geo:wktLiteral . bd:serviceParam wikibase:cornerNorthEast "' . $northEast . '"^^geo:wktLiteral . } } LIMIT 20';
         try {
             $response = $this->httpClient->request('GET', 'https://database.factgrid.de/sparql', ['format' => 'json', 'query' => $query], ['Accept' => 'application/sparql-results+json', 'User-Agent' => 'webtrees Wikibase Places/0.2'], 8.0);
-            if ($response === null) { $this->lastNearbyDiagnostic = 'HTTP request returned no response.'; return []; }
+            if ($response === null) {
+                $transportError = $this->httpClient->lastError();
+                $this->lastNearbyDiagnostic = 'HTTP request returned no response' . ($transportError === null ? '.' : ': ' . $transportError);
+                return [];
+            }
             $body = $response->getBody()->getContents();
             if ($response->getStatusCode() !== 200) { $this->lastNearbyDiagnostic = 'FactGrid HTTP status: ' . $response->getStatusCode() . '.'; return []; }
             if (strlen($body) > self::MAX_RESPONSE_BYTES) { $this->lastNearbyDiagnostic = 'FactGrid response exceeded the configured size limit (' . number_format(strlen($body)) . ' bytes).'; return []; }
