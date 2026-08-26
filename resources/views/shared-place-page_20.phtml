@@ -1,0 +1,30 @@
+<?php
+
+use Fisharebest\Webtrees\I18N;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\ExternalPlacesModule;
+
+$vestaViews = method_exists($module, 'resourcesFolder')
+    ? $module->resourcesFolder() . 'views/'
+    : '';
+$original = $vestaViews . 'shared-place-page_20.phtml';
+ob_start();
+if (is_file($original)) {
+    include $original;
+}
+$html = ob_get_clean();
+
+$recordForUrl = $sharedPlace ?? ($record ?? null);
+$treeForUrl = $tree ?? $recordForUrl?->tree();
+if ($recordForUrl !== null && $treeForUrl !== null) {
+    $url = ExternalPlacesModule::externalInformationUrl([
+        'tree' => $treeForUrl->name(),
+        'xref' => $recordForUrl->xref(),
+    ]);
+    $tab = '<li class="nav-item"><a class="nav-link" role="tab" href="' . e($url) . '">' . e(I18N::translate('External information')) . '</a></li>';
+    $position = strpos($html, '</ul>');
+    if ($position !== false) {
+        $html = substr($html, 0, $position) . $tab . substr($html, $position);
+    }
+}
+
+echo $html;
