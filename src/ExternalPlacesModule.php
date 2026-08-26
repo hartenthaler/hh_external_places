@@ -29,6 +29,7 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalInformati
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalProviderRegistry;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalProviderSettings;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\GeoNamesProvider;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\GovExternalIdentifierCatalog;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\PlaceTypeFilterSettings;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikibase\ReadOnlyWikibaseClient;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domus\DomusMapLinkProvider;
