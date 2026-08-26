@@ -122,9 +122,8 @@ msgid "Item"
 msgstr "Element"
 
 #: C:\Users\harte\Documents\Codex\webtrees-modules\hh_external_places\resources\views\assignment.phtml:78
-#, fuzzy
 msgid "Nearby FactGrid items"
-msgstr "Wikidata-Elemente in der Nähe"
+msgstr "FactGrid-Elemente in der Nähe"
 
 #: C:\Users\harte\Documents\Codex\webtrees-modules\hh_external_places\resources\views\assignment.phtml:79
 msgid "No FactGrid items were found."
@@ -184,12 +183,10 @@ msgstr "Das Wikidata-Element wurde zugeordnet."
 
 #: C:\Users\harte\Documents\Codex\webtrees-modules\hh_external_places\src\Http\WikidataLocationAssignmentAction.php:53
 #: C:\Users\harte\Documents\Codex\webtrees-modules\hh_external_places\src\Http\WikidataLocationAssignmentAction.php:63
-#, fuzzy
 msgid "Invalid external identifier."
-msgstr "Ungültige Wikidata-Kennung."
+msgstr "Ungültige externe Kennung."
 
 #: C:\Users\harte\Documents\Codex\webtrees-modules\hh_external_places\src\Http\WikidataLocationAssignmentAction.php:57
-#, fuzzy
 msgid "The external identifier has been added."
 msgstr "Die externe Kennung wurde hinzugefügt."
 

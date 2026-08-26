@@ -248,7 +248,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         }
         if ($entity?->commonsFileName !== null) {
             $fileUrl = 'https://commons.wikimedia.org/wiki/Special:FilePath/' . rawurlencode($entity->commonsFileName);
-            $html .= '<br><a href="' . e($fileUrl) . '" rel="noopener noreferrer" target="_blank">' . e(I18N::translate('Image on Wikimedia Commons')) . '</a>';
+            $html .= '<br><a href="' . e($fileUrl) . '" rel="noopener noreferrer" target="_blank"><img src="' . e($fileUrl) . '" alt="' . e(I18N::translate('Image on Wikimedia Commons')) . '" loading="lazy" style="max-width:500px;max-height:500px;width:auto;height:auto"></a>';
         }
         if ($entity === null) {
             $html .= ' — <small>' . e(I18N::translate('Wikidata details are currently unavailable.')) . '</small>';
