@@ -197,7 +197,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         }
 
         $label = $entity?->label ?? $identifier->qid();
-        $html  = '<br><br><strong>' . e(I18N::translate('Wikidata')) . ':</strong> ';
+        $html  = '<section class="mt-4"><h3 class="h4 mb-2">' . e(I18N::translate('Wikidata')) . '</h3>';
         $html .= '<a href="' . e($identifier->entityUrl()) . '" rel="noopener noreferrer" target="_blank">' . e($label) . '</a> (' . e($identifier->qid()) . ')';
         if ($entity?->description !== null) {
             $html .= ' — ' . e($entity->description);
@@ -251,7 +251,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                     $assignmentUrl = $location->canEdit() ? self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]) : null;
                     $html .= $this->crossReferenceHtml($wikidataReference, $externalIdentifiers, $assignmentUrl);
         }
-        $html .= '<br><small>' . e(MoreI18N::xlate('Source')) . ': Wikidata</small>';
+        $html .= '<br><small>' . e(MoreI18N::xlate('Source')) . ': Wikidata</small></section>';
         $assignmentUrl = $location->canEdit() ? self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]) : null;
         $html .= $this->externalInformationHtml($externalIdentifiers, $language, 'wikidata', $location->fullName(), $assignmentUrl);
         $html .= $this->geoNamesHtml($location->fullName(), $language);
@@ -332,7 +332,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         if (!ExternalProviderSettings::isEnabled('geonames')) { return ''; }
         $information = (new GeoNamesProvider())->lookup($placeName, $language);
         if ($information === null) { return ''; }
-        $html = '<section class="mt-3"><strong>' . e(I18N::translate('GeoNames')) . ':</strong> <a href="' . e($information['url']) . '" rel="noopener noreferrer" target="_blank">' . e($information['label']) . '</a>';
+        $html = '<section class="mt-4"><h3 class="h4 mb-2">' . e(I18N::translate('GeoNames')) . '</h3><a href="' . e($information['url']) . '" rel="noopener noreferrer" target="_blank">' . e($information['label']) . '</a>';
         foreach ($information['details'] as $detail) {
             $html .= '<br><small>' . e($this->externalDetailLabel($detail['label'])) . ': ' . e($this->externalDetailValue($detail['label'], $detail['value'])) . '</small>';
         }
