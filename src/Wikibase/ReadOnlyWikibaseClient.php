@@ -150,13 +150,15 @@ final class ReadOnlyWikibaseClient
         // FactGrid calls its coordinate-location property P48 (the local
         // equivalent of Wikidata's P625).
         // Keep the response compact; the UI displays at most 20 candidates.
-        $query = 'SELECT ?item ?itemLabel ?itemDescription ?coord WHERE {' . $types . ' SERVICE wikibase:box { ?item wdt:P48 ?coord . bd:serviceParam wikibase:cornerSouthWest "' . $southWest . '"^^geo:wktLiteral . bd:serviceParam wikibase:cornerNorthEast "' . $northEast . '"^^geo:wktLiteral . } SERVICE wikibase:label { bd:serviceParam wikibase:language "' . $this->language($language) . ',en". } } LIMIT 20';
+        // Descriptions can be very large on FactGrid.  They are not needed
+        // to discover nearby candidates and can exceed the response limit.
+        $query = 'SELECT ?item ?itemLabel ?coord WHERE {' . $types . ' SERVICE wikibase:box { ?item wdt:P48 ?coord . bd:serviceParam wikibase:cornerSouthWest "' . $southWest . '"^^geo:wktLiteral . bd:serviceParam wikibase:cornerNorthEast "' . $northEast . '"^^geo:wktLiteral . } SERVICE wikibase:label { bd:serviceParam wikibase:language "' . $this->language($language) . ',en". } } LIMIT 20';
         try {
             $response = $this->httpClient->request('GET', 'https://database.factgrid.de/sparql', ['format' => 'json', 'query' => $query], ['Accept' => 'application/sparql-results+json', 'User-Agent' => 'webtrees Wikibase Places/0.2'], 8.0);
             if ($response === null) { $this->lastNearbyDiagnostic = 'HTTP request returned no response.'; return []; }
             $body = $response->getBody()->getContents();
             if ($response->getStatusCode() !== 200) { $this->lastNearbyDiagnostic = 'FactGrid HTTP status: ' . $response->getStatusCode() . '.'; return []; }
-            if (strlen($body) > self::MAX_RESPONSE_BYTES) { $this->lastNearbyDiagnostic = 'FactGrid response exceeded the configured size limit.'; return []; }
+            if (strlen($body) > self::MAX_RESPONSE_BYTES) { $this->lastNearbyDiagnostic = 'FactGrid response exceeded the configured size limit (' . number_format(strlen($body)) . ' bytes).'; return []; }
             $payload = json_decode($body, true, 32, JSON_THROW_ON_ERROR);
             $bindingCount = count($payload['results']['bindings'] ?? []);
             $this->lastNearbyDiagnostic = 'FactGrid returned ' . $bindingCount . ' coordinate binding(s); parsed candidates are shown below.';
