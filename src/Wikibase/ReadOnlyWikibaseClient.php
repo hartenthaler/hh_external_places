@@ -156,7 +156,9 @@ final class ReadOnlyWikibaseClient
         try {
             $response = $this->httpClient->request('GET', 'https://database.factgrid.de/sparql', ['format' => 'json', 'query' => $query], ['Accept' => 'application/sparql-results+json', 'User-Agent' => 'webtrees Wikibase Places/0.2'], 8.0);
             if ($response === null) {
-                $transportError = $this->httpClient->lastError();
+                // Keep compatibility with installations that still have the
+                // pre-diagnostic HttpTransport class loaded.
+                $transportError = method_exists($this->httpClient, 'lastError') ? $this->httpClient->lastError() : null;
                 $this->lastNearbyDiagnostic = 'HTTP request returned no response' . ($transportError === null ? '.' : ': ' . $transportError);
                 return [];
             }
