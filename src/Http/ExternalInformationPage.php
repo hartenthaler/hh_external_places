@@ -10,6 +10,7 @@ use Fisharebest\Webtrees\Module\ModuleConfigInterface;
 use Fisharebest\Webtrees\Registry;
 use Fisharebest\Webtrees\Services\ModuleService;
 use Fisharebest\Webtrees\Validator;
+use Fisharebest\Webtrees\View;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\ExternalPlacesModule;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -36,6 +37,10 @@ final class ExternalInformationPage implements RequestHandlerInterface
         if (!$module instanceof ExternalPlacesModule) {
             return response('External Places module is not available.', 503);
         }
+
+        // Vesta can dispatch this route before the module's boot() method has
+        // registered its view namespace. Register it defensively here as well.
+        View::registerNamespace('hh_external_places', dirname(__DIR__, 2) . '/resources/views/');
 
         $canonical = $location->primaryPlace()->gedcomName();
         $place = PlaceStructure::fromNameAndLocNow($canonical, $location->xref(), $tree, 0, $location);
