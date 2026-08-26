@@ -539,6 +539,9 @@ msgstr ""
 msgid "External Places settings have been updated."
 msgstr ""
 
+msgid "At least one external information provider must be enabled in the module settings."
+msgstr ""
+
 msgid "Nearby-search radius"
 msgstr ""
 

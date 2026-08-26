@@ -48,6 +48,7 @@ final class WikidataLocationAssignmentPage implements RequestHandlerInterface
         if (!in_array($providerKey, $enabledProviders, true)) {
             $providerKey = $enabledProviders[0] ?? 'wikidata';
         }
+        $providerEnabled = in_array($providerKey, $enabledProviders, true);
         $nameFact        = $location->facts(['NAME'])->first();
         $locationName    = $nameFact === null ? $location->xref() : trim(strip_tags($nameFact->value()));
         $search          = $submittedSearch === '' ? $locationName : $submittedSearch;
@@ -79,11 +80,11 @@ final class WikidataLocationAssignmentPage implements RequestHandlerInterface
             'assignment_url' => ExternalPlacesModule::assignmentUrl(['tree' => $tree->name(), 'xref' => $location->xref()]),
             'provider_key'   => $providerKey,
             'enabled_providers' => $enabledProviders,
-            'candidates'     => $providerKey === 'wikidata' && $submittedSearch !== '' ? $client->search($submittedSearch, $language, $houseOnly) : [],
-            'external_candidates' => $providerKey === 'gov' && $submittedSearch !== '' && $govProvider !== null && method_exists($govProvider, 'search') ? array_values(array_filter($govProvider->search($submittedSearch, $language), static fn (array $candidate): bool => !$houseOnly || PlaceTypeFilterSettings::matches('gov', $candidate))) : [],
-            'factgrid_candidates' => $providerKey === 'factgrid' && $submittedSearch !== '' ? $wikibaseClient->search('factgrid', $submittedSearch, $language, $houseOnly) : [],
-            'geonames_candidates' => $providerKey === 'geonames' && $submittedSearch !== '' ? $geoNamesProvider->search($submittedSearch, $language, $houseOnly) : [],
-            'factgrid_nearby_candidates' => $providerKey === 'factgrid' && $nearbyRequested && $coordinates !== null ? $wikibaseClient->nearby('factgrid', $coordinates['latitude'], $coordinates['longitude'], $radiusKm, $language, $houseOnly) : [],
+            'candidates'     => $providerEnabled && $providerKey === 'wikidata' && $submittedSearch !== '' ? $client->search($submittedSearch, $language, $houseOnly) : [],
+            'external_candidates' => $providerEnabled && $providerKey === 'gov' && $submittedSearch !== '' && $govProvider !== null && method_exists($govProvider, 'search') ? array_values(array_filter($govProvider->search($submittedSearch, $language), static fn (array $candidate): bool => !$houseOnly || PlaceTypeFilterSettings::matches('gov', $candidate))) : [],
+            'factgrid_candidates' => $providerEnabled && $providerKey === 'factgrid' && $submittedSearch !== '' ? $wikibaseClient->search('factgrid', $submittedSearch, $language, $houseOnly) : [],
+            'geonames_candidates' => $providerEnabled && $providerKey === 'geonames' && $submittedSearch !== '' ? $geoNamesProvider->search($submittedSearch, $language, $houseOnly) : [],
+            'factgrid_nearby_candidates' => $providerEnabled && $providerKey === 'factgrid' && $nearbyRequested && $coordinates !== null ? $wikibaseClient->nearby('factgrid', $coordinates['latitude'], $coordinates['longitude'], $radiusKm, $language, $houseOnly) : [],
             'coordinates'    => $coordinates,
             'current'        => $current,
             'entity'         => $entity,
@@ -91,8 +92,8 @@ final class WikidataLocationAssignmentPage implements RequestHandlerInterface
             'location'       => $location,
             'location_name'  => $locationName,
             'has_search'     => $submittedSearch !== '',
-            'nearby_candidates' => $providerKey === 'wikidata' && $nearbyRequested && $coordinates !== null ? $client->nearby($coordinates['latitude'], $coordinates['longitude'], $radiusKm, $language, $locationName, $houseOnly) : [],
-            'external_nearby_candidates' => $nearbyRequested && $providerKey === 'gov' && $coordinates !== null && $govProvider !== null && method_exists($govProvider, 'nearby') ? array_values(array_filter($govProvider->nearby($coordinates['latitude'], $coordinates['longitude'], $radiusKm), static fn (array $candidate): bool => !$houseOnly || PlaceTypeFilterSettings::matches('gov', $candidate))) : [],
+            'nearby_candidates' => $providerEnabled && $providerKey === 'wikidata' && $nearbyRequested && $coordinates !== null ? $client->nearby($coordinates['latitude'], $coordinates['longitude'], $radiusKm, $language, $locationName, $houseOnly) : [],
+            'external_nearby_candidates' => $providerEnabled && $nearbyRequested && $providerKey === 'gov' && $coordinates !== null && $govProvider !== null && method_exists($govProvider, 'nearby') ? array_values(array_filter($govProvider->nearby($coordinates['latitude'], $coordinates['longitude'], $radiusKm), static fn (array $candidate): bool => !$houseOnly || PlaceTypeFilterSettings::matches('gov', $candidate))) : [],
             'nearby_requested' => $nearbyRequested,
             'house_only'      => $houseOnly,
             'can_edit'        => $canEdit,

@@ -142,6 +142,10 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             return null;
         }
 
+        if (ExternalProviderSettings::enabled() === []) {
+            return GenericViewElement::create('<div class="alert alert-warning">' . e(I18N::translate('At least one external information provider must be enabled in the module settings.')) . '</div>');
+        }
+
         $url = self::externalInformationUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]);
         return GenericViewElement::create('<a class="btn btn-outline-secondary btn-sm" href="' . e($url) . '">' . e(I18N::translate('External information')) . '</a>');
     }
@@ -152,6 +156,10 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         $location = $place->getLocation();
         if ($location === null) {
             return null;
+        }
+
+        if (ExternalProviderSettings::enabled() === []) {
+            return GenericViewElement::create('<div class="alert alert-warning">' . e(I18N::translate('At least one external information provider must be enabled in the module settings.')) . '</div>');
         }
 
         $providerRegistry = new ExternalProviderRegistry();
