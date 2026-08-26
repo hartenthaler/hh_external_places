@@ -152,7 +152,7 @@ final class ReadOnlyWikibaseClient
         // Keep the response compact; the UI displays at most 20 candidates.
         // Descriptions can be very large on FactGrid.  They are not needed
         // to discover nearby candidates and can exceed the response limit.
-        $query = 'SELECT ?item ?itemLabel ?coord WHERE {' . $types . ' SERVICE wikibase:box { ?item wdt:P48 ?coord . bd:serviceParam wikibase:cornerSouthWest "' . $southWest . '"^^geo:wktLiteral . bd:serviceParam wikibase:cornerNorthEast "' . $northEast . '"^^geo:wktLiteral . } SERVICE wikibase:label { bd:serviceParam wikibase:language "' . $this->language($language) . ',en". } } LIMIT 20';
+        $query = 'SELECT DISTINCT ?item ?coord WHERE {' . $types . ' SERVICE wikibase:box { ?item wdt:P48 ?coord . bd:serviceParam wikibase:cornerSouthWest "' . $southWest . '"^^geo:wktLiteral . bd:serviceParam wikibase:cornerNorthEast "' . $northEast . '"^^geo:wktLiteral . } } LIMIT 20';
         try {
             $response = $this->httpClient->request('GET', 'https://database.factgrid.de/sparql', ['format' => 'json', 'query' => $query], ['Accept' => 'application/sparql-results+json', 'User-Agent' => 'webtrees Wikibase Places/0.2'], 8.0);
             if ($response === null) { $this->lastNearbyDiagnostic = 'HTTP request returned no response.'; return []; }
@@ -182,6 +182,18 @@ final class ReadOnlyWikibaseClient
             $distance = $this->distanceKm($latitude, $longitude, $candidateLatitude, $candidateLongitude);
             if ($distance > $radiusKm) { continue; }
             $results[] = ['qid' => 'Q' . $qid[1], 'label' => (string) ($binding['itemLabel']['value'] ?? ('Q' . $qid[1])), 'description' => isset($binding['itemDescription']['value']) ? (string) $binding['itemDescription']['value'] : null, 'distanceKm' => $distance];
+        }
+        // Resolve labels/descriptions only for the small, already filtered
+        // candidate set.  This avoids the label service inflating the box
+        // response and keeps the query bounded on large FactGrid regions.
+        if ($results !== []) {
+            $entities = $this->entities('factgrid', array_column($results, 'qid'), $language);
+            foreach ($results as &$result) {
+                $entity = $entities[$result['qid']] ?? [];
+                $result['label'] = (string) ($entity['labels'][$this->language($language)]['value'] ?? $result['qid']);
+                $result['description'] = isset($entity['descriptions'][$this->language($language)]['value']) ? (string) $entity['descriptions'][$this->language($language)]['value'] : null;
+            }
+            unset($result);
         }
         usort($results, static fn (array $a, array $b): int => $a['distanceKm'] <=> $b['distanceKm']);
         if ($results === []) {
