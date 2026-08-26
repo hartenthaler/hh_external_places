@@ -28,7 +28,7 @@ msgstr ""
 
 #: resources/views/external-information.phtml
 #, php-format
-msgid "External place information for %s"
+msgid "External information for place: %s"
 msgstr ""
 
 msgid "GeoNames information"

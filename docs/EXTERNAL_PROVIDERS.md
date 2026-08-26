@@ -19,9 +19,12 @@ default for an exception removes that exception.
 ## Dedicated external-information page
 
 The module provides a dedicated shared-place page at the **External
-information** link. It contains the complete provider output, consistency
-messages, population data and editor actions in one place. The compact link in
-the Vesta Shared Places summary remains for compatibility.
+information** link. It uses the normal webtrees page layout, identifies the
+place in its heading with a link back to the shared-place record, and contains
+the complete provider output, consistency messages, population data and editor
+actions in one place. The compact link in the Vesta Shared Places summary
+remains for compatibility; the optional Vesta tab integration is registered
+for both the webtrees 2.2 and 2.3 shared-place view variants.
 
 ## Supported identifiers
 
