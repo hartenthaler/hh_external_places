@@ -371,8 +371,11 @@ msgstr "Externe Informationsanbieter"
 msgid "Cross-provider consistency"
 msgstr "Providerübergreifende Konsistenz"
 
-msgid "Show confirmations for consistent external identifiers"
-msgstr "Bestätigungen für konsistente externe Kennungen anzeigen"
+msgid "Show confirmations for consistent external information"
+msgstr "Bestätigungen für konsistente externe Informationen anzeigen"
+
+msgid "External Places settings have been updated."
+msgstr "Die Einstellungen für externe Orte wurden aktualisiert."
 
 msgid "Nearby-search radius"
 msgstr "Suchradius in der Nähe"

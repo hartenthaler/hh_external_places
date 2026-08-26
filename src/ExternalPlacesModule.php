@@ -61,7 +61,8 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
     private const ASSIGNMENT_ROUTE_NAME = 'hh-external-places.assignment-page';
     private const ASSIGNMENT_ROUTE_PATH = '/tree/{tree}/external-place/{xref}/assignment';
     private const EXTERNAL_INFORMATION_ROUTE_PATH = '/tree/{tree}/external-place/{xref}/information';
-    private const SHOW_CONSISTENT_REFERENCES_PREFERENCE = 'show_consistent_cross_references';
+    // Keep the site preference below webtrees' setting_name column limit.
+    private const SHOW_CONSISTENT_REFERENCES_PREFERENCE = 'HH_EP_SHOW_CONSISTENT';
 
     public function boot(): void
     {
@@ -613,6 +614,8 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         }
         $globalInput = str_replace(',', '.', trim((string) ($body['global-radius-km'] ?? '')));
         $globalRadius = is_numeric($globalInput) ? (float) $globalInput : NearbyDiscoverySettings::DEFAULT_RADIUS_KM;
+        $oldGlobalRadius = NearbyDiscoverySettings::globalRadius();
+        $oldExceptions = NearbyDiscoverySettings::exceptions();
         $exceptions = is_array($body['radius-exceptions'] ?? null) ? array_map('strval', $body['radius-exceptions']) : [];
 
         // A selected tree can be added without requiring a long form row for
@@ -636,6 +639,8 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             FlashMessages::addMessage(I18N::translate('Select a family tree and enter a radius before adding an exception.'), 'warning');
         }
         NearbyDiscoverySettings::save($globalRadius, $exceptions);
+        $radiusChanged = NearbyDiscoverySettings::normalise((string) $oldGlobalRadius) !== NearbyDiscoverySettings::normalise((string) $globalRadius)
+            || $oldExceptions !== $exceptions;
 
         if ($exceptionTree !== '' && $parsedExceptionValue !== null) {
             $trees = Registry::container()->get(TreeService::class)->all();
@@ -646,7 +651,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                 : I18N::translate('The nearby-search radius for family tree %s is now %s km.', $treeTitle, number_format($parsedExceptionValue, 1));
             FlashMessages::addMessage($message, 'success');
         } elseif ($resetProvider === '') {
-            FlashMessages::addMessage(I18N::translate('Nearby search settings have been updated.'), 'success');
+            FlashMessages::addMessage(I18N::translate($radiusChanged ? 'Nearby search settings have been updated.' : 'External Places settings have been updated.'), 'success');
         }
 
         return redirect($this->getConfigLink());

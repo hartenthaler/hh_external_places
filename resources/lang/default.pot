@@ -533,7 +533,10 @@ msgstr ""
 msgid "Cross-provider consistency"
 msgstr ""
 
-msgid "Show confirmations for consistent external identifiers"
+msgid "Show confirmations for consistent external information"
+msgstr ""
+
+msgid "External Places settings have been updated."
 msgstr ""
 
 msgid "Nearby-search radius"
