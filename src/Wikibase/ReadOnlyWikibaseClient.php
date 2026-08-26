@@ -132,7 +132,10 @@ final class ReadOnlyWikibaseClient
         $center = sprintf('Point(%.6F %.6F)', $longitude, $latitude);
         $houseTypes = array_values(array_filter(PlaceTypeFilterSettings::all()['factgrid'] ?? [], static fn (string $value): bool => preg_match('/^Q[1-9][0-9]*$/', $value) === 1));
         $types = $houseOnly && $houseTypes !== [] ? ' VALUES ?houseType { ' . implode(' ', array_map(static fn (string $value): string => 'wd:' . $value, $houseTypes)) . ' } ?item wdt:P2 ?houseType .' : '';
-        $query = 'SELECT ?item ?itemLabel ?itemDescription ?coord WHERE {' . $types . ' SERVICE wikibase:around { ?item wdt:P48 ?coord . bd:serviceParam wikibase:center "' . $center . '"^^geo:wktLiteral . bd:serviceParam wikibase:radius "' . number_format($radiusKm, 3, '.', '') . '" . } SERVICE wikibase:label { bd:serviceParam wikibase:language "' . $this->language($language) . ',en". } } LIMIT 20';
+        // FactGrid follows the Wikidata coordinate convention: P625 is the
+        // coordinate-location property used by the wikibase:around service.
+        // P48 is unrelated and returned no nearby place items.
+        $query = 'SELECT ?item ?itemLabel ?itemDescription ?coord WHERE {' . $types . ' SERVICE wikibase:around { ?item wdt:P625 ?coord . bd:serviceParam wikibase:center "' . $center . '"^^geo:wktLiteral . bd:serviceParam wikibase:radius "' . number_format($radiusKm, 3, '.', '') . '" . } SERVICE wikibase:label { bd:serviceParam wikibase:language "' . $this->language($language) . ',en". } } LIMIT 20';
         try {
             $response = $this->httpClient->request('GET', 'https://database.factgrid.de/query/sparql', ['format' => 'json', 'query' => $query], ['Accept' => 'application/sparql-results+json', 'User-Agent' => 'webtrees Wikibase Places/0.2'], 8.0);
             if ($response === null) { return []; }
