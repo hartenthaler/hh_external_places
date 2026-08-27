@@ -68,7 +68,10 @@ final class HttpTransport
         $this->lastError = null;
         // Accept the former Guzzle-style options array while callers are
         // migrated incrementally. This also keeps custom module tests small.
-        if (array_key_exists('query', $query) || array_key_exists('headers', $query) || array_key_exists('timeout', $query)) {
+        // A normal request may itself contain a string-valued `query`
+        // parameter (for example a SPARQL query).  Treat it as legacy Guzzle
+        // options only when the nested `query` value is an array.
+        if (is_array($query['query'] ?? null) || array_key_exists('headers', $query) || array_key_exists('timeout', $query)) {
             $options = $query;
             $query = is_array($options['query'] ?? null) ? $options['query'] : [];
             $headers = is_array($options['headers'] ?? null) ? $options['headers'] : [];
