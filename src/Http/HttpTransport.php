@@ -20,6 +20,8 @@ use Throwable;
  */
 final class HttpTransport
 {
+    private ?string $lastError = null;
+
     private function __construct(
         private readonly ?PsrClientInterface $psrClient,
         private readonly ?RequestFactoryInterface $requestFactory,
@@ -63,6 +65,7 @@ final class HttpTransport
      */
     public function request(string $method, string $url, array $query = [], array $headers = [], float $timeout = 6.0): ?ResponseInterface
     {
+        $this->lastError = null;
         // Accept the former Guzzle-style options array while callers are
         // migrated incrementally. This also keeps custom module tests small.
         if (array_key_exists('query', $query) || array_key_exists('headers', $query) || array_key_exists('timeout', $query)) {
@@ -84,7 +87,8 @@ final class HttpTransport
                 }
 
                 return $this->psrClient->sendRequest($request);
-            } catch (Throwable) {
+            } catch (Throwable $exception) {
+                $this->lastError = $exception->getMessage();
                 return null;
             }
         }
@@ -102,8 +106,14 @@ final class HttpTransport
                 'query' => $query,
                 'timeout' => $timeout,
             ]);
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
+            $this->lastError = $exception->getMessage();
             return null;
         }
+    }
+
+    public function lastError(): ?string
+    {
+        return $this->lastError;
     }
 }
