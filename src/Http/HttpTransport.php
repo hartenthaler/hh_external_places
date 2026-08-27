@@ -20,8 +20,6 @@ use Throwable;
  */
 final class HttpTransport
 {
-    private ?string $lastError = null;
-
     private function __construct(
         private readonly ?PsrClientInterface $psrClient,
         private readonly ?RequestFactoryInterface $requestFactory,
@@ -65,10 +63,12 @@ final class HttpTransport
      */
     public function request(string $method, string $url, array $query = [], array $headers = [], float $timeout = 6.0): ?ResponseInterface
     {
-        $this->lastError = null;
         // Accept the former Guzzle-style options array while callers are
         // migrated incrementally. This also keeps custom module tests small.
-        if (array_key_exists('query', $query) || array_key_exists('headers', $query) || array_key_exists('timeout', $query)) {
+        // A normal request may itself contain a string-valued `query`
+        // parameter (for example a SPARQL query).  Treat it as legacy Guzzle
+        // options only when the nested `query` value is an array.
+        if (is_array($query['query'] ?? null) || array_key_exists('headers', $query) || array_key_exists('timeout', $query)) {
             $options = $query;
             $query = is_array($options['query'] ?? null) ? $options['query'] : [];
             $headers = is_array($options['headers'] ?? null) ? $options['headers'] : [];
@@ -87,8 +87,7 @@ final class HttpTransport
                 }
 
                 return $this->psrClient->sendRequest($request);
-            } catch (Throwable $exception) {
-                $this->lastError = $exception->getMessage();
+            } catch (Throwable) {
                 return null;
             }
         }
@@ -100,20 +99,17 @@ final class HttpTransport
         try {
             return $this->guzzleClient->request($method, $url, [
                 'allow_redirects' => false,
-                'connect_timeout' => min(3.0, $timeout),
+                // Some FactGrid SPARQL requests need more than a few seconds
+                // to establish a connection.  Honour the caller's bounded
+                // timeout instead of imposing an unconditional 3-second cut.
+                'connect_timeout' => min(8.0, $timeout),
                 'headers' => $headers,
                 'http_errors' => false,
                 'query' => $query,
                 'timeout' => $timeout,
             ]);
-        } catch (Throwable $exception) {
-            $this->lastError = $exception->getMessage();
+        } catch (Throwable) {
             return null;
         }
-    }
-
-    public function lastError(): ?string
-    {
-        return $this->lastError;
     }
 }
