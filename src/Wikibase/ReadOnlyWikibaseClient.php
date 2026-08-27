@@ -149,10 +149,12 @@ final class ReadOnlyWikibaseClient
         $types = $houseOnly && $houseTypes !== [] ? ' VALUES ?houseType { ' . implode(' ', array_map(static fn (string $value): string => 'wd:' . $value, $houseTypes)) . ' } ?item wdt:P2 ?houseType .' : '';
         // FactGrid calls its coordinate-location property P48 (the local
         // equivalent of Wikidata's P625).
-        // Keep the response compact; the UI displays at most 20 candidates.
+        // Keep the response compact; FactGrid may materialize many bindings
+        // before applying a larger LIMIT.  Five candidates are sufficient for
+        // nearby assignment and keep shared-hosting responses bounded.
         // Descriptions can be very large on FactGrid.  They are not needed
         // to discover nearby candidates and can exceed the response limit.
-        $query = 'SELECT DISTINCT ?item ?coord WHERE {' . $types . ' SERVICE wikibase:box { ?item wdt:P48 ?coord . bd:serviceParam wikibase:cornerSouthWest "' . $southWest . '"^^geo:wktLiteral . bd:serviceParam wikibase:cornerNorthEast "' . $northEast . '"^^geo:wktLiteral . } } LIMIT 20';
+        $query = 'SELECT DISTINCT ?item ?coord WHERE {' . $types . ' SERVICE wikibase:box { ?item wdt:P48 ?coord . bd:serviceParam wikibase:cornerSouthWest "' . $southWest . '"^^geo:wktLiteral . bd:serviceParam wikibase:cornerNorthEast "' . $northEast . '"^^geo:wktLiteral . } } LIMIT 5';
         try {
             $response = $this->httpClient->request('GET', 'https://database.factgrid.de/sparql', ['format' => 'json', 'query' => $query], ['Accept' => 'application/sparql-results+json', 'User-Agent' => 'webtrees Wikibase Places/0.2'], 8.0);
             if ($response === null) {
