@@ -74,10 +74,8 @@ final class WikidataLocationAssignmentPage implements RequestHandlerInterface
         $searchUrl      = (string) $request->getUri()->withQuery('');
 
         $factgridNearbyCandidates = [];
-        $factgridNearbyDiagnostic = null;
         if ($providerEnabled && $providerKey === 'factgrid' && $nearbyRequested && $coordinates !== null) {
             $factgridNearbyCandidates = $wikibaseClient->nearby('factgrid', $coordinates['latitude'], $coordinates['longitude'], $radiusKm, $language, $houseOnly);
-            $factgridNearbyDiagnostic = $wikibaseClient->nearbyDiagnostic();
         }
 
         $current = (new ExternalIdService())->wikidataIdentifiers($location->gedcom())->identifier();
@@ -92,7 +90,6 @@ final class WikidataLocationAssignmentPage implements RequestHandlerInterface
             'factgrid_candidates' => $providerEnabled && $providerKey === 'factgrid' && $submittedSearch !== '' ? $wikibaseClient->search('factgrid', $submittedSearch, $language, $houseOnly) : [],
             'geonames_candidates' => $providerEnabled && $providerKey === 'geonames' && $submittedSearch !== '' ? $geoNamesProvider->search($submittedSearch, $language, $houseOnly) : [],
             'factgrid_nearby_candidates' => $factgridNearbyCandidates,
-            'factgrid_nearby_diagnostic' => $factgridNearbyDiagnostic,
             'coordinates'    => $coordinates,
             'current'        => $current,
             'entity'         => $entity,

@@ -19,8 +19,6 @@ final class ReadOnlyWikibaseClient
 {
     private const MAX_RESPONSE_BYTES = 1_000_000;
 
-    private ?string $lastNearbyDiagnostic = null;
-
     /** @var array<string,string> */
     private const ENDPOINTS = [
         'wikidata' => 'https://www.wikidata.org/w/api.php',
@@ -33,11 +31,6 @@ final class ReadOnlyWikibaseClient
     }
 
     private readonly HttpTransport $httpClient;
-
-    public function nearbyDiagnostic(): ?string
-    {
-        return $this->lastNearbyDiagnostic;
-    }
 
     /** @return array<string,mixed>|null */
     public function entity(string $provider, string $itemId, string $language): ?array
@@ -134,7 +127,6 @@ final class ReadOnlyWikibaseClient
     /** @return list<array{qid:string,label:string,description:?string,distanceKm:float}> */
     public function nearby(string $provider, float $latitude, float $longitude, float $radiusKm, string $language, bool $houseOnly = false): array
     {
-        $this->lastNearbyDiagnostic = null;
         if ($provider !== 'factgrid' || $latitude < -90 || $latitude > 90 || $longitude < -180 || $longitude > 180) { return []; }
         $radiusKm = max(0.1, min(100.0, $radiusKm));
         // FactGrid's query service supports the box service reliably for its
@@ -149,28 +141,14 @@ final class ReadOnlyWikibaseClient
         $types = $houseOnly && $houseTypes !== [] ? ' VALUES ?houseType { ' . implode(' ', array_map(static fn (string $value): string => 'wd:' . $value, $houseTypes)) . ' } ?item wdt:P2 ?houseType .' : '';
         // FactGrid calls its coordinate-location property P48 (the local
         // equivalent of Wikidata's P625).
-        // Keep the response compact; FactGrid may materialize many bindings
-        // before applying a larger LIMIT.  Five candidates are sufficient for
-        // nearby assignment and keep shared-hosting responses bounded.
-        // Descriptions can be very large on FactGrid.  They are not needed
-        // to discover nearby candidates and can exceed the response limit.
-        $query = 'SELECT DISTINCT ?item ?coord WHERE {' . $types . ' SERVICE wikibase:box { ?item wdt:P48 ?coord . bd:serviceParam wikibase:cornerSouthWest "' . $southWest . '"^^geo:wktLiteral . bd:serviceParam wikibase:cornerNorthEast "' . $northEast . '"^^geo:wktLiteral . } } LIMIT 5';
+        $query = 'SELECT DISTINCT ?item ?itemLabel ?itemDescription ?coord WHERE {' . $types . ' SERVICE wikibase:box { ?item wdt:P48 ?coord . bd:serviceParam wikibase:cornerSouthWest "' . $southWest . '"^^geo:wktLiteral . bd:serviceParam wikibase:cornerNorthEast "' . $northEast . '"^^geo:wktLiteral . } SERVICE wikibase:label { bd:serviceParam wikibase:language "' . $this->language($language) . ',en". } } LIMIT 20';
         try {
             $response = $this->httpClient->request('GET', 'https://database.factgrid.de/sparql', ['format' => 'json', 'query' => $query], ['Accept' => 'application/sparql-results+json', 'User-Agent' => 'webtrees Wikibase Places/0.2'], 8.0);
-            if ($response === null) {
-                // Keep compatibility with installations that still have the
-                // pre-diagnostic HttpTransport class loaded.
-                $transportError = method_exists($this->httpClient, 'lastError') ? $this->httpClient->lastError() : null;
-                $this->lastNearbyDiagnostic = 'HTTP request returned no response' . ($transportError === null ? '.' : ': ' . $transportError);
-                return [];
-            }
+            if ($response === null) { return []; }
             $body = $response->getBody()->getContents();
-            if ($response->getStatusCode() !== 200) { $this->lastNearbyDiagnostic = 'FactGrid HTTP status: ' . $response->getStatusCode() . '.'; return []; }
-            if (strlen($body) > self::MAX_RESPONSE_BYTES) { $this->lastNearbyDiagnostic = 'FactGrid response exceeded the configured size limit (' . number_format(strlen($body)) . ' bytes).'; return []; }
+            if ($response->getStatusCode() !== 200 || strlen($body) > self::MAX_RESPONSE_BYTES) { return []; }
             $payload = json_decode($body, true, 32, JSON_THROW_ON_ERROR);
-            $bindingCount = count($payload['results']['bindings'] ?? []);
-            $this->lastNearbyDiagnostic = 'FactGrid returned ' . $bindingCount . ' coordinate binding(s); parsed candidates are shown below.';
-        } catch (Throwable $exception) { $this->lastNearbyDiagnostic = 'FactGrid request/parsing error: ' . $exception->getMessage(); return []; }
+        } catch (Throwable) { return []; }
         $results = [];
         foreach (array_slice($payload['results']['bindings'] ?? [], 0, 20) as $binding) {
             $uri = $binding['item']['value'] ?? null;
@@ -191,22 +169,7 @@ final class ReadOnlyWikibaseClient
             if ($distance > $radiusKm) { continue; }
             $results[] = ['qid' => 'Q' . $qid[1], 'label' => (string) ($binding['itemLabel']['value'] ?? ('Q' . $qid[1])), 'description' => isset($binding['itemDescription']['value']) ? (string) $binding['itemDescription']['value'] : null, 'distanceKm' => $distance];
         }
-        // Resolve labels/descriptions only for the small, already filtered
-        // candidate set.  This avoids the label service inflating the box
-        // response and keeps the query bounded on large FactGrid regions.
-        if ($results !== []) {
-            $entities = $this->entities('factgrid', array_column($results, 'qid'), $language);
-            foreach ($results as &$result) {
-                $entity = $entities[$result['qid']] ?? [];
-                $result['label'] = (string) ($entity['labels'][$this->language($language)]['value'] ?? $result['qid']);
-                $result['description'] = isset($entity['descriptions'][$this->language($language)]['value']) ? (string) $entity['descriptions'][$this->language($language)]['value'] : null;
-            }
-            unset($result);
-        }
         usort($results, static fn (array $a, array $b): int => $a['distanceKm'] <=> $b['distanceKm']);
-        if ($results === []) {
-            $this->lastNearbyDiagnostic .= ' No candidate remained after coordinate and radius filtering.';
-        }
         return $results;
     }
 
