@@ -26,6 +26,7 @@ use Fisharebest\Webtrees\Validator;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Infrastructure\WikidataCacheSchema;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Infrastructure\WikidataCacheRepository;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Gedcom\ExternalIdService;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Gedcom\GovTypeValidator;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalInformation;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalProviderRegistry;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalProviderSettings;
@@ -184,7 +185,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             }
 
             $assignmentUrl = $location->canEdit() ? self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]) : null;
-            $html = $this->externalInformationHtml($externalIdentifiers, $language, '', $location->fullName(), $assignmentUrl);
+            $html = $this->externalInformationHtml($externalIdentifiers, $language, '', $location->fullName(), $assignmentUrl, $location->gedcom());
             $html .= $geoNamesHtml;
             $html .= '<div class="d-flex gap-2 flex-wrap mt-2">';
             if ($location->canEdit()) {
@@ -264,7 +265,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         }
         $html .= '<br><small>' . e(MoreI18N::xlate('Source')) . ': Wikidata</small></section>';
         $assignmentUrl = $location->canEdit() ? self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]) : null;
-        $html .= $this->externalInformationHtml($externalIdentifiers, $language, 'wikidata', $location->fullName(), $assignmentUrl);
+        $html .= $this->externalInformationHtml($externalIdentifiers, $language, 'wikidata', $location->fullName(), $assignmentUrl, $location->gedcom());
         $html .= $this->geoNamesHtml($location->fullName(), $language);
         $html .= '<div class="d-flex gap-2 flex-wrap mt-2">';
         if ($location->canEdit()) {
@@ -284,7 +285,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
      *
      * @param list<\Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\ExternalIdentifier> $identifiers
      */
-    private function externalInformationHtml(array $identifiers, string $language, string $skip = '', string $placeName = '', ?string $assignmentUrl = null): string
+    private function externalInformationHtml(array $identifiers, string $language, string $skip = '', string $placeName = '', ?string $assignmentUrl = null, string $gedcom = ''): string
     {
         if ($identifiers === []) {
             return '';
@@ -326,6 +327,17 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                     $html .= '<br><img src="' . e($information->imageUrl) . '" alt="" loading="lazy" style="max-width:500px;max-height:500px;width:auto;height:auto">';
                 }
                 if ($information !== null) {
+                    if ($provider->key() === 'gov' && $information->typeId !== null) {
+                        $typeStatus = GovTypeValidator::compare($gedcom, $information->typeId);
+                        if ($typeStatus['state'] === 'consistent') {
+                            $html .= '<br><small>' . e(I18N::translate('GOV place type is consistent with the shared place.')) . '</small>';
+                        } elseif ($typeStatus['state'] === 'inconsistent') {
+                            $html .= '<br><span class="text-danger"><strong>' . e(I18N::translate('GOV place type is inconsistent with the shared place.')) . '</strong></span>';
+                        } elseif ($assignmentUrl !== null) {
+                            $html .= '<br><span class="text-warning">' . e(I18N::translate('GOV place type is missing from the shared place.')) . '</span>';
+                            $html .= ' <form method="post" action="' . e($assignmentUrl) . '" class="d-inline">' . csrf_field() . '<input type="hidden" name="operation" value="add-gov-type"><input type="hidden" name="gov_type" value="' . e($information->typeId) . '"><button class="btn btn-sm btn-outline-primary" type="submit">' . e(I18N::translate('Add GOV place type')) . '</button></form>';
+                        }
+                    }
                     foreach ($information->references['genwiki'] ?? [] as $genwikiUrl) {
                         $html .= '<br><small>' . e(I18N::translate('Article in GenWiki')) . ': <a href="' . e($genwikiUrl) . '" rel="noopener noreferrer" target="_blank">' . e($genwikiUrl) . '</a></small>';
                     }

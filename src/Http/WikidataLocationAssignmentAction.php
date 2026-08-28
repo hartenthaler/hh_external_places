@@ -67,6 +67,10 @@ final class WikidataLocationAssignmentAction implements RequestHandlerInterface
             if ($identifier === null) { throw new HttpBadRequestException(I18N::translate('Invalid external identifier.')); }
             $removed = $service->removeExternalIdentifier($location, $identifier);
             FlashMessages::addMessage($removed ? I18N::translate('The external identifier has been removed.') : I18N::translate('The external identifier was not found.'), $removed ? 'success' : 'danger');
+        } elseif ($operation === 'add-gov-type') {
+            $typeId = Validator::parsedBody($request)->string('gov_type', '');
+            $added = $service->addGovType($location, $typeId);
+            FlashMessages::addMessage($added ? I18N::translate('The GOV place type has been added.') : I18N::translate('The GOV place type was not added.'), $added ? 'success' : 'danger');
         } else {
             throw new HttpBadRequestException(I18N::translate('Invalid Wikidata assignment operation.'));
         }

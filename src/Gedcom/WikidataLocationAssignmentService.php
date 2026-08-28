@@ -19,7 +19,7 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\ExternalIdentifier;
  */
 final class WikidataLocationAssignmentService
 {
-    public function __construct(private readonly WikidataExternalIdEditor $editor = new WikidataExternalIdEditor(), private readonly ExternalIdEditor $externalEditor = new ExternalIdEditor())
+    public function __construct(private readonly WikidataExternalIdEditor $editor = new WikidataExternalIdEditor(), private readonly ExternalIdEditor $externalEditor = new ExternalIdEditor(), private readonly GovTypeEditor $govTypeEditor = new GovTypeEditor())
     {
     }
 
@@ -70,6 +70,15 @@ final class WikidataLocationAssignmentService
         if (!$location->canEdit()) { return false; }
         $updated = $this->externalEditor->remove($location->gedcom(), $identifier);
         if ($updated === rtrim($location->gedcom()) . "\n") { return false; }
+        $location->updateRecord($this->withUpdatedChange($updated), false);
+        return true;
+    }
+
+    public function addGovType(Location $location, string $typeId): bool
+    {
+        if (!$location->canEdit() || preg_match('/^\d+$/', $typeId) !== 1) { return false; }
+        $updated = $this->govTypeEditor->add($location->gedcom(), $typeId);
+        if ($updated === $location->gedcom()) { return false; }
         $location->updateRecord($this->withUpdatedChange($updated), false);
         return true;
     }

@@ -666,3 +666,21 @@ msgstr "Die Typen des Hausfilters für %s wurden auf die Standardwerte zurückge
 
 msgid "Coordinates must be defined for this shared place before nearby search can be used."
 msgstr "Für die Umkreissuche müssen zuerst Koordinaten für diesen gemeinsamen Ort festgelegt werden."
+
+msgid "GOV place type is consistent with the shared place."
+msgstr "Der GOV-Ortstyp stimmt mit dem Typ des gemeinsamen Ortes überein."
+
+msgid "GOV place type is inconsistent with the shared place."
+msgstr "Der GOV-Ortstyp stimmt nicht mit dem Typ des gemeinsamen Ortes überein."
+
+msgid "GOV place type is missing from the shared place."
+msgstr "Der GOV-Ortstyp fehlt im gemeinsamen Ort."
+
+msgid "Add GOV place type"
+msgstr "GOV-Ortstyp hinzufügen"
+
+msgid "The GOV place type has been added."
+msgstr "Der GOV-Ortstyp wurde hinzugefügt."
+
+msgid "The GOV place type was not added."
+msgstr "Der GOV-Ortstyp wurde nicht hinzugefügt."
