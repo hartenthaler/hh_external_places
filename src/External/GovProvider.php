@@ -118,13 +118,15 @@ final class GovProvider implements ExternalProvider
         $label = $this->firstString($data, ['name', 'label', 'title', 'placeName']);
         if ($label !== null) { $label = trim(strip_tags($label)); }
         $description = $this->firstString($data, ['description', 'type', 'objectType']);
+        $typeId = $this->firstScalarString($data, ['typeId', 'govType', 'objectTypeId', 'type']);
         // GOV often returns the numeric vocabulary identifier as the type
         // description (for example "24"). Present the configured, readable
         // label instead; the label is translated at rendering time.
         if ($description !== null && preg_match('/^\\d+$/', $description) === 1) {
+            $typeId = $description;
             $description = PlaceTypeFilterSettings::govLabel($description);
         }
-        return new ExternalInformation('gov', $identifier->value, $identifier->url, $label, $description, null, [], $this->references($data), $this->details($data), [], [], [], $this->population($data));
+        return new ExternalInformation('gov', $identifier->value, $identifier->url, $label, $description, null, [], $this->references($data), $this->details($data), [], [], [], $this->population($data), $typeId);
     }
 
     /** @param array<string,mixed> $data @param list<string> $keys */
@@ -142,6 +144,18 @@ final class GovProvider implements ExternalProvider
                         }
                     }
                 }
+            }
+        }
+        return null;
+    }
+
+    /** @param array<string,mixed> $data @param list<string> $keys */
+    private function firstScalarString(array $data, array $keys): ?string
+    {
+        foreach ($keys as $key) {
+            $value = $data[$key] ?? null;
+            if (is_scalar($value) && trim((string) $value) !== '') {
+                return trim((string) $value);
             }
         }
         return null;

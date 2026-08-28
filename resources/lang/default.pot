@@ -630,3 +630,21 @@ msgstr ""
 
 msgid "Coordinates must be defined for this shared place before nearby search can be used."
 msgstr ""
+
+msgid "GOV place type is consistent with the shared place."
+msgstr ""
+
+msgid "GOV place type is inconsistent with the shared place."
+msgstr ""
+
+msgid "GOV place type is missing from the shared place."
+msgstr ""
+
+msgid "Add GOV place type"
+msgstr ""
+
+msgid "The GOV place type has been added."
+msgstr ""
+
+msgid "The GOV place type was not added."
+msgstr ""

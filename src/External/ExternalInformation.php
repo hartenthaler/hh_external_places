@@ -22,6 +22,7 @@ final class ExternalInformation
         public readonly array $owners = [],
         public readonly array $occupants = [],
         public readonly array $population = [],
+        public readonly ?string $typeId = null,
     ) {
     }
 }
