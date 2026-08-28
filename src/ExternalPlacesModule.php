@@ -379,6 +379,10 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
     /** @param array<int,int|float> $population */
     private function populationChartHtml(array $population): string
     {
+        if (count($population) < 3) {
+            return '';
+        }
+
         $points = array_keys($population);
         $values = array_values($population);
         $min = min($values); $max = max($values); $range = $max - $min ?: 1;
@@ -389,11 +393,15 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             $y = 145 - (115 * ((float) $value - $min) / $range);
             $coordinates[] = round($x, 2) . ',' . round($y, 2);
         }
-        $svg = '<svg viewBox="0 0 320 180" width="320" height="180" role="img" aria-label="' . e(I18N::translate('Population')) . '"><line x1="35" y1="145" x2="305" y2="145" stroke="currentColor" stroke-opacity=".35"/><line x1="35" y1="20" x2="35" y2="145" stroke="currentColor" stroke-opacity=".35"/><polyline fill="none" stroke="currentColor" stroke-width="2" points="' . e(implode(' ', $coordinates)) . '"/>';
+        $yearLabel = MoreI18N::xlate('Year');
+        $populationLabel = I18N::translate('Population');
+        $svg = '<svg viewBox="0 0 320 190" width="320" height="190" role="img" aria-label="' . e($populationLabel) . '"><line x1="35" y1="145" x2="305" y2="145" stroke="currentColor" stroke-opacity=".35"/><line x1="35" y1="20" x2="35" y2="145" stroke="currentColor" stroke-opacity=".35"/><polyline fill="none" stroke="currentColor" stroke-width="2" points="' . e(implode(' ', $coordinates)) . '"/>';
         foreach ($values as $index => $value) {
             [$x, $y] = explode(',', $coordinates[$index]);
             $svg .= '<circle cx="' . e($x) . '" cy="' . e($y) . '" r="3" fill="currentColor"><title>' . e((string) $points[$index] . ': ' . I18N::number($value)) . '</title></circle>';
         }
+        $svg .= '<text x="170" y="178" text-anchor="middle" font-size="11">' . e($yearLabel) . '</text>';
+        $svg .= '<text x="11" y="83" text-anchor="middle" font-size="11" transform="rotate(-90 11 83)">' . e($populationLabel) . '</text>';
         return '<div>' . $svg . '</svg></div>';
     }
 
