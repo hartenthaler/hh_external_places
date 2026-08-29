@@ -554,6 +554,9 @@ msgstr ""
 msgid "Configure optional provider-specific type filters for each hierarchy level. Editors can apply one filter to a search."
 msgstr ""
 
+msgid "Configure optional provider-specific type filters for each hierarchy level. Users with edit permission can activate these filters when searching."
+msgstr ""
+
 msgid "Planet (Earth)"
 msgstr ""
 
@@ -662,6 +665,9 @@ msgid "Reset to default"
 msgstr ""
 
 msgid "The house filter types for %s were reset to their defaults."
+msgstr ""
+
+msgid "The filter types for %s were reset to their defaults."
 msgstr ""
 
 msgid "Coordinates must be defined for this shared place before nearby search can be used."

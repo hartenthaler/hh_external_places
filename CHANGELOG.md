@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.2.6.7 - 2026-08-29
+
+- GOV identifiers now also accept valid legacy IDs with lower-case prefixes,
+  such as `object_1192115`.
+- Improved the settings wording and provider presentation.
+- GOV population entries with “from” and “until” dates are retained as
+  separate historical values.
+
 ## 2.2.6.6 - 2026-08-29
 
 - Search filters can now distinguish four levels: house/farm, country,

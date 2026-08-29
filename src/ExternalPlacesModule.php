@@ -333,7 +333,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                 if ($information !== null) {
                     if ($provider->key() === 'gov' && $information->typeId !== null) {
                         $typeStatus = GovTypeValidator::compare($gedcom, $information->typeId);
-                        if ($typeStatus['state'] === 'consistent') {
+                        if ($typeStatus['state'] === 'consistent' && self::showConsistentReferences()) {
                             $html .= '<br><small>' . e(I18N::translate('GOV place type is consistent with the shared place.')) . '</small>';
                         } elseif ($typeStatus['state'] === 'inconsistent') {
                             $html .= '<br><span class="text-danger"><strong>' . e(I18N::translate('GOV place type is inconsistent with the shared place.')) . '</strong></span>';
@@ -417,7 +417,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
 
         $icon = $iconUrl === null ? '' : '<img class="me-1" src="' . e($iconUrl) . '" width="20" height="20" alt="" aria-hidden="true" loading="lazy" referrerpolicy="no-referrer" style="vertical-align:-0.2em">';
 
-        return '<h3 class="h4 mb-2">' . $icon . e($label) . '</h3>';
+        return '<h3 class="h4 mb-2" style="display:flex;align-items:center;gap:.4rem">' . $icon . e($label) . '</h3>';
     }
 
     private function providerHomepage(string $provider): string
@@ -449,7 +449,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         };
     }
 
-    /** @param array<int,int|float> $population */
+    /** @param array<string,int|float> $population */
     private function populationHtml(array $population): string
     {
         if ($population === []) { return ''; }
@@ -462,7 +462,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         return $html;
     }
 
-    /** @param array<int,int|float> $population */
+    /** @param array<string,int|float> $population */
     private function populationChartHtml(array $population): string
     {
         if (count($population) < 3) {
@@ -702,6 +702,9 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         }
         $typeFilters = is_array($body['type-filters'] ?? null) ? $body['type-filters'] : [];
         $reset = trim((string) ($body['reset-type-filter'] ?? ''));
+        // Keep the legacy variable available for the success-message branch
+        // below; a normal settings save has no reset action.
+        $resetProvider = '';
         if ($reset !== '') {
             [$resetLevel, $resetProvider] = array_pad(explode(':', $reset, 2), 2, '');
             if ($resetLevel === 'house') { PlaceTypeFilterSettings::reset($resetProvider); }

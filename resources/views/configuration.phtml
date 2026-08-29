@@ -31,17 +31,6 @@ use Illuminate\Support\Collection;
         <div class="form-check"><input class="form-check-input" id="provider-<?= e($key) ?>" name="providers[]" type="checkbox" value="<?= e($key) ?>" <?= in_array($key, $enabled_providers, true) ? 'checked' : '' ?>><label class="form-check-label" for="provider-<?= e($key) ?>"><?= e($label) ?></label></div>
     <?php endforeach ?>
 
-    <h2 class="mt-4"><?= I18N::translate('Search filter types') ?></h2>
-    <p><?= I18N::translate('Configure optional provider-specific type filters for each hierarchy level. Editors can apply one filter to a search.') ?></p>
-    <div class="accordion" id="type-filter-accordion">
-    <?php foreach (['planet' => 'Planet (Earth)', 'federation' => 'Federation / international organisation', 'country' => 'State / country', 'house' => 'House / farm'] as $level => $levelLabel) : ?>
-        <div class="accordion-item"><h3 class="accordion-header" id="heading-<?= e($level) ?>"><button class="accordion-button <?= $level === 'house' ? '' : 'collapsed' ?>" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-<?= e($level) ?>" aria-expanded="<?= $level === 'house' ? 'true' : 'false' ?>"><?= I18N::translate($levelLabel) ?></button></h3>
-        <div id="collapse-<?= e($level) ?>" class="accordion-collapse collapse <?= $level === 'house' ? 'show' : '' ?>" data-bs-parent="#type-filter-accordion"><div class="accordion-body">
-        <?php foreach ($provider_labels as $key => $label) : ?><?php if ($key === 'nominatim') { continue; } ?><div class="row mb-3"><label class="col-sm-3 col-form-label" for="types-<?= e($level) ?>-<?= e($key) ?>"><?= e($label) ?></label><div class="col-sm-6"><textarea class="form-control" id="types-<?= e($level) ?>-<?= e($key) ?>" name="type-filters[<?= e($level) ?>][<?= e($key) ?>][]" rows="3"><?= e(implode("\n", $type_filters[$level][$key] ?? [])) ?></textarea><small class="text-muted"><?= I18N::translate('One value per line; the exact meaning depends on the provider.') ?></small><?php if (($type_filters[$level][$key] ?? []) !== []) : ?><ul class="small text-muted mb-0 mt-1"><?php foreach ($type_filters[$level][$key] as $type) : ?><li><code><?= e($type) ?></code> — <?= e($type_labels[$level][$key][$type] ?? $type) ?></li><?php endforeach ?></ul><?php endif ?></div><div class="col-sm-3"><button class="btn btn-outline-secondary" name="reset-type-filter" type="submit" value="<?= e($level . ':' . $key) ?>"><?= I18N::translate('Reset to default') ?></button></div></div><?php endforeach ?>
-        </div></div></div>
-    <?php endforeach ?>
-    </div>
-
     <h2 class="mt-4"><?= I18N::translate('Cross-provider consistency') ?></h2>
     <div class="form-check mb-3">
         <input class="form-check-input" id="show-consistent-references" name="show-consistent-references" type="checkbox" value="1" <?= $show_consistent_references ? 'checked' : '' ?>>
@@ -71,6 +60,17 @@ use Illuminate\Support\Collection;
             <div class="col-sm-3"><button class="btn btn-secondary" name="radius_exception_action" type="submit" value="add"><?= I18N::translate('Add exception') ?></button></div>
         </div>
     <?php endif ?>
+    <h2 class="mt-4"><?= I18N::translate('Search filter types') ?></h2>
+    <p><?= I18N::translate('Configure optional provider-specific type filters for each hierarchy level. Users with edit permission can activate these filters when searching.') ?></p>
+    <div class="accordion" id="type-filter-accordion">
+    <?php foreach (['planet' => 'Planet (Earth)', 'federation' => 'Federation / international organisation', 'country' => 'State / country', 'house' => 'House / farm'] as $level => $levelLabel) : ?>
+        <div class="accordion-item"><h3 class="accordion-header" id="heading-<?= e($level) ?>"><button class="accordion-button <?= $level === 'house' ? '' : 'collapsed' ?>" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-<?= e($level) ?>" aria-expanded="<?= $level === 'house' ? 'true' : 'false' ?>"><?= I18N::translate($levelLabel) ?></button></h3>
+        <div id="collapse-<?= e($level) ?>" class="accordion-collapse collapse <?= $level === 'house' ? 'show' : '' ?>" data-bs-parent="#type-filter-accordion"><div class="accordion-body">
+        <?php foreach ($provider_labels as $key => $label) : ?><?php if ($key === 'nominatim') { continue; } ?><div class="row mb-3"><label class="col-sm-3 col-form-label" for="types-<?= e($level) ?>-<?= e($key) ?>"><?= e($label) ?></label><div class="col-sm-6"><textarea class="form-control" id="types-<?= e($level) ?>-<?= e($key) ?>" name="type-filters[<?= e($level) ?>][<?= e($key) ?>][]" rows="3"><?= e(implode("\n", $type_filters[$level][$key] ?? [])) ?></textarea><small class="text-muted"><?= I18N::translate('One value per line; the exact meaning depends on the provider.') ?></small><?php if (($type_filters[$level][$key] ?? []) !== []) : ?><ul class="small text-muted mb-0 mt-1"><?php foreach ($type_filters[$level][$key] as $type) : ?><li><code><?= e($type) ?></code> — <?= e($type_labels[$level][$key][$type] ?? $type) ?></li><?php endforeach ?></ul><?php endif ?></div><div class="col-sm-3"><button class="btn btn-outline-secondary" name="reset-type-filter" type="submit" value="<?= e($level . ':' . $key) ?>"><?= I18N::translate('Reset to default') ?></button></div></div><?php endforeach ?>
+        </div></div></div>
+    <?php endforeach ?>
+    </div>
+
     <div class="row mb-3"><div class="offset-sm-3 col-sm-9"><button class="btn btn-primary" type="submit"><?= view('icons/save') ?> <?= MoreI18N::xlate('save') ?></button></div></div>
     <?= csrf_field() ?>
 </form>

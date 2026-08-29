@@ -133,7 +133,7 @@ final class NominatimProvider
                 $details[] = ['label' => $detailLabel, 'value' => trim((string) $value)];
             }
         }
-        if (is_string($payload['type'] ?? null) && trim($payload['type']) !== '' && !in_array(strtolower(trim($payload['type'])), ['yes', 'no'], true)) {
+        if (is_string($payload['type'] ?? null) && trim($payload['type']) !== '' && !in_array(strtolower(trim($payload['type'])), ['yes', 'no', 'administrative'], true)) {
             array_unshift($details, ['label' => 'Type', 'value' => trim($payload['type'])]);
         }
         $geometry = is_array($payload['geojson'] ?? null) && is_string($payload['geojson']['type'] ?? null) && is_array($payload['geojson']['coordinates'] ?? null)
