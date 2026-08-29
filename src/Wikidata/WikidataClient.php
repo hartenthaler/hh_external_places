@@ -215,7 +215,7 @@ final class WikidataClient
     }
 
     /** @return list<WikidataSearchResult> */
-    public function search(string $term, string $language, bool $houseOnly = false): array
+    public function search(string $term, string $language, bool $houseOnly = false, string $filterLevel = 'house'): array
     {
         $term = trim($term);
         if (mb_strlen($term) < 2 || mb_strlen($term) > 120) {
@@ -265,7 +265,7 @@ final class WikidataClient
             return $results;
         }
 
-        $houseTypes = PlaceTypeFilterSettings::all()['wikidata'] ?? [];
+        $houseTypes = PlaceTypeFilterSettings::forLevel('wikidata', $filterLevel);
         return array_values(array_filter($results, function (WikidataSearchResult $result) use ($language, $houseTypes): bool {
             $identifier = WikidataIdentifier::tryFrom($result->qid);
             $entity = $identifier === null ? null : $this->fetch($identifier, $language);
@@ -280,7 +280,7 @@ final class WikidataClient
      *
      * @return list<WikidataNearbyCandidate>
      */
-    public function nearby(float $latitude, float $longitude, float $radiusKm, string $language, string $placeName = '', bool $houseOnly = false): array
+    public function nearby(float $latitude, float $longitude, float $radiusKm, string $language, string $placeName = '', bool $houseOnly = false, string $filterLevel = 'house'): array
     {
         if ($latitude < -90.0 || $latitude > 90.0 || $longitude < -180.0 || $longitude > 180.0) {
             return [];
@@ -289,7 +289,7 @@ final class WikidataClient
         $language = $this->language($language);
         $radiusKm = max(0.1, min(100.0, $radiusKm));
         $center   = sprintf('Point(%.6F %.6F)', $longitude, $latitude);
-        $houseTypes = array_values(array_filter(PlaceTypeFilterSettings::all()['wikidata'] ?? [], static fn (string $value): bool => preg_match('/^Q[1-9][0-9]*$/', $value) === 1));
+        $houseTypes = array_values(array_filter(PlaceTypeFilterSettings::forLevel('wikidata', $filterLevel), static fn (string $value): bool => preg_match('/^Q[1-9][0-9]*$/', $value) === 1));
         $types = $houseOnly && $houseTypes !== [] ? ' VALUES ?houseType { ' . implode(' ', array_map(static fn (string $value): string => 'wd:' . $value, $houseTypes)) . ' } ?item wdt:P31/wdt:P279* ?houseType .' : '';
         $query    = 'SELECT ?item ?itemLabel ?itemDescription ?coord WHERE {' . $types
             . ' SERVICE wikibase:around { ?item wdt:P625 ?coord .'
