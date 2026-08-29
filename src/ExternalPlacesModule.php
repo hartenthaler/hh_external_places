@@ -212,7 +212,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         }
 
         $label = $entity?->label ?? $identifier->qid();
-        $html  = '<section class="mt-4"><h3 class="h4 mb-2">' . e(I18N::translate('Wikidata')) . '</h3>';
+        $html  = '<section class="mt-4">' . $this->providerHeading('wikidata', I18N::translate('Wikidata'));
         $html .= '<a href="' . e($identifier->entityUrl()) . '" rel="noopener noreferrer" target="_blank">' . e($label) . '</a> (' . e($identifier->qid()) . ')';
         if ($entity?->description !== null) {
             $html .= ' — ' . e($entity->description);
@@ -266,7 +266,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                     $assignmentUrl = $location->canEdit() ? self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]) : null;
                     $html .= $this->crossReferenceHtml($wikidataReference, $externalIdentifiers, $assignmentUrl);
         }
-        $html .= '<br><small>' . e(MoreI18N::xlate('Source')) . ': Wikidata</small></section>';
+        $html .= $this->sourceHtml('Wikidata', 'https://www.wikidata.org/') . '</section>';
         $assignmentUrl = $location->canEdit() ? self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]) : null;
         $html .= $this->externalInformationHtml($externalIdentifiers, $language, 'wikidata', $location->fullName(), $assignmentUrl, $location->gedcom());
         $html .= $this->geoNamesHtml($location->fullName(), $language);
@@ -311,7 +311,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                     $displayLabel = $placeName !== '' ? trim(strip_tags($placeName)) : $identifier->value;
                 }
                 $showIdentifier = $displayLabel !== $identifier->value;
-                $html .= '<section class="mt-4"><h3 class="h4 mb-2">' . e($provider->label()) . '</h3>'
+                $html .= '<section class="mt-4">' . $this->providerHeading($provider->key(), $provider->label())
                     . '<a href="' . e($identifier->url) . '" rel="noopener noreferrer" target="_blank">'
                     . e($displayLabel) . '</a>' . ($showIdentifier ? ' <small>(' . e($identifier->value) . ')</small>' : '');
                 if ($information?->description !== null) {
@@ -348,7 +348,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                     $html .= $this->crossReferenceHtml($information, $identifiers, $assignmentUrl);
                     $html .= $this->externalPersonRelationsHtml($information);
                 }
-                $html .= '<br><small>' . e(MoreI18N::xlate('Source')) . ': ' . e($provider->label()) . '</small></section>';
+                $html .= $this->sourceHtml($provider->label(), $this->providerHomepage($provider->key())) . '</section>';
             }
         }
         return $html;
@@ -359,11 +359,11 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         if (!ExternalProviderSettings::isEnabled('geonames')) { return ''; }
         $information = (new GeoNamesProvider())->lookup($placeName, $language);
         if ($information === null) { return ''; }
-        $html = '<section class="mt-4"><h3 class="h4 mb-2">' . e(I18N::translate('GeoNames')) . '</h3><a href="' . e($information['url']) . '" rel="noopener noreferrer" target="_blank">' . e($information['label']) . '</a>';
+        $html = '<section class="mt-4">' . $this->providerHeading('geonames', I18N::translate('GeoNames')) . '<a href="' . e($information['url']) . '" rel="noopener noreferrer" target="_blank">' . e($information['label']) . '</a>';
         foreach ($information['details'] as $detail) {
             $html .= '<br><small>' . e($this->externalDetailLabel($detail['label'])) . ': ' . e($this->externalDetailValue($detail['label'], $detail['value'])) . '</small>';
         }
-        return $html . '<br><small>' . e(MoreI18N::xlate('Source')) . ': GeoNames</small></section>';
+        return $html . $this->sourceHtml('GeoNames', 'https://www.geonames.org/') . '</section>';
     }
 
     private function nominatimHtml(string $placeName, string $language): string
@@ -376,7 +376,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         if ($information === null) {
             return '';
         }
-        $html = '<section class="mt-4"><h3 class="h4 mb-2">Nominatim</h3><a href="' . e($information['url']) . '" rel="noopener noreferrer" target="_blank">' . e($information['label']) . '</a>';
+        $html = '<section class="mt-4">' . $this->providerHeading('nominatim', 'Nominatim') . '<a href="' . e($information['url']) . '" rel="noopener noreferrer" target="_blank">' . e($information['label']) . '</a>';
         if ($information['description'] !== null && $information['description'] !== '') {
             $html .= ' — ' . e($information['description']);
         }
@@ -396,7 +396,39 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             // assets. Load Leaflet only when a polygon is actually present.
             $html .= '<script>(function(){const el=document.getElementById(' . json_encode($mapId, JSON_THROW_ON_ERROR) . ');const geometry=' . $geometry . ';function draw(){if(!el||typeof L === "undefined"){return;}const map=L.map(el);L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"&copy; OpenStreetMap contributors"}).addTo(map);const layer=L.geoJSON({type:"Feature",geometry:geometry},{style:{color:"#3388ff",weight:2,fillColor:"#3388ff",fillOpacity:0.35}}).addTo(map);map.fitBounds(layer.getBounds(),{padding:[12,12]});setTimeout(function(){map.invalidateSize();},100);}if(typeof L!=="undefined"){draw();return;}if(!document.querySelector("[data-hh-leaflet]")){const css=document.createElement("link");css.rel="stylesheet";css.href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";document.head.appendChild(css);const script=document.createElement("script");script.src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";script.async=true;script.dataset.hhLeaflet="1";script.onload=draw;document.head.appendChild(script);}else{const timer=setInterval(function(){if(typeof L!=="undefined"){clearInterval(timer);draw();}},50);}})();</script>';
         }
-        return $html . '<br><small>' . e(MoreI18N::xlate('Source')) . ': Nominatim</small></section>';
+        return $html . $this->sourceHtml('Nominatim', 'https://nominatim.openstreetmap.org/') . '</section>';
+    }
+
+    private function sourceHtml(string $name, string $url): string
+    {
+        return '<br><small>' . e(MoreI18N::xlate('Source')) . ': <a href="' . e($url) . '" rel="noopener noreferrer" target="_blank">' . e($name) . '</a></small>';
+    }
+
+    private function providerHeading(string $provider, string $label): string
+    {
+        $iconUrl = match ($provider) {
+            'wikidata' => 'https://www.wikidata.org/static/favicon/wikidata.ico',
+            'factgrid' => 'https://database.factgrid.de/favicon.ico',
+            'gov' => 'https://gov.genealogy.net/favicon.ico',
+            'geonames' => 'https://www.geonames.org/favicon.ico',
+            'nominatim' => 'https://nominatim.openstreetmap.org/favicon.ico',
+            default => null,
+        };
+
+        $icon = $iconUrl === null ? '' : '<img class="me-1" src="' . e($iconUrl) . '" width="20" height="20" alt="" aria-hidden="true" loading="lazy" referrerpolicy="no-referrer" style="vertical-align:-0.2em">';
+
+        return '<h3 class="h4 mb-2">' . $icon . e($label) . '</h3>';
+    }
+
+    private function providerHomepage(string $provider): string
+    {
+        return match ($provider) {
+            'factgrid' => 'https://database.factgrid.de/',
+            'gov' => 'https://gov.genealogy.net/',
+            'geonames' => 'https://www.geonames.org/',
+            'nominatim' => 'https://nominatim.openstreetmap.org/',
+            default => 'https://www.wikidata.org/',
+        };
     }
 
     private function externalDetailLabel(string $label): string
@@ -622,22 +654,22 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         $this->layout = 'layouts/administration';
         $trees = Registry::container()->get(TreeService::class)->all();
         $radiusExceptions = NearbyDiscoverySettings::exceptions();
-        $houseTypeFilters = PlaceTypeFilterSettings::all();
-        $houseTypeLabels = ['wikidata' => [], 'factgrid' => [], 'gov' => [], 'geonames' => []];
+        $typeFilters = PlaceTypeFilterSettings::levels();
+        $typeLabels = [];
         $language = explode('-', str_replace('_', '-', I18N::languageTag()))[0] ?: 'en';
         $wikibaseClient = new ReadOnlyWikibaseClient();
-        foreach (['wikidata', 'factgrid'] as $provider) {
-            foreach ($wikibaseClient->entities($provider, $houseTypeFilters[$provider] ?? [], $language) as $qid => $entity) {
-                $label = $entity['labels'][$language]['value'] ?? $entity['labels']['en']['value'] ?? null;
-                $houseTypeLabels[$provider][$qid] = is_string($label) && $label !== '' ? $label : $qid;
+        foreach ($typeFilters as $level => $filters) {
+            foreach (['wikidata', 'factgrid'] as $provider) {
+                foreach ($wikibaseClient->entities($provider, $filters[$provider] ?? [], $language) as $qid => $entity) {
+                    $label = $entity['labels'][$language]['value'] ?? $entity['labels']['en']['value'] ?? null;
+                    $typeLabels[$level][$provider][$qid] = is_string($label) && $label !== '' ? $label : $qid;
+                }
             }
-        }
-        // GOV values are numeric vocabulary identifiers; their English labels
-        // are translated like all other module-owned strings.
-        foreach (['gov', 'geonames'] as $provider) {
-            foreach ($houseTypeFilters[$provider] ?? [] as $value) {
-                $label = $provider === 'geonames' ? PlaceTypeFilterSettings::geonamesLabel($value) : PlaceTypeFilterSettings::govLabel($value);
-                $houseTypeLabels[$provider][$value] = I18N::translate($label);
+            foreach (['gov', 'geonames'] as $provider) {
+                foreach ($filters[$provider] ?? [] as $value) {
+                    $label = $provider === 'geonames' ? PlaceTypeFilterSettings::geonamesLabel($value) : PlaceTypeFilterSettings::govLabel($value);
+                    $typeLabels[$level][$provider][$value] = I18N::translate($label);
+                }
             }
         }
 
@@ -647,8 +679,8 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             'radius_exceptions' => $radiusExceptions,
             'enabled_providers' => ExternalProviderSettings::enabled(),
             'provider_labels' => ExternalProviderSettings::labels(),
-            'house_type_filters' => PlaceTypeFilterSettings::all(),
-            'house_type_labels' => $houseTypeLabels,
+            'type_filters' => $typeFilters,
+            'type_labels' => $typeLabels,
             'show_consistent_references' => self::showConsistentReferences(),
             'title' => $this->title(),
         ]);
@@ -668,19 +700,25 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                 FlashMessages::addMessage(I18N::translate('No GeoNames username is configured. Enter it in Control panel / Geographical data / Geolocation / GeoNames.'), 'warning');
             }
         }
-        $typeFilters = is_array($body['house-type-filters'] ?? null) ? $body['house-type-filters'] : [];
-        $resetProvider = trim((string) ($body['reset-house-type-filter'] ?? ''));
-        if ($resetProvider !== '') {
-            PlaceTypeFilterSettings::reset($resetProvider);
+        $typeFilters = is_array($body['type-filters'] ?? null) ? $body['type-filters'] : [];
+        $reset = trim((string) ($body['reset-type-filter'] ?? ''));
+        if ($reset !== '') {
+            [$resetLevel, $resetProvider] = array_pad(explode(':', $reset, 2), 2, '');
+            if ($resetLevel === 'house') { PlaceTypeFilterSettings::reset($resetProvider); }
+            else {
+                $defaults = PlaceTypeFilterSettings::levels();
+                $defaults[$resetLevel][$resetProvider] = PlaceTypeFilterSettings::defaultsForLevel($resetLevel)[$resetProvider] ?? [];
+                PlaceTypeFilterSettings::saveLevels($defaults);
+            }
             $providerLabel = [
                 'wikidata' => 'Wikidata',
                 'factgrid' => 'FactGrid',
                 'gov' => 'GOV',
                 'geonames' => 'GeoNames',
             ][$resetProvider] ?? $resetProvider;
-            FlashMessages::addMessage(I18N::translate('The house filter types for %s were reset to their defaults.', $providerLabel), 'success');
+            FlashMessages::addMessage(I18N::translate('The filter types for %s were reset to their defaults.', $providerLabel), 'success');
         } else {
-            PlaceTypeFilterSettings::save($typeFilters);
+            PlaceTypeFilterSettings::saveLevels($typeFilters);
         }
         $globalInput = str_replace(',', '.', trim((string) ($body['global-radius-km'] ?? '')));
         $globalRadius = is_numeric($globalInput) ? (float) $globalInput : NearbyDiscoverySettings::DEFAULT_RADIUS_KM;

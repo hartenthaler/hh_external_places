@@ -96,7 +96,7 @@ final class ReadOnlyWikibaseClient
     }
 
     /** @return list<array{qid:string,label:string,description:?string}> */
-    public function search(string $provider, string $term, string $language, bool $houseOnly = false): array
+    public function search(string $provider, string $term, string $language, bool $houseOnly = false, string $filterLevel = 'house'): array
     {
         $endpoint = self::ENDPOINTS[$provider] ?? null;
         $term = trim($term);
@@ -119,13 +119,13 @@ final class ReadOnlyWikibaseClient
         }
 
         $entities = $this->entities($provider, array_column($results, 'qid'), $language);
-        return array_values(array_filter($results, function (array $result) use ($entities, $provider): bool {
-            return PlaceTypeFilterSettings::matchesWikibaseClaims($provider, (array) ($entities[$result['qid']]['claims'] ?? []));
+        return array_values(array_filter($results, function (array $result) use ($entities, $provider, $filterLevel): bool {
+            return PlaceTypeFilterSettings::matchesWikibaseClaims($provider, (array) ($entities[$result['qid']]['claims'] ?? []), $filterLevel);
         }));
     }
 
     /** @return list<array{qid:string,label:string,description:?string,distanceKm:float}> */
-    public function nearby(string $provider, float $latitude, float $longitude, float $radiusKm, string $language, bool $houseOnly = false): array
+    public function nearby(string $provider, float $latitude, float $longitude, float $radiusKm, string $language, bool $houseOnly = false, string $filterLevel = 'house'): array
     {
         if ($provider !== 'factgrid' || $latitude < -90 || $latitude > 90 || $longitude < -180 || $longitude > 180) { return []; }
         $radiusKm = max(0.1, min(100.0, $radiusKm));
@@ -137,7 +137,7 @@ final class ReadOnlyWikibaseClient
         $lonDelta = $radiusKm / (111.32 * $lonScale);
         $southWest = sprintf('Point(%.6F %.6F)', $longitude - $lonDelta, $latitude - $latDelta);
         $northEast = sprintf('Point(%.6F %.6F)', $longitude + $lonDelta, $latitude + $latDelta);
-        $houseTypes = array_values(array_filter(PlaceTypeFilterSettings::all()['factgrid'] ?? [], static fn (string $value): bool => preg_match('/^Q[1-9][0-9]*$/', $value) === 1));
+        $houseTypes = array_values(array_filter(PlaceTypeFilterSettings::forLevel('factgrid', $filterLevel), static fn (string $value): bool => preg_match('/^Q[1-9][0-9]*$/', $value) === 1));
         $types = $houseOnly && $houseTypes !== [] ? ' VALUES ?houseType { ' . implode(' ', array_map(static fn (string $value): string => 'wd:' . $value, $houseTypes)) . ' } ?item wdt:P2 ?houseType .' : '';
         // FactGrid calls its coordinate-location property P48 (the local
         // equivalent of Wikidata's P625).

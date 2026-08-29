@@ -69,7 +69,7 @@ final class GeoNamesProvider implements ExternalProvider
     }
 
     /** @return list<array{id:string,label:string,url:string,description:?string,distanceKm:?float,details:list<array{label:string,value:string}>}> */
-    public function search(string $place, string $language, bool $houseOnly = false): array
+    public function search(string $place, string $language, bool $houseOnly = false, string $filterLevel = 'house'): array
     {
         $username = $this->username();
         $place = trim($place);
@@ -92,7 +92,7 @@ final class GeoNamesProvider implements ExternalProvider
             $label = is_string($row['name'] ?? null) ? trim($row['name']) : '';
             if ($identifier === null || $label === '') { continue; }
             $featureCode = strtoupper(trim((string) ($row['fclass'] ?? '') . '.' . (string) ($row['fcode'] ?? '')));
-            if ($houseOnly && !in_array($featureCode, PlaceTypeFilterSettings::all()['geonames'] ?? [], true)) { continue; }
+            if ($houseOnly && !in_array($featureCode, PlaceTypeFilterSettings::forLevel('geonames', $filterLevel), true)) { continue; }
             $results[] = [
                 'id' => $identifier->value,
                 'label' => $label,
