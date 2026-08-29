@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.2.6.6 - 2026-08-29
+
+- Search filters can now distinguish four levels: house/farm, country,
+  federation or international organisation, and planet.
+- Administrators can edit the provider-specific type lists in an accordion;
+  each provider and level can be reset to its defaults.
+- Editors can apply any of these filters to normal and nearby searches while
+  leaving the unfiltered search available.
+- Added the requested Wikidata and FactGrid defaults for planet, federation
+  and country searches.
+
 ## 2.2.6.5 - 2026-08-29
 
 - Nominatim/OpenStreetMap can now optionally enrich shared places with the

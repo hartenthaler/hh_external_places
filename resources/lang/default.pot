@@ -67,6 +67,18 @@ msgstr ""
 msgid "Filter house"
 msgstr ""
 
+msgid "Filter country"
+msgstr ""
+
+msgid "Filter federation"
+msgstr ""
+
+msgid "Filter planet"
+msgstr ""
+
+msgid "Remove filter"
+msgstr ""
+
 msgid "Remove house filter"
 msgstr ""
 
@@ -534,6 +546,24 @@ msgid "Choose which external providers are used and how far the editor-only near
 msgstr ""
 
 msgid "External information providers"
+msgstr ""
+
+msgid "Search filter types"
+msgstr ""
+
+msgid "Configure optional provider-specific type filters for each hierarchy level. Editors can apply one filter to a search."
+msgstr ""
+
+msgid "Planet (Earth)"
+msgstr ""
+
+msgid "Federation / international organisation"
+msgstr ""
+
+msgid "State / country"
+msgstr ""
+
+msgid "House / farm"
 msgstr ""
 
 msgid "Cross-provider consistency"

@@ -1,7 +1,7 @@
 # **webtrees** module: External Places
 
 ![webtrees major version](https://img.shields.io/badge/webtrees-v2.2.x-green)
-[![Module version](https://img.shields.io/badge/version-2.2.6.5-blue)](version.txt)
+[![Module version](https://img.shields.io/badge/version-2.2.6.6-blue)](version.txt)
 [![Downloads](https://img.shields.io/github/downloads/hartenthaler/hh_external_places/total?label=downloads)](https://github.com/hartenthaler/hh_external_places/releases)
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
@@ -43,7 +43,7 @@ The current release provides:
 * provider-specific searches and nearby searches where the provider supports them;
 * assigning, replacing and removing identifiers explicitly, without automatic GEDCOM changes;
 * checking cross-references between providers and showing whether they are consistent;
-* filtering provider searches for house/building types;
+* filtering provider searches by hierarchy level: house/farm, country, federation/international organisation, or planet;
 * showing historical addresses, owners and occupants from Wikidata or FactGrid;
 * searching public people and organisations associated with external places;
 * linking displayed external people to their provider records and, when available, to WikiTree (`P2949`);
@@ -99,12 +99,13 @@ For a shared place with GEDCOM `MAP`, `LATI` and `LONG` coordinates, editors can
 
 Search results use a compact table. They show the provider label and identifier, the description and—where applicable—distance. Opening a result uses the provider's public page; **Assign** remains an explicit editor action.
 
-Administrators can maintain provider-specific type lists for the lowest
-inhabited-place level (apartments, houses, farms, castles and palaces). Each
-provider has a **Reset to default** action. Editors can activate **Filter
-house** separately for each provider; the normal unfiltered search remains
-available. Nearby-search buttons are disabled until the shared place has valid
-coordinates; a tooltip explains what is missing.
+Administrators can maintain provider-specific type lists for four hierarchy
+levels: house/farm, country, federation/international organisation, and planet.
+The lists are presented in an accordion and each provider has a **Reset to
+default** action. Editors can activate one level filter separately for each
+provider; the normal unfiltered search remains available. Nearby-search
+buttons are disabled until the shared place has valid coordinates; a tooltip
+explains what is missing.
 
 When Wikidata provides address statements, the shared-place page shows a read-only address table with house number, street, postal code, place and optional validity dates. It is intentionally omitted for items without address data, such as most settlements or administrative areas.
 
