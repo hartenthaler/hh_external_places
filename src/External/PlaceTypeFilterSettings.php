@@ -27,7 +27,7 @@ final class PlaceTypeFilterSettings
     /** @var array<string,array<string,list<string>>> */
     private const HIERARCHY_DEFAULTS = [
         'planet' => [
-            'wikidata' => ['Q634'],
+            'wikidata' => ['Q634', 'Q3504248', 'Q13205267', 'Q30014'],
             'factgrid' => ['Q176135'],
             'gov' => [],
             'geonames' => [],

@@ -30,7 +30,10 @@ final class GovProvider implements ExternalProvider
     {
         $value = trim($value);
         if (str_starts_with($value, self::AUTHORITY_URI)) { $value = preg_replace('~^https://gov\.genealogy\.net/(?:data/|\?id=)?~', '', $value) ?? $value; }
-        if (preg_match('/^[A-Z][A-Z0-9_]{2,63}$/', $value) !== 1) { return null; }
+        // GOV also contains legacy identifiers with lower-case prefixes,
+        // e.g. object_1192115.  IDs are still restricted to the documented
+        // alphanumeric/underscore alphabet and a bounded length.
+        if (preg_match('/^[A-Za-z][A-Za-z0-9_]{2,63}$/', $value) !== 1) { return null; }
         return new ExternalIdentifier($this->key(), $value, self::AUTHORITY_URI, 'https://gov.genealogy.net/item/show/' . rawurlencode($value));
     }
 
@@ -208,24 +211,44 @@ final class GovProvider implements ExternalProvider
         return $details;
     }
 
-    /** @param array<string,mixed> $data @return array<int,int|float> */
+    /** @param array<string,mixed> $data @return array<string,int|float> */
     private function population(array $data): array
     {
         $result = [];
+        $add = static function (string $year, int|float $amount, string $qualifier = '') use (&$result): void {
+            $base = $qualifier !== '' ? $qualifier . ' ' . $year : $year;
+            $key = $base;
+            $suffix = 2;
+            while (array_key_exists($key, $result)) { $key = $base . ' (' . $suffix++ . ')'; }
+            $result[$key] = $amount;
+        };
         foreach (['population', 'populationCount', 'inhabitants', 'inhabitantCount', 'populationHistory'] as $key) {
             $value = $data[$key] ?? null;
             if (is_array($value)) {
                 foreach ($value as $index => $item) {
-                    $year = is_array($item) ? ($item['year'] ?? $item['date'] ?? $item['from'] ?? $index) : $index;
+                    if (is_string($item) && preg_match('/\b(ab|bis)\s+(\d{3,4})\D+(\d+(?:[.,]\d+)?)/iu', $item, $match) === 1) {
+                        $amount = (float) str_replace(',', '.', $match[3]);
+                        $add($match[2], $amount == (int) $amount ? (int) $amount : $amount, mb_strtolower($match[1]));
+                        continue;
+                    }
+                    $year = is_array($item) ? ($item['year'] ?? $item['date'] ?? $item['from'] ?? $item['until'] ?? $index) : $index;
                     $amount = is_array($item) ? ($item['value'] ?? $item['count'] ?? $item['population'] ?? null) : $item;
-                    if (!is_scalar($year) || !is_scalar($amount)) { continue; }
+                    if (!is_scalar($year) || !is_scalar($amount) || !is_numeric($amount)) { continue; }
+                    $numericAmount = (float) $amount == (int) (float) $amount ? (int) $amount : (float) $amount;
+                    if (is_array($item) && is_scalar($item['from'] ?? null) && is_scalar($item['until'] ?? null)) {
+                        foreach (['from' => 'ab', 'until' => 'bis'] as $field => $qualifier) {
+                            $bound = (int) preg_replace('/[^0-9-].*$/', '', (string) $item[$field]);
+                            if ($bound > 0) { $add((string) $bound, $numericAmount, $qualifier); }
+                        }
+                        continue;
+                    }
                     $year = (int) preg_replace('/[^0-9-].*$/', '', (string) $year);
-                    if ($year < 1 || !is_numeric($amount)) { continue; }
-                    $result[$year] = (float) $amount == (int) (float) $amount ? (int) $amount : (float) $amount;
+                    if ($year < 1) { continue; }
+                    $add((string) $year, $numericAmount);
                 }
             }
         }
-        ksort($result, SORT_NUMERIC);
+        uksort($result, static function (string $a, string $b): int { return ((int) preg_replace('/\D.*/', '', $a)) <=> ((int) preg_replace('/\D.*/', '', $b)); });
         return $result;
     }
 }

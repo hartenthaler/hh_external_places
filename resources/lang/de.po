@@ -377,6 +377,9 @@ msgstr "Suchfiltertypen"
 msgid "Configure optional provider-specific type filters for each hierarchy level. Editors can apply one filter to a search."
 msgstr "Konfigurieren Sie optionale anbieterspezifische Typfilter für jede Hierarchieebene. Redakteure können einen Filter auf eine Suche anwenden."
 
+msgid "Configure optional provider-specific type filters for each hierarchy level. Users with edit permission can activate these filters when searching."
+msgstr "Konfigurieren Sie optionale anbieterspezifische Typfilter für jede Hierarchieebene. Bearbeiter können diese Filter bei der Suche aktivieren."
+
 msgid "Planet (Earth)"
 msgstr "Planet (Erde)"
 
@@ -699,6 +702,9 @@ msgstr "Auf Standard zurücksetzen"
 
 msgid "The house filter types for %s were reset to their defaults."
 msgstr "Die Typen des Hausfilters für %s wurden auf die Standardwerte zurückgesetzt."
+
+msgid "The filter types for %s were reset to their defaults."
+msgstr "Die Filtertypen für %s wurden auf die Standardwerte zurückgesetzt."
 
 msgid "Coordinates must be defined for this shared place before nearby search can be used."
 msgstr "Für die Umkreissuche müssen zuerst Koordinaten für diesen gemeinsamen Ort festgelegt werden."
