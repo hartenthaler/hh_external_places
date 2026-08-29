@@ -1,5 +1,11 @@
 # Changelog
 
+## Next release
+
+* Add an optional, cached Nominatim provider for OpenStreetMap place context.
+  It displays the returned object type and address hierarchy, identifies the
+  source, and documents the public service usage policy.
+
 All notable user-facing changes are documented here.
 
 ## Next release

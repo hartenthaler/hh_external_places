@@ -16,6 +16,21 @@ searches use one global default radius. Only trees with an explicitly
 different radius are stored and displayed as exceptions; entering the global
 default for an exception removes that exception.
 
+Nominatim is also optional. It performs a read-only contextual lookup against
+the public OpenStreetMap Nominatim API using the shared-place name. Results are
+cached locally and include the returned object type and address hierarchy where
+available. The provider is not used for systematic or automatic bulk queries;
+it is only evaluated when the shared-place information is rendered. The public
+service's [Nominatim usage policy](https://operations.osmfoundation.org/policies/nominatim/)
+is binding: at most one request per second, an identifying User-Agent, visible
+OpenStreetMap attribution, and no autocomplete or systematic downloads.
+
+The lookup uses the public endpoint
+`https://nominatim.openstreetmap.org/search` with `format=jsonv2`, address
+details, name details and a single best result. The returned `type` and
+address hierarchy are shown as contextual information; no Nominatim ID is
+written to the GEDCOM record.
+
 ## Dedicated external-information page
 
 The module provides a dedicated shared-place page at the **External

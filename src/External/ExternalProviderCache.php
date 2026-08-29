@@ -32,6 +32,32 @@ final class ExternalProviderCache
         if ($encoded !== false) { @file_put_contents($file, $encoded, LOCK_EX); }
     }
 
+    /** Enforce the public provider's minimum interval between requests. */
+    public function allowRequest(string $provider, float $intervalSeconds = 1.0): bool
+    {
+        $file = $this->file($provider, '__rate_limit__');
+        $directory = dirname($file);
+        if (!is_dir($directory)) { @mkdir($directory, 0775, true); }
+        $handle = @fopen($file, 'c+');
+        if ($handle === false) { return false; }
+        try {
+            if (!@flock($handle, LOCK_EX)) { return false; }
+            $last = trim((string) stream_get_contents($handle));
+            $now = microtime(true);
+            if ($last !== '' && is_numeric($last) && $now - (float) $last < $intervalSeconds) {
+                return false;
+            }
+            ftruncate($handle, 0);
+            rewind($handle);
+            fwrite($handle, (string) $now);
+            fflush($handle);
+            return true;
+        } finally {
+            @flock($handle, LOCK_UN);
+            fclose($handle);
+        }
+    }
+
     private function file(string $provider, string $identifier): string
     {
         $safe = preg_replace('/[^a-z0-9_-]+/i', '-', $provider) ?: 'external';

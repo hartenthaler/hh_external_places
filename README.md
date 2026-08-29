@@ -5,7 +5,7 @@
 [![Downloads](https://img.shields.io/github/downloads/hartenthaler/hh_external_places/total?label=downloads)](https://github.com/hartenthaler/hh_external_places/releases)
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-External Places is a [webtrees](https://www.webtrees.net) module for enriching [Vesta Shared Places](https://github.com/vesta-webtrees-2-custom-modules/vesta_shared_places) (`_LOC`) with public, read-only information from Wikidata, FactGrid, GOV and optionally GeoNames. Administrators can enable or disable providers and configure a global nearby-search radius with optional exceptions for individual family trees. Editors can assign and compare external place identifiers, search each provider and inspect cached details without copying external research into genealogical data.
+External Places is a [webtrees](https://www.webtrees.net) module for enriching [Vesta Shared Places](https://github.com/vesta-webtrees-2-custom-modules/vesta_shared_places) (`_LOC`) with public information from Wikidata, FactGrid, GOV, GeoNames and optionally Nominatim/OpenStreetMap. The module focuses on houses, farms and other inhabited buildings, while remaining usable for every kind of shared place. Administrators can enable or disable providers and configure a global nearby-search radius with optional exceptions for individual family trees. Editors can assign and compare external place identifiers, search each provider and inspect cached details. After review, selected external identifiers or information can explicitly be transferred into the shared-place record.
 
 ## 📚 Contents
 
@@ -26,24 +26,26 @@ External Places is a [webtrees](https://www.webtrees.net) module for enriching [
 
 A shared place can represent a building, farm, church, cemetery, street, square, district, village or another real-world place. The module stores validated external identifiers alongside the shared-place record and displays provider-specific public information such as names, descriptions, types, images, addresses, relationships, external references and population data where available.
 
-The module does not synchronize with Wikidata, FactGrid or GOV and does not send genealogical person data to these services. Assigning, replacing or removing an identifier is always an explicit action by a user who may edit the shared place. Read-only display never changes GEDCOM data.
+The module does not synchronize with Wikidata, FactGrid or GOV and does not send genealogical person data to these services. Assigning, replacing or removing an identifier, or transferring a reviewed value into the shared-place record, is always an explicit action by a user who may edit the shared place. Read-only display never changes GEDCOM data.
 
 Wikidata, FactGrid and GOV use fixed provider adapters. Their public cross-references can be checked for consistency; missing identifiers are added only after an editor explicitly submits them. See [External providers and identifier consistency](docs/EXTERNAL_PROVIDERS.md).
 
 ## 🏠 Domus (Wikidata)
 
-[Domus](https://domus.genealogy.net) is an open application for researching the history of houses and buildings. It complements webtrees: webtrees remains the place for private genealogical data, while Domus can provide specialised public research and map views. **Show in Domus** opens the linked Wikidata item in Domus in a new tab. Without a Wikidata link, it opens the Domus map start page. The module does not embed Domus or synchronize data with it.
+[Domus](https://domus.genealogy.net) is an open application for researching the history of houses and buildings. It complements webtrees: webtrees remains the place for private genealogical data, while Domus can provide specialised public research and map views. **Show in Domus** opens the linked Wikidata item in Domus in a new tab. Without a Wikidata link, it opens the Domus map start page. Domus is a separate public research application; the module only provides links to it.
 
 ## ⚙️ Main features
 
 The current release provides:
 
 * recognising typed Wikidata and FactGrid QIDs, GOV identifiers and GeoNames IDs;
-* loading and caching public information from Wikidata, FactGrid, GOV and GeoNames;
+* loading and caching public information from Wikidata, FactGrid, GOV, GeoNames and Nominatim;
 * provider-specific searches and nearby searches where the provider supports them;
 * assigning, replacing and removing identifiers explicitly, without automatic GEDCOM changes;
 * checking cross-references between providers and showing whether they are consistent;
+* filtering provider searches for house/building types;
 * showing historical addresses, owners and occupants from Wikidata or FactGrid;
+* searching public people and organisations associated with external places;
 * linking displayed external people to their provider records and, when available, to WikiTree (`P2949`);
 * configuring enabled providers and one global nearby-search radius with optional tree exceptions; and
 * opening linked Wikidata places in Domus.

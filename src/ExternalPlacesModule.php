@@ -31,6 +31,7 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalInformati
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalProviderRegistry;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalProviderSettings;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\GeoNamesProvider;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\NominatimProvider;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\GovExternalIdentifierCatalog;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\PlaceTypeFilterSettings;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikibase\ReadOnlyWikibaseClient;
@@ -180,13 +181,15 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         if ($identifier === null || !$wikidataEnabled) {
             $language = explode('-', str_replace('_', '-', I18N::languageTag()))[0] ?: 'en';
             $geoNamesHtml = $this->geoNamesHtml($location->fullName(), $language);
-            if ($externalIdentifiers === [] && !$location->canEdit() && $geoNamesHtml === '') {
+            $nominatimHtml = $this->nominatimHtml($place->getGedcomName() !== '' ? $place->getGedcomName() : $location->fullName(), $language);
+            if ($externalIdentifiers === [] && !$location->canEdit() && $geoNamesHtml === '' && $nominatimHtml === '') {
                 return null;
             }
 
             $assignmentUrl = $location->canEdit() ? self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]) : null;
             $html = $this->externalInformationHtml($externalIdentifiers, $language, '', $location->fullName(), $assignmentUrl, $location->gedcom());
             $html .= $geoNamesHtml;
+            $html .= $nominatimHtml;
             $html .= '<div class="d-flex gap-2 flex-wrap mt-2">';
             if ($location->canEdit()) {
                 $html .= '<a class="btn btn-primary btn-sm" href="' . e(self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()])) . '">' . e(I18N::translate('Assign external identifier')) . '</a>';
@@ -267,6 +270,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         $assignmentUrl = $location->canEdit() ? self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]) : null;
         $html .= $this->externalInformationHtml($externalIdentifiers, $language, 'wikidata', $location->fullName(), $assignmentUrl, $location->gedcom());
         $html .= $this->geoNamesHtml($location->fullName(), $language);
+        $html .= $this->nominatimHtml($place->getGedcomName() !== '' ? $place->getGedcomName() : $location->fullName(), $language);
         $html .= '<div class="d-flex gap-2 flex-wrap mt-2">';
         if ($location->canEdit()) {
             $html .= '<a class="btn btn-primary btn-sm" href="' . e(self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()])) . '">' . e(I18N::translate('Assign external identifier')) . '</a>';
@@ -362,15 +366,53 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         return $html . '<br><small>' . e(MoreI18N::xlate('Source')) . ': GeoNames</small></section>';
     }
 
+    private function nominatimHtml(string $placeName, string $language): string
+    {
+        if (!ExternalProviderSettings::isEnabled('nominatim')) {
+            return '';
+        }
+        $provider = new NominatimProvider();
+        $information = $provider->lookup($placeName, $language);
+        if ($information === null) {
+            return '';
+        }
+        $html = '<section class="mt-4"><h3 class="h4 mb-2">Nominatim</h3><a href="' . e($information['url']) . '" rel="noopener noreferrer" target="_blank">' . e($information['label']) . '</a>';
+        if ($information['description'] !== null && $information['description'] !== '') {
+            $html .= ' — ' . e($information['description']);
+        }
+        $parts = [];
+        foreach ($information['details'] as $detail) {
+            $label = $this->externalDetailLabel($detail['label']);
+            $parts[] = '<span title="' . e($label) . '" aria-label="' . e($label) . '">' . e($detail['value']) . '</span>';
+        }
+        if ($parts !== []) {
+            $html .= '<br><small>' . implode(', ', $parts) . '</small>';
+        }
+        if (is_array($information['geometry'] ?? null)) {
+            $mapId = 'nominatim-map-' . substr(md5($information['url']), 0, 10);
+            $geometry = json_encode($information['geometry'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+            $html .= '<div id="' . e($mapId) . '" style="height:320px;min-height:240px" class="mt-3 rounded border" role="img" aria-label="' . e(I18N::translate('Map showing the Nominatim geometry')) . '"></div>';
+            // Dedicated module pages do not necessarily load webtrees map
+            // assets. Load Leaflet only when a polygon is actually present.
+            $html .= '<script>(function(){const el=document.getElementById(' . json_encode($mapId, JSON_THROW_ON_ERROR) . ');const geometry=' . $geometry . ';function draw(){if(!el||typeof L === "undefined"){return;}const map=L.map(el);L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"&copy; OpenStreetMap contributors"}).addTo(map);const layer=L.geoJSON({type:"Feature",geometry:geometry},{style:{color:"#3388ff",weight:2,fillColor:"#3388ff",fillOpacity:0.35}}).addTo(map);map.fitBounds(layer.getBounds(),{padding:[12,12]});setTimeout(function(){map.invalidateSize();},100);}if(typeof L!=="undefined"){draw();return;}if(!document.querySelector("[data-hh-leaflet]")){const css=document.createElement("link");css.rel="stylesheet";css.href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";document.head.appendChild(css);const script=document.createElement("script");script.src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";script.async=true;script.dataset.hhLeaflet="1";script.onload=draw;document.head.appendChild(script);}else{const timer=setInterval(function(){if(typeof L!=="undefined"){clearInterval(timer);draw();}},50);}})();</script>';
+        }
+        return $html . '<br><small>' . e(MoreI18N::xlate('Source')) . ': Nominatim</small></section>';
+    }
+
     private function externalDetailLabel(string $label): string
     {
         return match ($label) {
-            'Country', 'Region' => MoreI18N::xlate($label),
+            'Country', 'Region', 'Street', 'Postal code', 'Place' => MoreI18N::xlate($label),
             'Population' => I18N::translate('Population'),
             'External identifier' => I18N::translate('External identifier'),
             'Administrative area' => I18N::translate('Administrative area'),
             'Feature' => I18N::translate('Feature'),
             'Elevation' => I18N::translate('Elevation'),
+            'House number' => I18N::translate('House number'),
+            'Municipality' => I18N::translate('Municipality'),
+            'County' => I18N::translate('County'),
+            'State' => I18N::translate('State'),
+            'Type' => I18N::translate('Type'),
             default => $label,
         };
     }
@@ -747,6 +789,14 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                 'country'     => 'International',
                 'privacy_url' => 'https://www.geonames.org/terms-of-service.html',
                 'description' => I18N::translate('The module retrieves public contextual place information from GeoNames when the provider is enabled and a GeoNames username is configured.'),
+                'data'        => [I18N::translate('The shared-place name, requested display language and the server IP address.')],
+            ], [
+                'service_id'  => 'nominatim',
+                'name'        => 'Nominatim / OpenStreetMap',
+                'url'         => 'https://nominatim.openstreetmap.org/',
+                'country'     => 'International',
+                'privacy_url' => 'https://operations.osmfoundation.org/policies/nominatim/',
+                'description' => I18N::translate('The module retrieves public contextual place information from Nominatim when the provider is enabled.'),
                 'data'        => [I18N::translate('The shared-place name, requested display language and the server IP address.')],
             ]],
             'security_measures' => [

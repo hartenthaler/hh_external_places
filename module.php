@@ -47,6 +47,7 @@ require __DIR__ . '/src/External/ExternalProvider.php';
 require __DIR__ . '/src/External/ExternalProviderSettings.php';
 require __DIR__ . '/src/External/PlaceTypeFilterSettings.php';
 require __DIR__ . '/src/External/GeoNamesProvider.php';
+require __DIR__ . '/src/External/NominatimProvider.php';
 require __DIR__ . '/src/External/GovExternalIdentifierCatalog.php';
 require __DIR__ . '/src/External/WikibaseProvider.php';
 require __DIR__ . '/src/External/GovProvider.php';
