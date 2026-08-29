@@ -371,6 +371,24 @@ msgstr "Wählen Sie die externen Informationsanbieter und den Radius, den die Su
 msgid "External information providers"
 msgstr "Externe Informationsanbieter"
 
+msgid "Search filter types"
+msgstr "Suchfiltertypen"
+
+msgid "Configure optional provider-specific type filters for each hierarchy level. Editors can apply one filter to a search."
+msgstr "Konfigurieren Sie optionale anbieterspezifische Typfilter für jede Hierarchieebene. Redakteure können einen Filter auf eine Suche anwenden."
+
+msgid "Planet (Earth)"
+msgstr "Planet (Erde)"
+
+msgid "Federation / international organisation"
+msgstr "Staatenbund / internationale Organisation"
+
+msgid "State / country"
+msgstr "Staat / Land"
+
+msgid "House / farm"
+msgstr "Haus / Hof"
+
 msgid "Cross-provider consistency"
 msgstr "Providerübergreifende Konsistenz"
 
@@ -453,6 +471,18 @@ msgstr "Ein Wert pro Zeile; die genaue Bedeutung hängt vom Anbieter ab."
 
 msgid "Filter house"
 msgstr "Filter Haus"
+
+msgid "Filter country"
+msgstr "Filter Land"
+
+msgid "Filter federation"
+msgstr "Filter Staatenbund"
+
+msgid "Filter planet"
+msgstr "Filter Planet"
+
+msgid "Remove filter"
+msgstr "Filter entfernen"
 
 msgid "Remove house filter"
 msgstr "Hausfilter entfernen"

@@ -109,18 +109,21 @@ or conflicting values remain visible regardless of this setting.
 An editor may add a missing value explicitly. The module writes only a
 validated `_EXID`/`TYPE` block and updates the normal webtrees change stamp.
 
-The administrator can maintain provider-specific type identifiers for the
-optional house filter. The initial lists target the lowest inhabited-place
+The administrator can maintain provider-specific type identifiers for four
+optional hierarchy filters: house/farm, country, federation/international
+organisation, and planet. The initial lists target the lowest inhabited-place
 level; Wikidata and FactGrid use type QIDs, GOV uses numeric type IDs from its
-official type vocabulary, and GeoNames uses feature codes. FactGrid defaults
-include Q701396 (residential building), Q16200 (real estate), Q545649
-(apartment), and Q1340072 (isolated settlement/farmstead). The GOV defaults
+official type vocabulary, and GeoNames uses feature codes. The new Wikidata
+defaults include Q634 (planet), Q484652/Q1335818/Q170156 (federation or
+international organisation), and Q6256/Q1048835/Q4835091 (country). The
+corresponding FactGrid defaults are Q176135, Q1059807, and Q21925/Q221010.
+The existing house defaults remain unchanged. The GOV defaults
 are 8 (castle), 17 (building), 21 (manor), 24 (farm), 193 (alpine pasture),
 229 (group of houses), 231 (farms), 236 (houses), 261 (farm hamlet), 111
 (palace), 102 (forester's house), and 87 (mill). Labels are module strings
 and can be translated independently of the provider IDs. Each provider has a
-reset-to-default action. The editor activates the filter per provider, so an
-unfiltered search is always still available.
+reset-to-default action. The editor activates one filter level per provider,
+so an unfiltered search is always still available.
 
 The initial Wikidata list includes Q23413, Q751876, Q3947, Q16560, Q41176,
 Q44613, Q365627, Q1802963 and Q131596; administrators can extend or reduce it.
