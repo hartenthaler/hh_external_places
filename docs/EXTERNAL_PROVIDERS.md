@@ -29,7 +29,10 @@ The lookup uses the public endpoint
 `https://nominatim.openstreetmap.org/search` with `format=jsonv2`, address
 details, name details and a single best result. The returned `type` and
 address hierarchy are shown as contextual information; no Nominatim ID is
-written to the GEDCOM record.
+written to the GEDCOM record. If the response contains GeoJSON geometry, the
+module renders it as a semi-transparent polygon on an interactive Leaflet map.
+The map is loaded only for a result that includes geometry; an unavailable
+map library does not affect the surrounding place information.
 
 ## Dedicated external-information page
 
