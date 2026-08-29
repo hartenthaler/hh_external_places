@@ -12,7 +12,7 @@ final class ExternalProviderSettings
     public const PREFERENCE = 'HH_EXTERNAL_PLACES_PROVIDERS';
 
     /** @var list<string> */
-    public const PROVIDERS = ['wikidata', 'factgrid', 'gov', 'geonames'];
+    public const PROVIDERS = ['wikidata', 'factgrid', 'gov', 'geonames', 'nominatim'];
 
     /** @return list<string> */
     public static function enabled(): array
@@ -39,6 +39,6 @@ final class ExternalProviderSettings
     /** @return array<string,string> */
     public static function labels(): array
     {
-        return ['wikidata' => 'Wikidata', 'factgrid' => 'FactGrid', 'gov' => 'GOV', 'geonames' => 'GeoNames'];
+        return ['wikidata' => 'Wikidata', 'factgrid' => 'FactGrid', 'gov' => 'GOV', 'geonames' => 'GeoNames', 'nominatim' => 'Nominatim'];
     }
 }

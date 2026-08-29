@@ -17,6 +17,12 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+msgid "Municipality"
+msgstr ""
+
+msgid "County"
+msgstr ""
+
 #: C:\Users\harte\Documents\Codex\webtrees-modules\hh_external_places\resources\views\assignment.phtml:30
 #: C:\Users\harte\Documents\Codex\webtrees-modules\hh_external_places\src\ExternalPlacesModule.php:97
 #: C:\Users\harte\Documents\Codex\webtrees-modules\hh_external_places\src\ExternalPlacesModule.php:178
