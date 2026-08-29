@@ -1,18 +1,25 @@
 # Changelog
 
-## Next release
+## 2.2.6.5 - 2026-08-29
 
-* Add an optional, cached Nominatim provider for OpenStreetMap place context.
-  It displays the returned object type and address hierarchy, identifies the
-  source, and documents the public service usage policy.
-
-All notable user-facing changes are documented here.
-
-## Next release
-
+- Nominatim/OpenStreetMap can now optionally enrich shared places with the
+  object type and compact address hierarchy.
+- When Nominatim provides a building or area polygon, it is shown on an
+  interactive map with a transparent overlay.
+- Nominatim requests use local caching and the public service's one-request-
+  per-second policy; temporary request failures no longer produce a technical
+  diagnostic block in the place display.
+- Added German translations for the Nominatim address labels “Municipality”
+  (Gemeinde) and “County” (Landkreis).
 - Administrators can hide confirmations for external identifiers that are
   already consistent across providers. Missing or conflicting identifiers are
   still reported.
+- Provider searches can be filtered for house/building types, with editable
+  provider-specific defaults and a reset action.
+- GOV population history is shown chronologically in a table with a compact
+  line chart; additional GOV references are linked where possible.
+
+All notable user-facing changes are documented here.
 
 ## 2.2.6.4 - 2026-08-26
 
@@ -56,20 +63,6 @@ All notable user-facing changes are documented here.
 - Visitors can search and review results but cannot see or submit assignment
   actions; editors can assign missing cross-provider identifiers directly from
   the consistency message.
-
-## Unreleased
-
-- Administrators can maintain provider-specific house/building type lists and
-  editors can optionally apply a **Filter house** action to Wikidata, FactGrid,
-  GOV and GeoNames searches.
-- GOV population history is now shown as a year-sorted table with a compact
-  line chart; the population label is translated.
-- GOV cross-references to Wikidata and GeoNames are shown through the common
-  consistency display; additional GND and LEO-BW identifiers are translated
-  and linked directly.
-- GOV external-reference prefixes are maintained in a configuration file so
-  additional identifiers can be displayed consistently and translated.
-- Version 2 will add optional research workflows without automatic GEDCOM changes.
 
 ## 2.2.6.0 - 2026-08-19
 
