@@ -71,6 +71,11 @@ final class WikidataLocationAssignmentAction implements RequestHandlerInterface
             $typeId = Validator::parsedBody($request)->string('gov_type', '');
             $added = $service->addGovType($location, $typeId);
             FlashMessages::addMessage($added ? I18N::translate('The GOV place type has been added.') : I18N::translate('The GOV place type was not added.'), $added ? 'success' : 'danger');
+        } elseif ($operation === 'add-location-name') {
+            $name = Validator::parsedBody($request)->string('name', '');
+            $language = Validator::parsedBody($request)->string('language', '');
+            $added = $service->addLocationName($location, $name, $language);
+            FlashMessages::addMessage($added ? I18N::translate('The place name has been added.') : I18N::translate('The place name was not added.'), $added ? 'success' : 'danger');
         } else {
             throw new HttpBadRequestException(I18N::translate('Invalid Wikidata assignment operation.'));
         }

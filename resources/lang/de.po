@@ -735,3 +735,20 @@ msgstr "Der GOV-Ortstyp wurde hinzugefügt."
 
 msgid "The GOV place type was not added."
 msgstr "Der GOV-Ortstyp wurde nicht hinzugefügt."
+msgid "Alternate name"
+msgstr "Alternativname"
+
+msgid "consistent with the shared place name"
+msgstr "mit dem Ortsnamen konsistent"
+
+msgid "inconsistent with the shared place name"
+msgstr "mit dem Ortsnamen inkonsistent"
+
+msgid "Add place name"
+msgstr "Ortsnamen hinzufügen"
+
+msgid "The place name has been added."
+msgstr "Der Ortsname wurde hinzugefügt."
+
+msgid "The place name was not added."
+msgstr "Der Ortsname wurde nicht hinzugefügt."

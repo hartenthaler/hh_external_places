@@ -9,6 +9,7 @@ use Fisharebest\Webtrees\Location;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\WikidataIdentifier;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\ExternalIdentifier;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\PlaceTypeFilterSettings;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\GeoNamesLanguage;
 
 /**
  * Applies an explicit Wikidata assignment to a shared-place record.
@@ -80,6 +81,26 @@ final class WikidataLocationAssignmentService
         if (!$location->canEdit() || preg_match('/^\d+$/', $typeId) !== 1) { return false; }
         $updated = $this->govTypeEditor->add($location->gedcom(), $typeId, PlaceTypeFilterSettings::govLabel($typeId));
         if ($updated === $location->gedcom()) { return false; }
+        $location->updateRecord($this->withUpdatedChange($updated), false);
+        return true;
+    }
+
+    /** Add a missing shared-place NAME line, preserving all existing names. */
+    public function addLocationName(Location $location, string $name, string $language = ''): bool
+    {
+        if (!$location->canEdit() || trim($name) === '' || mb_strlen($name) > 240 || preg_match('/[\r\n]/', $name) === 1) { return false; }
+        $name = trim($name);
+        foreach (preg_split('/\r?\n/', $location->gedcom()) ?: [] as $line) {
+            if (preg_match('/^1 NAME(?: |$)(.*)$/', $line, $match) === 1 && trim($match[1]) === $name) { return false; }
+        }
+        $updated = rtrim($location->gedcom()) . "\n1 NAME " . $name;
+        $language = strtolower(trim(str_replace('_', '-', $language)));
+        $language = explode('-', $language)[0];
+        $gedcomLanguage = GeoNamesLanguage::gedcom($language);
+        if ($gedcomLanguage !== null) {
+            $updated .= "\n2 LANG " . $gedcomLanguage;
+        }
+        $updated .= "\n";
         $location->updateRecord($this->withUpdatedChange($updated), false);
         return true;
     }
