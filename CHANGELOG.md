@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 2.2.6.8 - 2026-08-31
+
+- GeoNames alternate names are now shown with their language codes, sorted and
+  deduplicated.
+- Editors can compare alternate names with the shared-place names and add a
+  missing name together with its language.
+- Added the missing Wikidata default filter for sovereign states.
+
 - Added the requested GOV, Wikidata and house-level default filter types.
 - GOV population histories no longer interpret list positions as years; “from”
   and “until” values are retained as separate dated observations.
