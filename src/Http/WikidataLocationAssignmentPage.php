@@ -82,12 +82,15 @@ final class WikidataLocationAssignmentPage implements RequestHandlerInterface
 
         $current = (new ExternalIdService())->wikidataIdentifiers($location->gedcom())->identifier();
         $entity  = $current === null ? null : $client->fetch($current, $language);
+        $wikidataCandidates = $providerEnabled && $providerKey === 'wikidata' && $submittedSearch !== ''
+            ? $client->search($submittedSearch, $language, $houseOnly, $filterLevel ?? 'house')
+            : [];
 
         return $this->viewResponse('hh_external_places::assignment', [
             'assignment_url' => ExternalPlacesModule::assignmentUrl(['tree' => $tree->name(), 'xref' => $location->xref()]),
             'provider_key'   => $providerKey,
             'enabled_providers' => $enabledProviders,
-            'candidates'     => $providerEnabled && $providerKey === 'wikidata' && $submittedSearch !== '' ? $client->search($submittedSearch, $language, $houseOnly, $filterLevel ?? 'house') : [],
+            'candidates'     => $wikidataCandidates,
             'external_candidates' => $providerEnabled && $providerKey === 'gov' && $submittedSearch !== '' && $govProvider !== null && method_exists($govProvider, 'search') ? array_values(array_filter($govProvider->search($submittedSearch, $language), static fn (array $candidate): bool => !$houseOnly || PlaceTypeFilterSettings::matches('gov', $candidate, $filterLevel ?? 'house'))) : [],
             'factgrid_candidates' => $providerEnabled && $providerKey === 'factgrid' && $submittedSearch !== '' ? $wikibaseClient->search('factgrid', $submittedSearch, $language, $houseOnly, $filterLevel ?? 'house') : [],
             'geonames_candidates' => $providerEnabled && $providerKey === 'geonames' && $submittedSearch !== '' ? $geoNamesProvider->search($submittedSearch, $language, $houseOnly, $filterLevel ?? 'house') : [],

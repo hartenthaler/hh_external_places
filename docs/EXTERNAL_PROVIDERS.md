@@ -75,6 +75,12 @@ GOV is read through its public REST endpoint `/api/getObject?itemId={id}`;
 the fixed GOV host and a validated ID. The service is read-only and has a
 bounded response size and timeout.
 
+For a validated GOV identifier the module checks the MediaWiki API with the
+stable namespace title `GOV:{id}` and follows redirects. A link supplied by GOV
+is preferred when present; otherwise an existing redirected GenWiki article is
+linked using its actual title. Missing articles are not displayed, and the API
+result is cached.
+
 GOV external-reference prefixes are described in
 `resources/config/gov-external-identifiers.json`. Each entry contains a
 translatable description and, where available, a URL template. The `{0}`
@@ -87,6 +93,11 @@ When GOV supplies historical population figures, the module normalizes them
 into a year-indexed `population` object. The shared-place summary presents
 these values in chronological order in a two-column table and a compact line
 chart; no external data is written back to GOV.
+
+GeoNames supplies a current population value, but its standard `getJSON`
+response does not include a census or reference year. The module therefore
+shows that value without inventing a year; historical population claims need
+a source that provides dated observations.
 
 ## HTTP transport
 

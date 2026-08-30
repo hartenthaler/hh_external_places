@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+- Added the requested GOV, Wikidata and house-level default filter types.
+- GOV population histories no longer interpret list positions as years; “from”
+  and “until” values are retained as separate dated observations.
+- Nominatim settlement searches now prefer settlement results for ambiguous
+  bare place names while preserving building results for address searches.
+- Wikibase filters now accept both object and string representations of type
+  claims returned by compatible API versions.
+- Newly added GOV place types receive a readable TYPE value instead of the
+  technical placeholder `place`.
+
 ## 2.2.6.7 - 2026-08-29
 
 - GOV identifiers now also accept valid legacy IDs with lower-case prefixes,

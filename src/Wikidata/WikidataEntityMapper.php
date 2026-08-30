@@ -9,6 +9,14 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\WikidataIdentifier;
 /** @internal Maps the fixed wbgetentities response subset to a value object. */
 final class WikidataEntityMapper
 {
+    /** @param array<string, mixed> $claims */
+    public function mapClaims(WikidataIdentifier $identifier, array $claims): WikidataEntity
+    {
+        return $this->map($identifier, [
+            'entities' => [$identifier->qid() => ['claims' => $claims]],
+        ], 'en') ?? new WikidataEntity($identifier->qid(), null, null, [], null, [], [], []);
+    }
+
     /** @param array<string, mixed> $payload */
     public function map(WikidataIdentifier $identifier, array $payload, string $language): ?WikidataEntity
     {
@@ -74,13 +82,45 @@ final class WikidataEntityMapper
 
         $ids = [];
         foreach ($statements as $statement) {
-            $id = $statement['mainsnak']['datavalue']['value']['id'] ?? null;
-            if (is_string($id) && preg_match('/^Q[1-9][0-9]*$/', $id) === 1) {
+            // The regular Wikibase shape is statement.mainsnak.datavalue,
+            // but formatversion=2 compatible proxies may omit mainsnak or
+            // expose the entity value directly. Keep the extraction focused
+            // on the claim value and accept all of these representations.
+            $value = is_array($statement)
+                ? ($statement['mainsnak']['datavalue']['value']
+                    ?? $statement['datavalue']['value']
+                    ?? $statement['value']
+                    ?? null)
+                : $statement;
+            $id = $this->entityId($value);
+            if ($id !== null) {
                 $ids[$id] = $id;
             }
         }
 
         return array_values($ids);
+    }
+
+    /** Extract one Wikibase item identifier from a claim value. */
+    private function entityId(mixed $value): ?string
+    {
+        if (is_string($value)) {
+            return preg_match('/^Q[1-9][0-9]*$/', $value) === 1 ? $value : null;
+        }
+        if (!is_array($value)) {
+            return null;
+        }
+
+        $id = $value['id'] ?? null;
+        if (is_string($id) && preg_match('/^Q[1-9][0-9]*$/', $id) === 1) {
+            return $id;
+        }
+        $numericId = $value['numeric-id'] ?? null;
+        if (is_int($numericId) || (is_string($numericId) && ctype_digit($numericId))) {
+            return 'Q' . $numericId;
+        }
+
+        return null;
     }
 
     /** @param mixed $statements */

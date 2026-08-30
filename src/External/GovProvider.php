@@ -7,6 +7,7 @@ namespace Hartenthaler\Webtrees\Module\ExternalPlacesModule\External;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\ExternalIdentifier;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Http\HttpTransport;
 use JsonException;
+use Throwable;
 
 /** Read-only adapter for the public GOV REST service. */
 final class GovProvider implements ExternalProvider
@@ -59,7 +60,7 @@ final class GovProvider implements ExternalProvider
         return $this->map($identifier, $data);
     }
 
-    /** @return list<array{id:string,label:string,description:?string,typeId:?string,distanceKm:?float}> */
+    /** @return list<array{id:string,label:string,description:?string,typeId:?string,typeIds:list<string>,distanceKm:?float}> */
     public function search(string $term, string $language = 'en'): array
     {
         $term = trim($term);
@@ -68,7 +69,7 @@ final class GovProvider implements ExternalProvider
         return $this->candidateList($payload);
     }
 
-    /** @return list<array{id:string,label:string,description:?string,typeId:?string,distanceKm:?float}> */
+    /** @return list<array{id:string,label:string,description:?string,typeId:?string,typeIds:list<string>,distanceKm:?float}> */
     public function nearby(float $latitude, float $longitude, float $radiusKm): array
     {
         if ($latitude < -90 || $latitude > 90 || $longitude < -180 || $longitude > 180) { return []; }
@@ -97,7 +98,7 @@ final class GovProvider implements ExternalProvider
         } catch (JsonException) { return null; }
     }
 
-    /** @param array<string,mixed>|null $payload @return list<array{id:string,label:string,description:?string,typeId:?string,distanceKm:?float}> */
+    /** @param array<string,mixed>|null $payload @return list<array{id:string,label:string,description:?string,typeId:?string,typeIds:list<string>,distanceKm:?float}> */
     private function candidateList(?array $payload): array
     {
         if ($payload === null) { return []; }
@@ -109,8 +110,8 @@ final class GovProvider implements ExternalProvider
             $id = $item['id'] ?? $item['govId'] ?? $item['itemId'] ?? $item['value'] ?? null;
             $label = $this->firstString($item, ['name', 'label', 'title']) ?? $id;
             if (!is_string($id) || $this->identifier($id) === null || !is_string($label)) { continue; }
-            $typeId = $item['typeId'] ?? $item['govType'] ?? $item['objectTypeId'] ?? null;
-            $out[] = ['id' => $id, 'label' => trim(strip_tags($label)), 'description' => $this->firstString($item, ['type', 'description', 'objectType']), 'typeId' => is_scalar($typeId) ? (string) $typeId : null, 'distanceKm' => is_numeric($item['distance'] ?? null) ? (float) $item['distance'] : null];
+            $typeIds = $this->typeIds($item);
+            $out[] = ['id' => $id, 'label' => trim(strip_tags($label)), 'description' => $this->firstString($item, ['type', 'description', 'objectType']), 'typeId' => $typeIds[0] ?? null, 'typeIds' => $typeIds, 'distanceKm' => is_numeric($item['distance'] ?? null) ? (float) $item['distance'] : null];
         }
         return $out;
     }
@@ -129,7 +130,7 @@ final class GovProvider implements ExternalProvider
             $typeId = $description;
             $description = PlaceTypeFilterSettings::govLabel($description);
         }
-        return new ExternalInformation('gov', $identifier->value, $identifier->url, $label, $description, null, [], $this->references($data), $this->details($data), [], [], [], $this->population($data), $typeId);
+        return new ExternalInformation('gov', $identifier->value, $identifier->url, $label, $description, null, [], $this->references($data, $identifier->value), $this->details($data), [], [], [], $this->population($data), $typeId);
     }
 
     /** @param array<string,mixed> $data @param list<string> $keys */
@@ -152,6 +153,20 @@ final class GovProvider implements ExternalProvider
         return null;
     }
 
+    /** @param array<string,mixed> $item @return list<string> */
+    private function typeIds(array $item): array
+    {
+        $values = [];
+        foreach (['typeId', 'govType', 'objectTypeId', 'type', 'types', 'objectTypes'] as $key) {
+            $raw = $item[$key] ?? null;
+            foreach (is_array($raw) ? $raw : [$raw] as $value) {
+                if (is_array($value)) { $value = $value['id'] ?? $value['value'] ?? $value['typeId'] ?? $value['name'] ?? null; }
+                if (is_scalar($value) && trim((string) $value) !== '') { $values[] = trim((string) $value); }
+            }
+        }
+        return array_values(array_unique($values));
+    }
+
     /** @param array<string,mixed> $data @param list<string> $keys */
     private function firstScalarString(array $data, array $keys): ?string
     {
@@ -165,7 +180,7 @@ final class GovProvider implements ExternalProvider
     }
 
     /** @param array<string,mixed> $data @return array<string,list<string>> */
-    private function references(array $data): array
+    private function references(array $data, string $govId): array
     {
         $references = [];
         foreach (['wikidata', 'factgrid'] as $provider) {
@@ -190,7 +205,55 @@ final class GovProvider implements ExternalProvider
             }
         }
         foreach ($references as $provider => $values) { $references[$provider] = array_values(array_unique($values)); }
+
+        // Resolve the documented GOV namespace page through MediaWiki. The
+        // API follows redirects, so the resulting link points to the actual
+        // GenWiki article title rather than to a missing GOV: namespace page.
+        if (($genwikiUrl = $this->genwikiUrl($govId)) !== null && ($references['genwiki'] ?? []) === []) {
+            $references['genwiki'] = [$genwikiUrl];
+        }
         return $references;
+    }
+
+    private function genwikiUrl(string $govId): ?string
+    {
+        $cached = $this->cache->read('genwiki', $govId);
+        if ($cached !== null) {
+            return is_string($cached['url'] ?? null) ? $cached['url'] : null;
+        }
+        if (!$this->cache->allowRequest('genwiki', 1.0)) {
+            return null;
+        }
+
+        try {
+            $response = $this->httpClient->request('GET', 'https://wiki.genealogy.net/api.php', [
+                'action' => 'query',
+                'format' => 'json',
+                'prop' => '',
+                'titles' => 'GOV:' . $govId,
+                'redirects' => '1',
+            ], [
+                'Accept' => 'application/json',
+                'User-Agent' => 'webtrees External Places/0.1 (https://github.com/hartenthaler/hh_external_places)',
+            ], 10.0);
+            if ($response === null || $response->getStatusCode() !== 200) {
+                return null;
+            }
+            $payload = json_decode($response->getBody()->getContents(), true, 16, JSON_THROW_ON_ERROR);
+        } catch (Throwable) {
+            return null;
+        }
+
+        $url = null;
+        foreach (($payload['query']['pages'] ?? []) as $page) {
+            if (!is_array($page) || array_key_exists('missing', $page) || !is_string($page['title'] ?? null)) {
+                continue;
+            }
+            $url = 'https://wiki.genealogy.net/' . rawurlencode($page['title']);
+            break;
+        }
+        $this->cache->write('genwiki', $govId, ['url' => $url]);
+        return $url;
     }
 
     /** @param array<string,mixed> $data @return list<array{label:string,value:string}> */
@@ -222,31 +285,56 @@ final class GovProvider implements ExternalProvider
             while (array_key_exists($key, $result)) { $key = $base . ' (' . $suffix++ . ')'; }
             $result[$key] = $amount;
         };
-        foreach (['population', 'populationCount', 'inhabitants', 'inhabitantCount', 'populationHistory'] as $key) {
-            $value = $data[$key] ?? null;
-            if (is_array($value)) {
-                foreach ($value as $index => $item) {
-                    if (is_string($item) && preg_match('/\b(ab|bis)\s+(\d{3,4})\D+(\d+(?:[.,]\d+)?)/iu', $item, $match) === 1) {
-                        $amount = (float) str_replace(',', '.', $match[3]);
-                        $add($match[2], $amount == (int) $amount ? (int) $amount : $amount, mb_strtolower($match[1]));
-                        continue;
-                    }
-                    $year = is_array($item) ? ($item['year'] ?? $item['date'] ?? $item['from'] ?? $item['until'] ?? $index) : $index;
-                    $amount = is_array($item) ? ($item['value'] ?? $item['count'] ?? $item['population'] ?? null) : $item;
-                    if (!is_scalar($year) || !is_scalar($amount) || !is_numeric($amount)) { continue; }
-                    $numericAmount = (float) $amount == (int) (float) $amount ? (int) $amount : (float) $amount;
-                    if (is_array($item) && is_scalar($item['from'] ?? null) && is_scalar($item['until'] ?? null)) {
-                        foreach (['from' => 'ab', 'until' => 'bis'] as $field => $qualifier) {
-                            $bound = (int) preg_replace('/[^0-9-].*$/', '', (string) $item[$field]);
-                            if ($bound > 0) { $add((string) $bound, $numericAmount, $qualifier); }
-                        }
-                        continue;
-                    }
-                    $year = (int) preg_replace('/[^0-9-].*$/', '', (string) $year);
-                    if ($year < 1) { continue; }
-                    $add((string) $year, $numericAmount);
+        $collect = function (mixed $value) use (&$collect, &$add): void {
+            if (is_string($value)) {
+                if (preg_match('/\b(ab|bis)\s+(\d{3,4})\D+(\d+(?:[.,]\d+)?)/iu', $value, $match) === 1) {
+                    $amount = (float) str_replace(',', '.', $match[3]);
+                    $add($match[2], $amount == (int) $amount ? (int) $amount : $amount, mb_strtolower($match[1]));
+                }
+                return;
+            }
+            if (!is_array($value)) { return; }
+
+            // A population record normally has an amount plus one or two
+            // temporal bounds. Never use the array index as a year: GOV's
+            // JSON frequently numbers list entries 0, 1, 2, ... .
+            $amount = null;
+            foreach (['value', 'count', 'population', 'inhabitants', 'number'] as $field) {
+                if (is_scalar($value[$field] ?? null) && is_numeric((string) $value[$field])) {
+                    $amount = (float) $value[$field];
+                    break;
                 }
             }
+            if ($amount !== null) {
+                $numericAmount = $amount == (int) $amount ? (int) $amount : $amount;
+                $bounds = [];
+                foreach (['from' => 'ab', 'timeBegin' => 'ab', 'until' => 'bis', 'timeEnd' => 'bis', 'year' => '', 'date' => ''] as $field => $qualifier) {
+                    if (!is_scalar($value[$field] ?? null)) { continue; }
+                    if (preg_match('/\b(\d{3,4})\b/', (string) $value[$field], $match) !== 1) { continue; }
+                    $bounds[$qualifier][] = $match[1];
+                }
+                if (($bounds['ab'] ?? []) !== [] || ($bounds['bis'] ?? []) !== []) {
+                    foreach (['ab', 'bis'] as $qualifier) {
+                        foreach (array_unique($bounds[$qualifier] ?? []) as $year) { $add($year, $numericAmount, $qualifier); }
+                    }
+                } elseif (($bounds[''] ?? []) !== []) {
+                    foreach (array_unique($bounds[''] ) as $year) { $add($year, $numericAmount); }
+                }
+            }
+            foreach ($value as $key => $child) {
+                // Some older GOV responses use a year as the object key and
+                // the population as scalar value. Accept only real years;
+                // list indexes (1, 2, 3, ...) must never become years.
+                if (is_scalar($child) && is_numeric((string) $child) && preg_match('/^(?:1[0-9]{3}|20[0-9]{2}|21[0-9]{2})$/', (string) $key) === 1) {
+                    $amount = (float) $child;
+                    $add((string) $key, $amount == (int) $amount ? (int) $amount : $amount);
+                    continue;
+                }
+                $collect($child);
+            }
+        };
+        foreach (['population', 'populationCount', 'inhabitants', 'inhabitantCount', 'populationHistory'] as $key) {
+            $collect($data[$key] ?? null);
         }
         uksort($result, static function (string $a, string $b): int { return ((int) preg_replace('/\D.*/', '', $a)) <=> ((int) preg_replace('/\D.*/', '', $b)); });
         return $result;

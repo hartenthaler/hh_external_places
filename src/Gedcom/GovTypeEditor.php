@@ -7,9 +7,11 @@ namespace Hartenthaler\Webtrees\Module\ExternalPlacesModule\Gedcom;
 /** Adds a GOV vocabulary type to the first TYPE block without changing other data. */
 final class GovTypeEditor
 {
-    public function add(string $gedcom, string $typeId): string
+    public function add(string $gedcom, string $typeId, string $typeLabel = ''): string
     {
         $typeId = trim($typeId);
+        $typeLabel = trim($typeLabel);
+        if ($typeLabel === '') { $typeLabel = 'GOV type ' . $typeId; }
         if (preg_match('/^\d+$/', $typeId) !== 1 || preg_match('/^2 _GOVTYPE /m', $gedcom) === 1) {
             return $gedcom;
         }
@@ -27,6 +29,6 @@ final class GovTypeEditor
             return implode("\n", $lines) . "\n";
         }
 
-        return rtrim($gedcom) . "\n1 TYPE place\n2 _GOVTYPE " . $typeId . "\n";
+        return rtrim($gedcom) . "\n1 TYPE " . $typeLabel . "\n2 _GOVTYPE " . $typeId . "\n";
     }
 }

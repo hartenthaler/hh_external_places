@@ -66,15 +66,16 @@ final class NominatimProvider
     {
         $transport = $this->http ?? HttpTransport::default();
         try {
-                $response = $transport->request('GET', self::ENDPOINT, [
+                $query = [
                     'q' => $place,
                     'format' => 'jsonv2',
                     'addressdetails' => 1,
                     'namedetails' => 1,
                     'extratags' => 1,
                     'polygon_geojson' => 1,
-                    'limit' => 1,
-                ], [
+                    'limit' => 5,
+                ];
+                $response = $transport->request('GET', self::ENDPOINT, $query, [
                     'Accept' => 'application/json',
                     'Accept-Language' => $language,
                     'Referer' => 'https://github.com/hartenthaler/hh_external_places',
@@ -88,9 +89,30 @@ final class NominatimProvider
                     return null;
                 }
                 $decoded = json_decode($body, true, 20, JSON_THROW_ON_ERROR);
-                $payload = is_array($decoded) ? ($decoded[0] ?? null) : null;
-                if ($payload === null) {
-                }
+                if (!is_array($decoded)) { return null; }
+                $candidates = array_values(array_filter($decoded, 'is_array'));
+                if ($candidates === []) { return null; }
+                // Prefer a result whose locality matches the requested place
+                // name. Nominatim ranks administrative regions highly for
+                // ambiguous names, even when a settlement is available.
+                $needle = mb_strtolower(trim($place));
+                usort($candidates, static function (array $left, array $right) use ($needle): int {
+                    $score = static function (array $candidate) use ($needle): int {
+                        $address = is_array($candidate['address'] ?? null) ? $candidate['address'] : [];
+                        $localities = array_filter(array_map('strval', [$address['city'] ?? '', $address['town'] ?? '', $address['village'] ?? '', $address['municipality'] ?? '']));
+                        $display = mb_strtolower((string) ($candidate['display_name'] ?? ''));
+                        $value = 0;
+                        foreach ($localities as $locality) {
+                            $locality = mb_strtolower($locality);
+                            if ($locality === $needle) { $value += 100; }
+                            elseif ($needle !== '' && str_contains($locality, $needle)) { $value += 20; }
+                        }
+                        if ($needle !== '' && str_contains($display, $needle)) { $value += 5; }
+                        return $value;
+                    };
+                    return $score($right) <=> $score($left);
+                });
+                $payload = $candidates[0] ?? null;
                 return is_array($payload) ? $payload : null;
         } catch (Throwable $exception) {
             return null;

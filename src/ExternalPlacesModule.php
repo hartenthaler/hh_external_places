@@ -177,7 +177,12 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
 
         $identifier = $lookup->identifier();
         $coordinates = LocationCoordinates::fromGedcom($location->gedcom());
-        $domusUrl = $wikidataEnabled ? (new DomusMapLinkProvider())->url($identifier, $coordinates) : '';
+        // Domus deep-links are meaningful only for a known Wikidata item.
+        // Do not show a generic Domus start-page button for places without a
+        // Wikidata assignment.
+        $domusUrl = $wikidataEnabled && $identifier !== null
+            ? (new DomusMapLinkProvider())->url($identifier, $coordinates)
+            : '';
         if ($identifier === null || !$wikidataEnabled) {
             $language = explode('-', str_replace('_', '-', I18N::languageTag()))[0] ?: 'en';
             $geoNamesHtml = $this->geoNamesHtml($location->fullName(), $language);
@@ -417,7 +422,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
 
         $icon = $iconUrl === null ? '' : '<img class="me-1" src="' . e($iconUrl) . '" width="20" height="20" alt="" aria-hidden="true" loading="lazy" referrerpolicy="no-referrer" style="vertical-align:-0.2em">';
 
-        return '<h3 class="h4 mb-2" style="display:flex;align-items:center;gap:.4rem">' . $icon . e($label) . '</h3>';
+        return '<h3 class="h4 mb-2" style="display:flex;flex-flow:row nowrap;align-items:center;justify-content:flex-start;text-align:left;gap:.4rem;white-space:nowrap">' . $icon . e($label) . '</h3>';
     }
 
     private function providerHomepage(string $provider): string

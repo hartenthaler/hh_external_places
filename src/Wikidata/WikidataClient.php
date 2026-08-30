@@ -53,6 +53,11 @@ final class WikidataClient
                     'ids'           => $identifier->qid(),
                     'languages'     => $language . '|en',
                     'props'         => 'labels|descriptions|claims',
+                    // We only need values, qualifiers and ranks for the
+                    // provider data model. Omitting hashes and references
+                    // keeps large entities such as Q183 below our bounded
+                    // response-size limit while retaining all P31 values.
+                    'clprop'        => 'value|qualifiers|rank',
                 ],
                 'timeout'         => 6.0,
             ]);
@@ -76,6 +81,49 @@ final class WikidataClient
         }
 
         return is_array($payload) ? $this->mapper->map($identifier, $payload, $language) : null;
+    }
+
+    /**
+     * Load only the claims needed by a type filter. Large entities such as
+     * countries can exceed the bounded size of the full display response.
+     */
+    private function fetchForFilter(WikidataIdentifier $identifier): ?WikidataEntity
+    {
+        try {
+            // wbgetclaims returns only the requested property and avoids the
+            // large, unrelated payload of wbgetentities for countries.
+            $response = $this->httpClient->request('GET', self::ENDPOINT, [
+                'allow_redirects' => false,
+                'connect_timeout' => 3.0,
+                'headers'         => [
+                    'Accept'     => 'application/json',
+                    'User-Agent' => 'webtrees External Places/0.1 (https://github.com/hartenthaler/hh_external_places)',
+                ],
+                'http_errors' => false,
+                'query'       => [
+                    'action'        => 'wbgetclaims',
+                    'format'        => 'json',
+                    'formatversion' => '2',
+                    'entity'        => $identifier->qid(),
+                    'property'      => 'P31',
+                ],
+                'timeout' => 6.0,
+            ]);
+            if ($response === null || $response->getStatusCode() !== 200) {
+                return null;
+            }
+            $body = $response->getBody()->getContents();
+            if (strlen($body) > self::MAX_RESPONSE_BYTES) {
+                return null;
+            }
+            $payload = json_decode($body, true, 32, JSON_THROW_ON_ERROR);
+        } catch (Throwable) {
+            return null;
+        }
+
+        return is_array($payload) && is_array($payload['claims'] ?? null)
+            ? $this->mapper->mapClaims($identifier, $payload['claims'])
+            : null;
     }
 
     /**
@@ -265,11 +313,10 @@ final class WikidataClient
             return $results;
         }
 
-        $houseTypes = PlaceTypeFilterSettings::forLevel('wikidata', $filterLevel);
-        return array_values(array_filter($results, function (WikidataSearchResult $result) use ($language, $houseTypes): bool {
+        return array_values(array_filter($results, function (WikidataSearchResult $result) use ($language, $filterLevel): bool {
             $identifier = WikidataIdentifier::tryFrom($result->qid);
-            $entity = $identifier === null ? null : $this->fetch($identifier, $language);
-            return $entity !== null && array_intersect($entity->instanceOfQids, $houseTypes) !== [];
+            $entity = $identifier === null ? null : $this->fetchForFilter($identifier);
+            return $entity !== null && PlaceTypeFilterSettings::matchesTypeIds('wikidata', $entity->instanceOfQids, $filterLevel);
         }));
     }
 
