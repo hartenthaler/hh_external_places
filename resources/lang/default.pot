@@ -699,3 +699,20 @@ msgstr ""
 
 msgid "The GOV place type was not added."
 msgstr ""
+msgid "Alternate name"
+msgstr ""
+
+msgid "consistent with the shared place name"
+msgstr ""
+
+msgid "inconsistent with the shared place name"
+msgstr ""
+
+msgid "Add place name"
+msgstr ""
+
+msgid "The place name has been added."
+msgstr ""
+
+msgid "The place name was not added."
+msgstr ""

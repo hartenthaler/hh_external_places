@@ -16,6 +16,10 @@ searches use one global default radius. Only trees with an explicitly
 different radius are stored and displayed as exceptions; entering the global
 default for an exception removes that exception.
 
+GeoNames `alternateNames` values returned by the service are shown as
+language-labelled, deduplicated details. They are read-only contextual data;
+the module never writes them to `_LOC:NAME` automatically.
+
 Nominatim is also optional. It performs a read-only contextual lookup against
 the public OpenStreetMap Nominatim API using the shared-place name. Results are
 cached locally and include the returned object type and address hierarchy where

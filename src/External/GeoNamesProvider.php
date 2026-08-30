@@ -164,6 +164,27 @@ final class GeoNamesProvider implements ExternalProvider
             $value = $row[$key] ?? null;
             if (is_scalar($value) && (string) $value !== '' && (string) $value !== '0') { $details[] = ['label' => $label, 'value' => (string) $value]; }
         }
+
+        // GeoNames may return several alternate names in FULL responses. Keep
+        // the language code visible, discard malformed values, and deduplicate
+        // names because the service can repeat the same value in its payload.
+        $seen = [];
+        foreach ((array) ($row['alternateNames'] ?? []) as $alternate) {
+            if (!is_array($alternate)) { continue; }
+            $name = trim((string) ($alternate['name'] ?? ''));
+            $language = strtolower(trim((string) ($alternate['lang'] ?? '')));
+            if ($name === '' || preg_match('/^[a-z]{2,3}(?:[-_][a-z]{2,4})?$/i', $language) !== 1) { continue; }
+            $key = $language . "\0" . $name;
+            if (isset($seen[$key])) { continue; }
+            $seen[$key] = true;
+            $details[] = ['label' => 'Alternate name (' . $language . ')', 'value' => $name];
+        }
+        usort($details, static function (array $left, array $right): int {
+            $leftAlternate = str_starts_with($left['label'], 'Alternate name (');
+            $rightAlternate = str_starts_with($right['label'], 'Alternate name (');
+            if ($leftAlternate !== $rightAlternate) { return $leftAlternate ? 1 : -1; }
+            return strnatcasecmp($left['label'] . "\0" . $left['value'], $right['label'] . "\0" . $right['value']);
+        });
         return $details;
     }
 

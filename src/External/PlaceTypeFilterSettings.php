@@ -39,7 +39,7 @@ final class PlaceTypeFilterSettings
             'geonames' => [],
         ],
         'country' => [
-            'wikidata' => ['Q6256', 'Q1048835', 'Q4835091'],
+            'wikidata' => ['Q6256', 'Q1048835', 'Q4835091', 'Q3624078'],
             'factgrid' => ['Q21925', 'Q221010'],
             'gov' => ['72', '130'],
             'geonames' => ['A.PCLI'],

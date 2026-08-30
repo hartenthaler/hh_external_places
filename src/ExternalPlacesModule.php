@@ -31,6 +31,7 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalInformati
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalProviderRegistry;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalProviderSettings;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\GeoNamesProvider;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\GeoNamesLanguage;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\NominatimProvider;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\GovExternalIdentifierCatalog;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\PlaceTypeFilterSettings;
@@ -327,7 +328,30 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                 }
                 foreach ($information?->details ?? [] as $detail) {
                     $value = $this->externalDetailValue($detail['label'], $detail['value']);
-                    $html .= '<br><small>' . e($this->externalDetailLabel($detail['label'])) . ': ' . ($detail['label'] === 'External identifier' ? $this->externalIdentifierHtml($value) : e($value)) . '</small>';
+                    $detailLabel = $this->externalDetailLabel($detail['label']);
+                    $alternateLanguage = null;
+                    if ($provider->key() === 'geonames' && str_starts_with($detail['label'], 'Alternate name (')) {
+                        preg_match('/^Alternate name \(([a-z]{2,3}(?:[-_][a-z]{2,4})?)\)$/i', $detail['label'], $languageMatch);
+                        $alternateLanguage = strtolower(explode('-', str_replace('_', '-', $languageMatch[1] ?? ''))[0]);
+                        $sameLanguage = $this->locationNamesByLanguage($gedcom)[$alternateLanguage] ?? [];
+                        if (in_array($value, $sameLanguage, true) && !self::showConsistentReferences()) {
+                            continue;
+                        }
+                    }
+                    $html .= '<br><small>' . e($detailLabel) . ': ' . ($detail['label'] === 'External identifier' ? $this->externalIdentifierHtml($value) : e($value)) . '</small>';
+                    if ($provider->key() === 'geonames' && str_starts_with($detail['label'], 'Alternate name (')) {
+                        $locNames = $this->locationNamesByLanguage($gedcom);
+                        $sameLanguage = $locNames[$alternateLanguage] ?? [];
+                        if (in_array($value, $sameLanguage, true)) {
+                            if (self::showConsistentReferences()) {
+                                $html .= ' <span class="text-success">(' . e(I18N::translate('consistent with the shared place name')) . ')</span>';
+                            }
+                        } elseif ($sameLanguage !== []) {
+                            $html .= ' <span class="text-danger">(' . e(I18N::translate('inconsistent with the shared place name')) . ')</span>';
+                        } elseif ($assignmentUrl !== null) {
+                            $html .= ' <form method="post" action="' . e($assignmentUrl) . '" class="d-inline">' . csrf_field() . '<input type="hidden" name="operation" value="add-location-name"><input type="hidden" name="name" value="' . e($value) . '"><input type="hidden" name="language" value="' . e($alternateLanguage) . '"><button class="btn btn-sm btn-outline-primary" type="submit">' . e(I18N::translate('Add place name')) . '</button></form>';
+                        }
+                    }
                 }
                 if (($information?->population ?? []) !== []) {
                     $html .= $this->populationHtml($information->population ?? []);
@@ -438,6 +462,9 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
 
     private function externalDetailLabel(string $label): string
     {
+        if (preg_match('/^Alternate name \(([a-z]{2,3}(?:[-_][a-z]{2,4})?)\)$/i', $label, $matches) === 1) {
+            return I18N::translate('Alternate name') . ' (' . strtolower($matches[1]) . ')';
+        }
         return match ($label) {
             'Country', 'Region', 'Street', 'Postal code', 'Place' => MoreI18N::xlate($label),
             'Population' => I18N::translate('Population'),
@@ -452,6 +479,26 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             'Type' => I18N::translate('Type'),
             default => $label,
         };
+    }
+
+    /** @return array<string,list<string>> */
+    private function locationNamesByLanguage(string $gedcom): array
+    {
+        $names = [];
+        $currentName = null;
+        foreach (preg_split('/\r?\n/', $gedcom) ?: [] as $line) {
+            if (preg_match('/^1 NAME(?: |$)(.*)$/', $line, $match) === 1 && trim($match[1]) !== '') {
+                $currentName = trim($match[1]);
+                $names[''] ??= [];
+                $names[''][] = $currentName;
+            } elseif ($currentName !== null && preg_match('/^2 LANG (.+)$/', $line, $match) === 1) {
+                $language = strtolower(trim($match[1]));
+                $language = GeoNamesLanguage::code($language);
+                $names[$language][] = $currentName;
+            }
+        }
+        foreach ($names as $language => $values) { $names[$language] = array_values(array_unique($values)); }
+        return $names;
     }
 
     /** @param array<string,int|float> $population */
