@@ -17,7 +17,7 @@ final class PlaceTypeFilterSettings
 
     /** @var array<string,list<string>> */
     private const DEFAULTS = [
-        'wikidata' => ['Q23413', 'Q751876', 'Q3947', 'Q16560', 'Q41176', 'Q44613', 'Q365627', 'Q1802963', 'Q131596'],
+        'wikidata' => ['Q23413', 'Q751876', 'Q3947', 'Q16560', 'Q41176', 'Q44613', 'Q365627', 'Q1802963', 'Q131596', 'Q489357'],
         // FactGrid building, dwelling and farm type identifiers.
         'factgrid' => ['Q701396', 'Q701397', 'Q983863', 'Q1783859', 'Q1783874', 'Q1853416', 'Q635758', 'Q394385', 'Q498903', 'Q36251', 'Q164328', 'Q370004', 'Q468136', 'Q902325'],
         'gov' => ['8', '17', '21', '24', '193', '229', '231', '236', '261', '111', '102', '87'],
@@ -35,13 +35,13 @@ final class PlaceTypeFilterSettings
         'federation' => [
             'wikidata' => ['Q484652', 'Q1335818', 'Q170156'],
             'factgrid' => ['Q1059807'],
-            'gov' => [],
+            'gov' => ['71'],
             'geonames' => [],
         ],
         'country' => [
             'wikidata' => ['Q6256', 'Q1048835', 'Q4835091'],
             'factgrid' => ['Q21925', 'Q221010'],
-            'gov' => [],
+            'gov' => ['72', '130'],
             'geonames' => ['A.PCLI'],
         ],
     ];
@@ -60,6 +60,9 @@ final class PlaceTypeFilterSettings
         '111' => 'Palace',
         '102' => "Forester's house",
         '87' => 'Mill',
+        '71' => 'Confederation',
+        '72' => 'State',
+        '130' => 'Country',
     ];
 
     /** @return array<string,list<string>> */
@@ -176,11 +179,18 @@ final class PlaceTypeFilterSettings
     {
         $values = self::forLevel($provider, $level);
         if ($values === []) { return false; }
-        $haystack = mb_strtolower(implode(' ', array_map('strval', [$candidate['description'] ?? '', $candidate['type'] ?? '', $candidate['typeId'] ?? '', $candidate['featureCode'] ?? ''])));
-        foreach ($values as $value) {
-            if (str_contains($haystack, mb_strtolower($value))) { return true; }
-            $label = self::GOV_LABELS[$value] ?? null;
-            if ($provider === 'gov' && $label !== null && str_contains($haystack, mb_strtolower($label))) { return true; }
+        $types = array_merge(
+            array_map('strval', (array) ($candidate['typeIds'] ?? [])),
+            array_map('strval', [$candidate['description'] ?? '', $candidate['type'] ?? '', $candidate['typeId'] ?? '', $candidate['featureCode'] ?? '']),
+        );
+        foreach ($types as $type) {
+            $type = mb_strtolower(trim($type));
+            if ($type === '') { continue; }
+            foreach ($values as $value) {
+                if (str_contains($type, mb_strtolower($value))) { return true; }
+                $label = self::GOV_LABELS[$value] ?? null;
+                if ($provider === 'gov' && $label !== null && str_contains($type, mb_strtolower($label))) { return true; }
+            }
         }
         return false;
     }
@@ -189,15 +199,30 @@ final class PlaceTypeFilterSettings
     public static function matchesWikibaseClaims(string $provider, array $claims, string $level = 'house'): bool
     {
         $property = $provider === 'wikidata' ? 'P31' : 'P2';
-        $allowed = self::forLevel($provider, $level);
+        $ids = [];
         foreach ((array) ($claims[$property] ?? []) as $statement) {
-            $value = $statement['mainsnak']['datavalue']['value'] ?? null;
-            $id = is_array($value) ? ($value['id'] ?? (isset($value['numeric-id']) ? 'Q' . $value['numeric-id'] : null)) : null;
-            if (is_string($id) && in_array($id, $allowed, true)) {
-                return true;
+            $value = is_array($statement)
+                ? ($statement['mainsnak']['datavalue']['value']
+                    ?? $statement['datavalue']['value']
+                    ?? $statement['value']
+                    ?? null)
+                : $statement;
+            if (is_string($value)) {
+                $ids[] = $value;
+            } elseif (is_array($value)) {
+                $id = $value['id'] ?? null;
+                if (is_string($id)) { $ids[] = $id; }
+                elseif (isset($value['numeric-id']) && is_numeric($value['numeric-id'])) { $ids[] = 'Q' . $value['numeric-id']; }
             }
         }
-        return false;
+        return self::matchesTypeIds($provider, $ids, $level);
+    }
+
+    /** @param list<string> $typeIds */
+    public static function matchesTypeIds(string $provider, array $typeIds, string $level = 'house'): bool
+    {
+        $allowed = self::forLevel($provider, $level);
+        return array_intersect($typeIds, $allowed) !== [];
     }
 
     public static function govLabel(string $typeId): string

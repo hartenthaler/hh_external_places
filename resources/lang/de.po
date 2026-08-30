@@ -694,6 +694,15 @@ msgstr "Schloss"
 msgid "Mill"
 msgstr "Mühle"
 
+msgid "Confederation"
+msgstr "Staatenbund"
+
+msgid "State"
+msgstr "Staat/Bundesland"
+
+msgid "Country"
+msgstr "Land"
+
 msgid "You are not authorized to modify this shared place."
 msgstr "Sie sind nicht berechtigt, diesen gemeinsamen Ort zu ändern."
 

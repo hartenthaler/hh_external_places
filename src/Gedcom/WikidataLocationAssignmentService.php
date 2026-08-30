@@ -8,6 +8,7 @@ use Fisharebest\Webtrees\Auth;
 use Fisharebest\Webtrees\Location;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\WikidataIdentifier;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\ExternalIdentifier;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\PlaceTypeFilterSettings;
 
 /**
  * Applies an explicit Wikidata assignment to a shared-place record.
@@ -77,7 +78,7 @@ final class WikidataLocationAssignmentService
     public function addGovType(Location $location, string $typeId): bool
     {
         if (!$location->canEdit() || preg_match('/^\d+$/', $typeId) !== 1) { return false; }
-        $updated = $this->govTypeEditor->add($location->gedcom(), $typeId);
+        $updated = $this->govTypeEditor->add($location->gedcom(), $typeId, PlaceTypeFilterSettings::govLabel($typeId));
         if ($updated === $location->gedcom()) { return false; }
         $location->updateRecord($this->withUpdatedChange($updated), false);
         return true;
