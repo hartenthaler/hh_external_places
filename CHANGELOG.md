@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Added safe links and documentation for GOV DCAT-AP.de political-geocoding
+  identifiers.
+
+## Unreleased
+
 ## 2.2.6.8 - 2026-08-31
 
 - GeoNames alternate names are now shown with their language codes, sorted and

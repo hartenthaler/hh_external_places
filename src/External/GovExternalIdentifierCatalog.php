@@ -49,6 +49,12 @@ final class GovExternalIdentifierCatalog
         if ($entry === null || $entry['url'] === null) { return null; }
         $separator = strpos($value, ':');
         $identifier = trim(substr($value, $separator + 1));
-        return str_replace('{0}', rawurlencode($identifier), $entry['url']);
+        if ($identifier === '') {
+            return null;
+        }
+        // Encode each path segment separately so structured identifiers such as
+        // DCAT-AP.de:stateKey/08 retain their documented slash separator.
+        $encodedIdentifier = implode('/', array_map('rawurlencode', explode('/', $identifier)));
+        return str_replace('{0}', $encodedIdentifier, $entry['url']);
     }
 }

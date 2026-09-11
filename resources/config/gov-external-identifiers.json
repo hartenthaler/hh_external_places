@@ -12,6 +12,7 @@
   "opengeodb": {"description": "Municipality in OpenGeoDB", "url": null},
   "osm-boundary": {"description": "OpenStreetMap municipal boundary", "url": "https://www.openstreetmap.org/?relation={0}"},
   "SCB": {"description": "Statistics Sweden", "url": null},
+  "DCAT-AP.de": {"description": "DCAT-AP.de political geocoding key", "url": "http://dcat-ap.de/def/politicalGeocoding/{0}"},
   "SIMC": {"description": "Official Polish national register of populated places", "url": null},
   "TERYT": {"description": "Official Polish national register of territorial units", "url": null},
   "UN/LOCODE": {"description": "United Nations Code for Trade and Transport Locations", "url": "https://service.unece.org/trade/locode/{0}.htm"},
