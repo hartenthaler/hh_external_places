@@ -110,6 +110,10 @@ response does not include a census or reference year. The module therefore
 shows that value without inventing a year; historical population claims need
 a source that provides dated observations.
 
+GeoNames searches use the provider's full-text `q` parameter. This includes
+alternate names and administrative objects; the optional hierarchy filters
+are applied to the returned feature codes afterwards.
+
 ## HTTP transport
 
 External requests use the module's transport boundary. On webtrees 2.3 it

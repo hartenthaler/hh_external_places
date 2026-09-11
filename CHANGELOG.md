@@ -4,6 +4,9 @@
 
 - Added safe links and documentation for GOV DCAT-AP.de political-geocoding
   identifiers.
+- GeoNames searches now include alternate names and administrative objects,
+  so searches such as “Deutschland” and “European Union” return their actual
+  GeoNames records.
 
 ## Unreleased
 

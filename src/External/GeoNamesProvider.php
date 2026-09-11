@@ -78,10 +78,11 @@ final class GeoNamesProvider implements ExternalProvider
         $cacheKey = 'search|' . $language . '|' . $place . '|' . $username;
         $payload = $this->cache->read('geonames', $cacheKey);
         if ($payload === null) {
-            // Match webtrees' own GeoNames module: place-name search is
-            // restricted to populated places and uses the same endpoint
-            // parameters as the core autocomplete service.
-            $payload = $this->request(self::ENDPOINT, ['name_startsWith' => $place, 'featureClass' => 'P', 'lang' => $language, 'maxRows' => 20, 'style' => 'FULL', 'username' => $username]);
+            // Use GeoNames' full-text query.  Unlike name_startsWith, `q`
+            // also searches alternate names (for example “Deutschland” for
+            // the primary name “Federal Republic of Germany”) and does not
+            // exclude administrative objects such as the European Union.
+            $payload = $this->request(self::ENDPOINT, ['q' => $place, 'lang' => $language, 'maxRows' => 20, 'style' => 'FULL', 'username' => $username]);
             if ($payload === null) { return []; }
             $this->cache->write('geonames', $cacheKey, $payload);
         }
