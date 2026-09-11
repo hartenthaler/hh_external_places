@@ -246,10 +246,14 @@ final class GovProvider implements ExternalProvider
 
         $url = null;
         foreach (($payload['query']['pages'] ?? []) as $page) {
-            if (!is_array($page) || array_key_exists('missing', $page) || !is_string($page['title'] ?? null)) {
+            if (!is_array($page) || array_key_exists('missing', $page)) {
                 continue;
             }
-            $url = 'https://wiki.genealogy.net/' . rawurlencode($page['title']);
+            if (is_numeric($page['pageid'] ?? null) && (int) $page['pageid'] > 0) {
+                $url = 'https://wiki.genealogy.net/?curid=' . (int) $page['pageid'];
+            } elseif (is_string($page['title'] ?? null)) {
+                $url = 'https://wiki.genealogy.net/' . rawurlencode($page['title']);
+            }
             break;
         }
         $this->cache->write('genwiki', $govId, ['url' => $url]);
