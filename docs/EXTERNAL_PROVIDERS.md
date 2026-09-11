@@ -93,6 +93,13 @@ GeoNames and other provider references are additionally checked by the
 shared consistency display; unrecognised prefixes remain visible without a
 link.
 
+GOV may provide political-geocoding identifiers from the German DCAT-AP.de
+standard. They use the form `DCAT-AP.de:<key>/<value>`, for example
+`DCAT-AP.de:stateKey/08` for Baden-Württemberg. The module links these values
+to `http://dcat-ap.de/def/politicalGeocoding/<key>/<value>` and only accepts
+the configured prefix and non-empty path value; it does not follow arbitrary
+URLs supplied by a GOV record.
+
 When GOV supplies historical population figures, the module normalizes them
 into a year-indexed `population` object. The shared-place summary presents
 these values in chronological order in a two-column table and a compact line
