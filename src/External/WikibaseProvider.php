@@ -10,7 +10,7 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikibase\ReadOnlyWikibaseC
 /** Provider adapter for Wikidata-like, read-only Wikibase installations. */
 final class WikibaseProvider implements ExternalProvider
 {
-    /** @param array{authority:string, label:string, type:string, image:string, factgrid:?string, wikidata:?string, gov:?string, geonames:?string, wikitree:string, owner:string, occupant:string, begin:string, end:string} $definition */
+    /** @param array{authority:string, label:string, type:string, image:string, factgrid:?string, wikidata:?string, gov:?string, geonames:?string, genwiki:?string, wikitree:string, owner:string, occupant:string, begin:string, end:string} $definition */
     public function __construct(private readonly string $key, private readonly array $definition, private readonly ReadOnlyWikibaseClient $client = new ReadOnlyWikibaseClient(), private readonly ExternalProviderCache $cache = new ExternalProviderCache())
     {
     }
@@ -67,6 +67,13 @@ final class WikibaseProvider implements ExternalProvider
                     $references[$provider] = $values;
                 }
             }
+        }
+        $genwikiProperty = $this->definition['genwiki'] ?? null;
+        if ($genwikiProperty !== null) {
+            foreach ($this->claimStrings($claims[$genwikiProperty] ?? [], 'genwiki') as $pageId) {
+                $references['genwiki'][] = 'https://wiki.genealogy.net/?curid=' . rawurlencode($pageId);
+            }
+            $references['genwiki'] = array_values(array_unique($references['genwiki'] ?? []));
         }
         // FactGrid can link back to Wikidata through the special sitelink
         // "wikidatawiki" instead of a dedicated claim.  Treat only a plain
@@ -181,6 +188,7 @@ final class WikibaseProvider implements ExternalProvider
                 'gov' => preg_match('/^[A-Z][A-Z0-9_]{2,63}$/', $value) === 1,
                 'geonames' => preg_match('/^[1-9][0-9]{0,11}$/', $value) === 1,
                 'wikitree' => preg_match('/^[\p{L}][\p{L}\p{M}0-9._-]{0,119}$/u', $value) === 1,
+                'genwiki' => preg_match('/^[1-9][0-9]{0,11}$/', $value) === 1,
                 default => preg_match('/^Q[1-9][0-9]*$/', $value) === 1,
             };
             if ($valid) { $values[] = $value; }

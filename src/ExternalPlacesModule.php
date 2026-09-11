@@ -264,17 +264,21 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             $html .= ' — <small>' . e(I18N::translate('Wikidata details are currently unavailable.')) . '</small>';
         }
         $wikidataProvider = (new ExternalProviderRegistry())->byAuthority('https://www.wikidata.org/entity/');
+        $genwikiShown = [];
         $wikidataReference = $wikidataProvider?->fetch(
             new \Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\ExternalIdentifier('wikidata', $identifier->qid(), 'https://www.wikidata.org/entity/', $identifier->entityUrl()),
             $language,
         );
         if ($wikidataReference !== null) {
                     $assignmentUrl = $location->canEdit() ? self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]) : null;
+                    foreach ($wikidataReference->references['genwiki'] ?? [] as $genwikiUrl) {
+                        $html .= $this->genwikiReferenceHtml($genwikiUrl, $externalIdentifiers, $assignmentUrl, $genwikiShown);
+                    }
                     $html .= $this->crossReferenceHtml($wikidataReference, $externalIdentifiers, $assignmentUrl);
         }
         $html .= $this->sourceHtml('Wikidata', 'https://www.wikidata.org/') . '</section>';
         $assignmentUrl = $location->canEdit() ? self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]) : null;
-        $html .= $this->externalInformationHtml($externalIdentifiers, $language, 'wikidata', $location->fullName(), $assignmentUrl, $location->gedcom());
+        $html .= $this->externalInformationHtml($externalIdentifiers, $language, 'wikidata', $location->fullName(), $assignmentUrl, $location->gedcom(), $genwikiShown);
         $html .= $this->geoNamesHtml($location->fullName(), $language);
         $html .= $this->nominatimHtml($place->getGedcomName() !== '' ? $place->getGedcomName() : $location->fullName(), $language);
         $html .= '<div class="d-flex gap-2 flex-wrap mt-2">';
@@ -295,7 +299,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
      *
      * @param list<\Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\ExternalIdentifier> $identifiers
      */
-    private function externalInformationHtml(array $identifiers, string $language, string $skip = '', string $placeName = '', ?string $assignmentUrl = null, string $gedcom = ''): string
+    private function externalInformationHtml(array $identifiers, string $language, string $skip = '', string $placeName = '', ?string $assignmentUrl = null, string $gedcom = '', array &$genwikiShown = []): string
     {
         if ($identifiers === []) {
             return '';
@@ -304,7 +308,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         $registry = new ExternalProviderRegistry();
         $html = '';
         foreach ($registry->all() as $provider) {
-            if ($provider->key() === $skip || !ExternalProviderSettings::isEnabled($provider->key())) {
+            if ($provider->key() === $skip || $provider->key() === 'genwiki' || !ExternalProviderSettings::isEnabled($provider->key())) {
                 continue;
             }
             foreach ($identifiers as $identifier) {
@@ -372,7 +376,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                         }
                     }
                     foreach ($information->references['genwiki'] ?? [] as $genwikiUrl) {
-                        $html .= '<br><small>' . e(I18N::translate('Article in GenWiki')) . ': <a href="' . e($genwikiUrl) . '" rel="noopener noreferrer" target="_blank">' . e($genwikiUrl) . '</a></small>';
+                        $html .= $this->genwikiReferenceHtml($genwikiUrl, $identifiers, $assignmentUrl, $genwikiShown);
                     }
                     $html .= $this->crossReferenceHtml($information, $identifiers, $assignmentUrl);
                     $html .= $this->externalPersonRelationsHtml($information);
@@ -381,6 +385,43 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             }
         }
         return $html;
+    }
+
+    /** Render one canonical GenWiki page and optionally offer its ID for EXID. */
+    private function genwikiReferenceHtml(string $url, array $identifiers, ?string $assignmentUrl, array &$shown): string
+    {
+        $pageId = null;
+        if (preg_match('~[?&]curid=([1-9][0-9]{0,11})~i', $url, $match) === 1) {
+            $pageId = $match[1];
+        } elseif (preg_match('~^https?://(?:www\\.)?wiki\\.genealogy\\.net/[^?#]+$~i', $url) !== 1) {
+            return '';
+        }
+        $canonical = $pageId === null ? $url : 'https://wiki.genealogy.net/?curid=' . $pageId;
+        if (in_array($canonical, $shown, true)) {
+            return '';
+        }
+        $shown[] = $canonical;
+        $matching = false;
+        foreach ($identifiers as $identifier) {
+            if ($pageId !== null && $identifier->provider === 'genwiki' && $identifier->value === $pageId) {
+                $matching = true;
+                break;
+            }
+        }
+        if ($matching && !self::showConsistentReferences()) {
+            return '';
+        }
+        $html = '<br><small>' . e(I18N::translate('Article in GenWiki')) . ': <a href="' . e($canonical) . '" rel="noopener noreferrer" target="_blank">' . e($canonical) . '</a>';
+        if ($matching) {
+            $html .= ' <span class="text-success">(' . e(I18N::translate('consistent')) . ')</span>';
+        } elseif ($pageId !== null && $assignmentUrl !== null) {
+            $html .= ' <form method="post" action="' . e($assignmentUrl) . '" class="d-inline">' . csrf_field()
+                . '<input type="hidden" name="operation" value="add-external-id">'
+                . '<input type="hidden" name="provider" value="genwiki">'
+                . '<input type="hidden" name="external_id" value="' . e($pageId) . '">'
+                . '<button class="btn btn-sm btn-outline-primary py-0" type="submit">' . e(I18N::translate('Assign')) . '</button></form>';
+        }
+        return $html . '</small>';
     }
 
     private function geoNamesHtml(string $placeName, string $language): string
