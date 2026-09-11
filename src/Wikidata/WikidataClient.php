@@ -66,21 +66,93 @@ final class WikidataClient
         }
 
         if ($response === null || $response->getStatusCode() !== 200) {
-            return null;
+            return $this->fetchCompact($identifier, $language);
         }
 
         $body = $response->getBody()->getContents();
         if (strlen($body) > self::MAX_RESPONSE_BYTES) {
-            return null;
+            return $this->fetchCompact($identifier, $language);
         }
 
         try {
             $payload = json_decode($body, true, 32, JSON_THROW_ON_ERROR);
         } catch (JsonException) {
-            return null;
+            return $this->fetchCompact($identifier, $language);
         }
 
         return is_array($payload) ? $this->mapper->map($identifier, $payload, $language) : null;
+    }
+
+    /**
+     * Fetch a large entity in bounded pieces. Countries and similar items can
+     * have thousands of unrelated statements, making a full entity response
+     * exceed the normal safety limit. Only properties consumed by the module
+     * are requested in the fallback path.
+     */
+    private function fetchCompact(WikidataIdentifier $identifier, string $language): ?WikidataEntity
+    {
+        $entityResponse = $this->httpClient->request('GET', self::ENDPOINT, [
+            'action' => 'wbgetentities', 'format' => 'json', 'formatversion' => '2',
+            'ids' => $identifier->qid(), 'languages' => $language . '|en',
+            'props' => 'labels|descriptions',
+        ], ['Accept' => 'application/json', 'User-Agent' => 'webtrees External Places/0.1 (https://github.com/hartenthaler/hh_external_places)'], 6.0);
+        if ($entityResponse === null || $entityResponse->getStatusCode() !== 200) {
+            return null;
+        }
+        $entityBody = $entityResponse->getBody()->getContents();
+        if (strlen($entityBody) > 100_000) {
+            return null;
+        }
+        try {
+            $payload = json_decode($entityBody, true, 20, JSON_THROW_ON_ERROR);
+        } catch (JsonException) {
+            return null;
+        }
+        if (!is_array($payload) || !is_array($payload['entities'][$identifier->qid()] ?? null)) {
+            return null;
+        }
+
+        $claims = [];
+        $claimsResponse = $this->httpClient->request('GET', self::ENDPOINT, [
+            'action' => 'wbgetclaims', 'format' => 'json', 'formatversion' => '2',
+            'entity' => $identifier->qid(),
+            'property' => 'P31|P18|P127|P466|P669|P6375|P14871|P2503|P1566',
+        ], ['Accept' => 'application/json', 'User-Agent' => 'webtrees External Places/0.1 (https://github.com/hartenthaler/hh_external_places)'], 6.0);
+        if ($claimsResponse !== null && $claimsResponse->getStatusCode() === 200) {
+            $claimsBody = $claimsResponse->getBody()->getContents();
+            if (strlen($claimsBody) <= 900_000) {
+                try {
+                    $claimsPayload = json_decode($claimsBody, true, 32, JSON_THROW_ON_ERROR);
+                    $claims = is_array($claimsPayload['claims'] ?? null) ? $claimsPayload['claims'] : [];
+                } catch (JsonException) {
+                    $claims = [];
+                }
+            }
+        }
+        // Some Wikibase versions accept only one property per wbgetclaims
+        // request. Retry the bounded property set individually when the
+        // combined request returned no usable claims.
+        if ($claims === []) {
+            foreach (['P31', 'P18', 'P127', 'P466', 'P669', 'P6375', 'P14871', 'P2503', 'P1566'] as $property) {
+                $single = $this->httpClient->request('GET', self::ENDPOINT, [
+                    'action' => 'wbgetclaims', 'format' => 'json', 'formatversion' => '2',
+                    'entity' => $identifier->qid(), 'property' => $property,
+                ], ['Accept' => 'application/json', 'User-Agent' => 'webtrees External Places/0.1 (https://github.com/hartenthaler/hh_external_places)'], 6.0);
+                if ($single === null || $single->getStatusCode() !== 200) { continue; }
+                $singleBody = $single->getBody()->getContents();
+                if (strlen($singleBody) > 200_000) { continue; }
+                try {
+                    $singlePayload = json_decode($singleBody, true, 32, JSON_THROW_ON_ERROR);
+                    if (is_array($singlePayload['claims'] ?? null)) {
+                        $claims = array_merge($claims, $singlePayload['claims']);
+                    }
+                } catch (JsonException) {
+                    continue;
+                }
+            }
+        }
+        $payload['entities'][$identifier->qid()]['claims'] = $claims;
+        return $this->mapper->map($identifier, $payload, $language);
     }
 
     /**
