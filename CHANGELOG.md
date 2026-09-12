@@ -4,6 +4,12 @@
 
 - Added safe links and documentation for GOV DCAT-AP.de political-geocoding
   identifiers.
+- GeoNames searches now include alternate names and administrative objects,
+  so searches such as “Deutschland” and “European Union” return their actual
+  GeoNames records.
+- Added GeoNames `A.ZN` as the default federation filter type for zones such as
+  the European Union.
+- Removed temporary provider diagnostics from the assignment page.
 
 ## Unreleased
 

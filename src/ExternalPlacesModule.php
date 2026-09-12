@@ -753,9 +753,15 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         $wikibaseClient = new ReadOnlyWikibaseClient();
         foreach ($typeFilters as $level => $filters) {
             foreach (['wikidata', 'factgrid'] as $provider) {
-                foreach ($wikibaseClient->entities($provider, $filters[$provider] ?? [], $language) as $qid => $entity) {
-                    $label = $entity['labels'][$language]['value'] ?? $entity['labels']['en']['value'] ?? null;
-                    $typeLabels[$level][$provider][$qid] = is_string($label) && $label !== '' ? $label : $qid;
+                $providerTypes = $filters[$provider] ?? [];
+                $providerLabels = $provider === 'wikidata'
+                    ? array_map(static fn (array $entity): array => (array) ($entity['labels'] ?? []), $wikibaseClient->entities($provider, $providerTypes, $language))
+                    : $wikibaseClient->labels($provider, $providerTypes, $language);
+                foreach ($providerTypes as $qid) {
+                    $labels = $providerLabels[$qid] ?? [];
+                    $label = $labels[$language]['value'] ?? $labels['en']['value'] ?? null;
+                    $resolvedLabel = is_string($label) && $label !== '' ? $label : $qid;
+                    $typeLabels[$level][$provider][$qid] = $resolvedLabel;
                 }
             }
             foreach (['gov', 'geonames'] as $provider) {
@@ -812,7 +818,13 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                 'gov' => 'GOV',
                 'geonames' => 'GeoNames',
             ][$resetProvider] ?? $resetProvider;
-            FlashMessages::addMessage(I18N::translate('The filter types for %s were reset to their defaults.', $providerLabel), 'success');
+            $levelLabel = [
+                'planet' => 'Planet (Earth)',
+                'federation' => 'Federation / international organisation',
+                'country' => 'State / country',
+                'house' => 'House / farm',
+            ][$resetLevel] ?? $resetLevel;
+            FlashMessages::addMessage(I18N::translate('The filter types for the "%s" level and %s were reset to their defaults.', I18N::translate($levelLabel), $providerLabel), 'success');
         } else {
             PlaceTypeFilterSettings::saveLevels($typeFilters);
         }

@@ -95,6 +95,67 @@ final class ReadOnlyWikibaseClient
         return $entities;
     }
 
+    /**
+     * Read labels only.  This deliberately avoids claims and descriptions so
+     * that large FactGrid entities cannot make the settings page response
+     * exceed the safety limit.
+     *
+     * @param list<string> $itemIds
+     * @return array<string,array<string,array{language:string,value:string}>>
+     */
+    public function labels(string $provider, array $itemIds, string $language): array
+    {
+        $endpoint = self::ENDPOINTS[$provider] ?? null;
+        $itemIds = array_values(array_unique(array_filter(array_slice($itemIds, 0, 50), static fn (string $id): bool => preg_match('/^Q[1-9][0-9]*$/', $id) === 1)));
+        if ($endpoint === null || $itemIds === []) {
+            return [];
+        }
+
+        $labels = [];
+        // Keep requests small.  FactGrid can be slow for a large batch even
+        // when only labels are requested; chunks also avoid one timeout
+        // hiding all labels on the settings page.
+        foreach (array_chunk($itemIds, 5) as $chunk) {
+            try {
+                $response = $this->httpClient->request('GET', $endpoint, [
+                    'action' => 'wbgetentities', 'format' => 'json', 'formatversion' => '2',
+                    'ids' => implode('|', $chunk), 'languages' => $this->language($language) . '|en',
+                    'props' => 'labels',
+                ], ['Accept' => 'application/json', 'User-Agent' => 'webtrees External Places/0.3'], 15.0);
+                if ($response === null || $response->getStatusCode() !== 200) {
+                    continue;
+                }
+                $body = $response->getBody()->getContents();
+                if (strlen($body) > self::MAX_RESPONSE_BYTES) {
+                    continue;
+                }
+                $payload = json_decode($body, true, 20, JSON_THROW_ON_ERROR);
+                foreach ($payload['entities'] ?? [] as $id => $entity) {
+                    if (is_string($id) && is_array($entity) && isset($entity['labels']) && is_array($entity['labels'])) {
+                        $labels[$id] = $entity['labels'];
+                    }
+                }
+            } catch (Throwable) {
+                continue;
+            }
+        }
+
+        if ($provider === 'factgrid' && count($labels) < count($itemIds)) {
+            foreach ($itemIds as $id) {
+                if (isset($labels[$id])) {
+                    continue;
+                }
+                foreach ($this->search('factgrid', $id, $language) as $result) {
+                    if ($result['qid'] === $id && $result['label'] !== $id) {
+                        $labels[$id] = [$this->language($language) => ['language' => $this->language($language), 'value' => $result['label']]];
+                        break;
+                    }
+                }
+            }
+        }
+        return $labels;
+    }
+
     /** @return list<array{qid:string,label:string,description:?string}> */
     public function search(string $provider, string $term, string $language, bool $houseOnly = false, string $filterLevel = 'house'): array
     {

@@ -715,6 +715,9 @@ msgstr "Die Typen des Hausfilters für %s wurden auf die Standardwerte zurückge
 msgid "The filter types for %s were reset to their defaults."
 msgstr "Die Filtertypen für %s wurden auf die Standardwerte zurückgesetzt."
 
+msgid "The filter types for the \"%s\" level and %s were reset to their defaults."
+msgstr "Die Filtertypen der Ebene „%s“ für %s wurden auf die Standardwerte zurückgesetzt."
+
 msgid "Coordinates must be defined for this shared place before nearby search can be used."
 msgstr "Für die Umkreissuche müssen zuerst Koordinaten für diesen gemeinsamen Ort festgelegt werden."
 
