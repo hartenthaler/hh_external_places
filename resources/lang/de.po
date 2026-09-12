@@ -457,6 +457,30 @@ msgstr "GeoNames nach diesem gemeinsamen Ort durchsuchen."
 msgid "Administrative area"
 msgstr "Verwaltungsgebiet"
 
+msgid "Hierarchy"
+msgstr "Hierarchie"
+
+msgid "Area"
+msgstr "Gebiet"
+
+msgid "Continent"
+msgstr "Kontinent"
+
+msgid "Independent political entity"
+msgstr "Unabhängige politische Einheit"
+
+msgid "First-order administrative division"
+msgstr "Verwaltungseinheit erster Ordnung"
+
+msgid "Second-order administrative division"
+msgstr "Verwaltungseinheit zweiter Ordnung"
+
+msgid "Third-order administrative division"
+msgstr "Verwaltungseinheit dritter Ordnung"
+
+msgid "Fourth-order administrative division"
+msgstr "Verwaltungseinheit vierter Ordnung"
+
 msgid "Population"
 msgstr "Einwohnerzahl"
 
@@ -633,6 +657,9 @@ msgstr "Eindeutige Kennung in Wikidata"
 
 msgid "Feature"
 msgstr "Merkmal"
+
+msgid "populated place"
+msgstr "Bewohnter Ort"
 
 msgid "Elevation"
 msgstr "Höhe"

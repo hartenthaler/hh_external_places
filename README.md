@@ -45,6 +45,7 @@ The current release provides:
 * checking cross-references between providers and showing whether they are consistent;
 * filtering provider searches by hierarchy level: house/farm, country, federation/international organisation, or planet;
 * showing historical addresses, owners and occupants from Wikidata or FactGrid;
+* showing a localized GeoNames parent hierarchy and translated type labels;
 * searching public people and organisations associated with external places;
 * linking displayed external people to their provider records and, when available, to WikiTree (`P2949`);
 * configuring enabled providers and one global nearby-search radius with optional tree exceptions; and
