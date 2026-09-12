@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.2.6.10 - 2026-09-12
+
+- GeoNames parent hierarchies are localized and shown directly after the
+  place name.
+- GeoNames details follow a stable order and feature and hierarchy labels use
+  the module translations.
+
 ## Unreleased
 
 - Added safe links and documentation for GOV DCAT-AP.de political-geocoding
