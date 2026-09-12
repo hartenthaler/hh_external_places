@@ -11,7 +11,7 @@ External Places is a [webtrees](https://www.webtrees.net) module for enriching [
 
 * [Purpose](#purpose)
 * [Main features](#main-features)
-* [Screenshot](#screenshot)
+* [Screenshots](#screenshots)
 * [Domus (Wikidata)](#domus-wikidata)
 * [Privacy](#privacy)
 * [Requirements](#requirements)
@@ -51,11 +51,50 @@ The current release provides:
 * configuring enabled providers and one global nearby-search radius with optional tree exceptions; and
 * opening linked Wikidata places in Domus.
 
-## 🖼️ Screenshot
+## 🖼️ Screenshots
 
-The shared-place summary keeps the local genealogy record in webtrees and adds compact, read-only external-provider panels.
+The screenshots below show the main workflows. The shared-place summary keeps
+the local genealogy record in webtrees and adds compact, read-only links and
+external-provider panels.
 
-![External provider information shown for a shared place](docs/images/screenshot1.jpg)
+### Linking a shared place
+
+The **External ID** action is available on the standard Vesta shared-place
+page. It links the shared place to external systems using the `EXID` tag
+introduced with GEDCOM 7.
+
+![External-ID link and summary actions](docs/images/link_exid.png)
+
+### Provider information and consistency
+
+The information page groups public data by provider. It also reports missing
+or inconsistent values that may need to be reviewed in the shared-place
+record.
+
+![Provider information and consistency checks](docs/images/info.png)
+
+### Addresses and related people
+
+When Wikidata provides addresses or people connected with a place, such as
+owners, the module displays these additional details as well.
+
+![Historical addresses and related individuals](docs/images/address_individuals.png)
+
+### Searching and assigning an external ID
+
+Editors can search each provider by name or by geographic radius. Result lists
+can be filtered for the relevant hierarchy level when a provider returns many
+matches.
+
+![External-ID assignment and provider searches](docs/images/zuordnung.png)
+
+### Domus integration
+
+Linked Wikidata places can be opened in [Domus](https://domus.genealogy.net).
+The Domus view can expose links to GOV and GenWiki, overlay historical maps,
+and show Wikidata residents or owners for houses and farms where available.
+
+![A shared place opened in Domus](docs/images/domus.png)
 
 ## 🔒 Privacy
 
