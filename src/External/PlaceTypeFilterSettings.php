@@ -15,17 +15,8 @@ final class PlaceTypeFilterSettings
     /** @var list<string> */
     public const LEVELS = ['planet', 'federation', 'country', 'house'];
 
-    /** @var array<string,list<string>> */
-    private const DEFAULTS = [
-        'wikidata' => ['Q23413', 'Q751876', 'Q3947', 'Q16560', 'Q41176', 'Q44613', 'Q365627', 'Q1802963', 'Q131596', 'Q489357'],
-        // FactGrid building, dwelling and farm type identifiers.
-        'factgrid' => ['Q701396', 'Q701397', 'Q983863', 'Q1783859', 'Q1783874', 'Q1853416', 'Q635758', 'Q394385', 'Q498903', 'Q36251', 'Q164328', 'Q370004', 'Q468136', 'Q902325'],
-        'gov' => ['8', '17', '21', '24', '193', '229', '231', '236', '261', '111', '102', '87'],
-        'geonames' => ['S.BLDA', 'S.BLDG', 'S.BRKS', 'S.CH', 'S.CSTL', 'S.CSTM', 'S.EST', 'S.FRM', 'S.FRMQ', 'S.FRMS', 'S.FRMT', 'S.GHSE', 'S.HSE', 'S.HSEC', 'S.HTL', 'S.HUT', 'S.HUTS', 'S.LTHSE', 'S.ML', 'S.PAL', 'S.PRN', 'S.RNCH', 'S.RSRT', 'S.RUIN', 'S.SNTR', 'S.CVNT', 'S.MSSN'],
-    ];
-
     /** @var array<string,array<string,list<string>>> */
-    private const HIERARCHY_DEFAULTS = [
+    private const DEFAULTS = [
         'planet' => [
             'wikidata' => ['Q634', 'Q3504248', 'Q13205267', 'Q30014'],
             'factgrid' => ['Q176135'],
@@ -36,13 +27,19 @@ final class PlaceTypeFilterSettings
             'wikidata' => ['Q484652', 'Q1335818', 'Q170156'],
             'factgrid' => ['Q1059807'],
             'gov' => ['71'],
-            'geonames' => [],
+            'geonames' => ['A.ZN'],
         ],
         'country' => [
             'wikidata' => ['Q6256', 'Q1048835', 'Q4835091', 'Q3624078'],
             'factgrid' => ['Q21925', 'Q221010'],
             'gov' => ['72', '130'],
             'geonames' => ['A.PCLI'],
+        ],
+        'house' => [
+            'wikidata' => ['Q23413', 'Q751876', 'Q3947', 'Q16560', 'Q41176', 'Q44613', 'Q365627', 'Q1802963', 'Q131596', 'Q489357'],
+            'factgrid' => ['Q701396', 'Q701397', 'Q983863', 'Q1783859', 'Q1783874', 'Q1853416', 'Q635758', 'Q394385', 'Q498903', 'Q36251', 'Q164328', 'Q370004', 'Q468136', 'Q902325'],
+            'gov' => ['8', '17', '21', '24', '193', '229', '231', '236', '261', '111', '102', '87'],
+            'geonames' => ['S.BLDA', 'S.BLDG', 'S.BRKS', 'S.CH', 'S.CSTL', 'S.CSTM', 'S.EST', 'S.FRM', 'S.FRMQ', 'S.FRMS', 'S.FRMT', 'S.GHSE', 'S.HSE', 'S.HSEC', 'S.HTL', 'S.HUT', 'S.HUTS', 'S.LTHSE', 'S.ML', 'S.PAL', 'S.PRN', 'S.RNCH', 'S.RSRT', 'S.RUIN', 'S.SNTR', 'S.CVNT', 'S.MSSN'],
         ],
     ];
 
@@ -69,11 +66,11 @@ final class PlaceTypeFilterSettings
     public static function all(): array
     {
         $raw = trim(Site::getPreference(self::PREFERENCE));
-        if ($raw === '') { return self::DEFAULTS; }
-        try { $decoded = json_decode($raw, true, 8, JSON_THROW_ON_ERROR); } catch (JsonException) { return self::DEFAULTS; }
-        if (!is_array($decoded)) { return self::DEFAULTS; }
-        $result = self::DEFAULTS;
-        foreach (array_keys(self::DEFAULTS) as $provider) {
+        if ($raw === '') { return self::DEFAULTS['house']; }
+        try { $decoded = json_decode($raw, true, 8, JSON_THROW_ON_ERROR); } catch (JsonException) { return self::DEFAULTS['house']; }
+        if (!is_array($decoded)) { return self::DEFAULTS['house']; }
+        $result = self::DEFAULTS['house'];
+        foreach (array_keys(self::DEFAULTS['house']) as $provider) {
             if (!is_array($decoded[$provider] ?? null)) { continue; }
             $values = [];
             foreach ($decoded[$provider] as $value) {
@@ -88,7 +85,7 @@ final class PlaceTypeFilterSettings
     /** @return array<string,array<string,list<string>>> */
     public static function levels(): array
     {
-        $levels = self::HIERARCHY_DEFAULTS;
+        $levels = self::DEFAULTS;
         $levels['house'] = self::all();
         $raw = trim(Site::getPreference(self::PREFERENCE . '_LEVELS'));
         if ($raw === '') {
@@ -97,7 +94,7 @@ final class PlaceTypeFilterSettings
         try { $decoded = json_decode($raw, true, 8, JSON_THROW_ON_ERROR); } catch (JsonException) { return $levels; }
         if (!is_array($decoded)) { return $levels; }
         foreach (self::LEVELS as $level) {
-            foreach (array_keys(self::DEFAULTS) as $provider) {
+            foreach (array_keys(self::DEFAULTS['house']) as $provider) {
                 if (!is_array($decoded[$level][$provider] ?? null)) { continue; }
                 $values = array_values(array_unique(array_filter(array_map(static fn ($value): string => trim((string) $value), $decoded[$level][$provider]), static fn (string $value): bool => $value !== '' && mb_strlen($value) <= 120)));
                 $levels[$level][$provider] = $values;
@@ -117,7 +114,7 @@ final class PlaceTypeFilterSettings
     {
         $result = [];
         foreach (self::LEVELS as $level) {
-            foreach (array_keys(self::DEFAULTS) as $provider) {
+            foreach (array_keys(self::DEFAULTS['house']) as $provider) {
                 $result[$level][$provider] = [];
                 foreach ((array) ($levels[$level][$provider] ?? []) as $rawValue) {
                     foreach (preg_split('/\R/u', (string) $rawValue) ?: [] as $value) {
@@ -135,31 +132,30 @@ final class PlaceTypeFilterSettings
     /** @return array<string,list<string>> */
     public static function defaults(): array
     {
-        return self::DEFAULTS;
+        return self::DEFAULTS['house'];
     }
 
     /** @return array<string,list<string>> */
     public static function defaultsForLevel(string $level): array
     {
-        return $level === 'house' ? self::DEFAULTS : (self::HIERARCHY_DEFAULTS[$level] ?? []);
+        return self::DEFAULTS[$level] ?? [];
     }
 
     public static function reset(string $provider): void
     {
-        if (!array_key_exists($provider, self::DEFAULTS)) {
+        if (!array_key_exists($provider, self::DEFAULTS['house'])) {
             return;
         }
-
-        $filters = self::all();
-        $filters[$provider] = self::DEFAULTS[$provider];
-        self::save($filters);
+        $levels = self::levels();
+        $levels['house'][$provider] = self::DEFAULTS['house'][$provider];
+        self::saveLevels($levels);
     }
 
     /** @param array<string,list<string>> $filters */
     public static function save(array $filters): void
     {
         $result = [];
-        foreach (array_keys(self::DEFAULTS) as $provider) {
+        foreach (array_keys(self::DEFAULTS['house']) as $provider) {
             $result[$provider] = [];
             foreach ((array) ($filters[$provider] ?? []) as $rawValue) {
                 foreach (preg_split('/\R/u', (string) $rawValue) ?: [] as $value) {

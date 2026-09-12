@@ -29,6 +29,7 @@ final class GeoNamesProvider implements ExternalProvider
 
     public function label(): string { return 'GeoNames'; }
 
+
     /** @return array{active:bool,username:bool} */
     public function configurationStatus(): array
     {
@@ -73,16 +74,25 @@ final class GeoNamesProvider implements ExternalProvider
     {
         $username = $this->username();
         $place = trim($place);
-        if ($username === '' || $place === '' || mb_strlen($place) > 240) { return []; }
+        if ($username === '') { return []; }
+        if ($place === '' || mb_strlen($place) > 240) { return []; }
         $language = $this->language($language);
-        $cacheKey = 'search|' . $language . '|' . $place . '|' . $username;
+        // Bump the key whenever the search strategy changes, so cached
+        // responses from the former name/q queries cannot mask new results.
+        $cacheKey = 'search-v3|' . $language . '|' . $place . '|' . $username;
         $payload = $this->cache->read('geonames', $cacheKey);
         if ($payload === null) {
-            // Use GeoNames' full-text query.  Unlike name_startsWith, `q`
-            // also searches alternate names (for example “Deutschland” for
-            // the primary name “Federal Republic of Germany”) and does not
-            // exclude administrative objects such as the European Union.
-            $payload = $this->request(self::ENDPOINT, ['q' => $place, 'lang' => $language, 'maxRows' => 20, 'style' => 'FULL', 'username' => $username]);
+            // Prefer an exact place-name match. This resolves names such as
+            // “Deutschland” and “European Union” before similarly named
+            // places. The fallback `name` query supports composite addresses
+            // such as “Klosterstraße 3, Ennetach, Mengen”. No feature-class
+            // restriction is applied, so administrative objects remain
+            // eligible.
+            $query = ['name_equals' => $place, 'lang' => $language, 'maxRows' => 20, 'style' => 'FULL', 'username' => $username];
+            $payload = $this->request(self::ENDPOINT, $query);
+            if (is_array($payload) && ((array) ($payload['geonames'] ?? []) === [])) {
+                $payload = $this->request(self::ENDPOINT, ['name' => $place, 'isNameRequired' => 'true', 'lang' => $language, 'maxRows' => 20, 'style' => 'FULL', 'username' => $username]);
+            }
             if ($payload === null) { return []; }
             $this->cache->write('geonames', $cacheKey, $payload);
         }
@@ -92,8 +102,13 @@ final class GeoNamesProvider implements ExternalProvider
             $identifier = $this->identifier((string) $row['geonameId']);
             $label = is_string($row['name'] ?? null) ? trim($row['name']) : '';
             if ($identifier === null || $label === '') { continue; }
-            $featureCode = strtoupper(trim((string) ($row['fclass'] ?? '') . '.' . (string) ($row['fcode'] ?? '')));
-            if ($houseOnly && !in_array($featureCode, PlaceTypeFilterSettings::forLevel('geonames', $filterLevel), true)) { continue; }
+            $featureClass = (string) ($row['fcl'] ?? $row['fclass'] ?? '');
+            $featureType = (string) ($row['fcode'] ?? '');
+            $featureCode = strtoupper(trim($featureClass . '.' . $featureType, '.'));
+            $allowedTypes = array_map('strtoupper', PlaceTypeFilterSettings::forLevel('geonames', $filterLevel));
+            $matchesFilter = in_array($featureCode, $allowedTypes, true)
+                || in_array(strtoupper($featureType), array_map(static fn (string $value): string => (string) (str_contains($value, '.') ? substr($value, strrpos($value, '.') + 1) : $value), $allowedTypes), true);
+            if ($houseOnly && !$matchesFilter) { continue; }
             $results[] = [
                 'id' => $identifier->value,
                 'label' => $label,
@@ -119,7 +134,8 @@ final class GeoNamesProvider implements ExternalProvider
     {
         try {
             $response = $this->http->request('GET', $endpoint, $query, ['Accept' => 'application/json', 'User-Agent' => 'webtrees External Places/0.3'], 10.0);
-            if ($response === null || $response->getStatusCode() !== 200) { return null; }
+            if ($response === null) { return null; }
+            if ($response->getStatusCode() !== 200) { return null; }
             $body = $response->getBody()->getContents();
             if (strlen($body) > 500_000) { return null; }
             $payload = json_decode($body, true, 20, JSON_THROW_ON_ERROR);

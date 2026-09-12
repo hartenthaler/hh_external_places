@@ -85,6 +85,9 @@ final class WikidataLocationAssignmentPage implements RequestHandlerInterface
         $wikidataCandidates = $providerEnabled && $providerKey === 'wikidata' && $submittedSearch !== ''
             ? $client->search($submittedSearch, $language, $houseOnly, $filterLevel ?? 'house')
             : [];
+        $geonamesCandidates = $providerEnabled && $providerKey === 'geonames' && $submittedSearch !== ''
+            ? $geoNamesProvider->search($submittedSearch, $language, $houseOnly, $filterLevel ?? 'house')
+            : [];
 
         return $this->viewResponse('hh_external_places::assignment', [
             'assignment_url' => ExternalPlacesModule::assignmentUrl(['tree' => $tree->name(), 'xref' => $location->xref()]),
@@ -93,7 +96,7 @@ final class WikidataLocationAssignmentPage implements RequestHandlerInterface
             'candidates'     => $wikidataCandidates,
             'external_candidates' => $providerEnabled && $providerKey === 'gov' && $submittedSearch !== '' && $govProvider !== null && method_exists($govProvider, 'search') ? array_values(array_filter($govProvider->search($submittedSearch, $language), static fn (array $candidate): bool => !$houseOnly || PlaceTypeFilterSettings::matches('gov', $candidate, $filterLevel ?? 'house'))) : [],
             'factgrid_candidates' => $providerEnabled && $providerKey === 'factgrid' && $submittedSearch !== '' ? $wikibaseClient->search('factgrid', $submittedSearch, $language, $houseOnly, $filterLevel ?? 'house') : [],
-            'geonames_candidates' => $providerEnabled && $providerKey === 'geonames' && $submittedSearch !== '' ? $geoNamesProvider->search($submittedSearch, $language, $houseOnly, $filterLevel ?? 'house') : [],
+            'geonames_candidates' => $geonamesCandidates,
             'factgrid_nearby_candidates' => $factgridNearbyCandidates,
             'coordinates'    => $coordinates,
             'current'        => $current,

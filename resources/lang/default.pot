@@ -679,6 +679,9 @@ msgstr ""
 msgid "The filter types for %s were reset to their defaults."
 msgstr ""
 
+msgid "The filter types for the \"%s\" level and %s were reset to their defaults."
+msgstr ""
+
 msgid "Coordinates must be defined for this shared place before nearby search can be used."
 msgstr ""
 
