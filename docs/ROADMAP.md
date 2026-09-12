@@ -19,9 +19,33 @@ Completed: show historical address data plus public Wikidata owners and occupant
 
 ## Version 2 – Planned reconciliation and extended research
 
-Future work is collected in the Version 2 milestone. It includes richer
-FactGrid/GOV metadata, subobjects, type-specific nearby-search behaviour,
-and an editor-controlled comparison of public Wikidata/FactGrid/GOV data
-with local family-tree data.
-No automatic GEDCOM changes are planned. The naming rationale is documented
-in [Module and repository naming proposal](RENAME_PROPOSAL.md).
+Version 2 now starts with a dedicated bug-fixing and quality phase before
+larger research features. The open Version 2 issues are:
+
+### Bug fixing and quality
+
+- #99 – make Nominatim reliably visible when enabled;
+- #98 – fix shared-place type assignment and temporal consistency checks;
+- #93 – expand the GOV type catalogue and replace remaining codes with labels;
+- #92 – fix missing or malformed GOV population tables and charts; and
+- #97 – clarify house/farm classification and historical date ranges.
+
+### Provider data and reconciliation
+
+- #83 – compare provider coordinates and offer validated import;
+- #88 – show and reconcile GOV alternate names;
+- #87 – show a filtered GOV object timeline;
+- #91 – suggest only filters matching the shared-place classification; and
+- #33 – reconcile provider data with the family tree.
+
+### Further research and presentation
+
+- #25 – display subobjects;
+- #37 – show relevant external objects as an optional map layer; and
+- #73 – document the module's focus on houses and farms.
+
+The deferred backlog also contains #48 (OpenRouteService) and #49
+(OpenHistoricalMap); these remain outside the current Version 2 scope until
+their practical benefit and provider availability are clearer. No automatic
+GEDCOM changes are planned. The naming rationale is documented in
+[Module and repository naming proposal](RENAME_PROPOSAL.md).
