@@ -49,6 +49,30 @@ msgstr ""
 msgid "Administrative area"
 msgstr ""
 
+msgid "Hierarchy"
+msgstr ""
+
+msgid "Area"
+msgstr ""
+
+msgid "Continent"
+msgstr ""
+
+msgid "Independent political entity"
+msgstr ""
+
+msgid "First-order administrative division"
+msgstr ""
+
+msgid "Second-order administrative division"
+msgstr ""
+
+msgid "Third-order administrative division"
+msgstr ""
+
+msgid "Fourth-order administrative division"
+msgstr ""
+
 msgid "Population"
 msgstr ""
 
@@ -224,6 +248,9 @@ msgid "Unique identifier in Wikidata"
 msgstr ""
 
 msgid "Feature"
+msgstr ""
+
+msgid "populated place"
 msgstr ""
 
 msgid "Elevation"

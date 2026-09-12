@@ -328,7 +328,19 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                     $description = $provider->key() === 'gov'
                         ? I18N::translate($information->description)
                         : $information->description;
+                    if ($provider->key() === 'geonames') {
+                        $description = $this->externalDetailValue('Feature', $description);
+                    }
                     $html .= ' — ' . e($description);
+                }
+                foreach ($information?->hierarchies ?? [] as $hierarchy) {
+                    $parts = [];
+                    foreach (array_reverse($hierarchy) as $node) {
+                        $parts[] = '<a href="' . e($node['url']) . '" title="' . e($this->externalDetailLabel($node['label'])) . '" target="_blank" rel="noopener noreferrer">' . e($node['value']) . '</a>';
+                    }
+                    if ($parts !== []) {
+                        $html .= '<br><small>' . e(I18N::translate('Hierarchy')) . ': ' . implode(', ', $parts) . '</small>';
+                    }
                 }
                 foreach ($information?->details ?? [] as $detail) {
                     $value = $this->externalDetailValue($detail['label'], $detail['value']);
@@ -506,18 +518,30 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         if (preg_match('/^Alternate name \(([a-z]{2,3}(?:[-_][a-z]{2,4})?)\)$/i', $label, $matches) === 1) {
             return I18N::translate('Alternate name') . ' (' . strtolower($matches[1]) . ')';
         }
-        return match ($label) {
-            'Country', 'Region', 'Street', 'Postal code', 'Place' => MoreI18N::xlate($label),
-            'Population' => I18N::translate('Population'),
-            'External identifier' => I18N::translate('External identifier'),
-            'Administrative area' => I18N::translate('Administrative area'),
-            'Feature' => I18N::translate('Feature'),
-            'Elevation' => I18N::translate('Elevation'),
-            'House number' => I18N::translate('House number'),
-            'Municipality' => I18N::translate('Municipality'),
-            'County' => I18N::translate('County'),
-            'State' => I18N::translate('State'),
-            'Type' => I18N::translate('Type'),
+        return match (strtolower($label)) {
+            'country' => MoreI18N::xlate('Country'),
+            'region' => MoreI18N::xlate('Region'),
+            'street' => MoreI18N::xlate('Street'),
+            'postal code' => MoreI18N::xlate('Postal code'),
+            'place' => MoreI18N::xlate('Place'),
+            'population' => I18N::translate('Population'),
+            'external identifier' => I18N::translate('External identifier'),
+            'administrative area' => I18N::translate('Administrative area'),
+            'feature' => I18N::translate('Feature'),
+            'elevation' => I18N::translate('Elevation'),
+            'house number' => I18N::translate('House number'),
+            'municipality' => I18N::translate('Municipality'),
+            'county' => I18N::translate('County'),
+            'state' => I18N::translate('State'),
+            'type' => I18N::translate('Type'),
+            'area' => I18N::translate('Area'),
+            'continent' => I18N::translate('Continent'),
+            'independent political entity' => I18N::translate('Independent political entity'),
+            'first-order administrative division' => I18N::translate('First-order administrative division'),
+            'second-order administrative division' => I18N::translate('Second-order administrative division'),
+            'third-order administrative division' => I18N::translate('Third-order administrative division'),
+            'fourth-order administrative division' => I18N::translate('Fourth-order administrative division'),
+            'populated place' => I18N::translate('populated place'),
             default => $label,
         };
     }
@@ -586,6 +610,15 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
 
     private function externalDetailValue(string $label, string $value): string
     {
+        if ($label === 'Feature') {
+            // GeoNames may vary the capitalization of feature labels. Use a
+            // canonical message id so translations (e.g. "populated place")
+            // are found reliably.
+            return match (strtolower(trim($value))) {
+                'populated place' => I18N::translate('populated place'),
+                default => I18N::translate($value),
+            };
+        }
         if ($label === 'Population' && is_numeric(trim($value))) {
             return I18N::number((float) $value);
         }

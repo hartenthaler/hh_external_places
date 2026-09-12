@@ -10,6 +10,8 @@
 - Added GeoNames `A.ZN` as the default federation filter type for zones such as
   the European Union.
 - Removed temporary provider diagnostics from the assignment page.
+- GeoNames parent hierarchies are now localized and displayed directly after
+  the place name; provider details use a stable, readable order.
 
 ## Unreleased
 

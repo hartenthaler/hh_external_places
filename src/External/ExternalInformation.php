@@ -7,7 +7,7 @@ namespace Hartenthaler\Webtrees\Module\ExternalPlacesModule\External;
 /** Small, provider-neutral read model used by the shared-place summary. */
 final class ExternalInformation
 {
-    /** @param array<string,list<string>> $references @param list<array{label:string,value:string}> $details @param array<string,ExternalPerson> $people @param list<ExternalPersonRelation> $owners @param list<ExternalPersonRelation> $occupants @param array<string,int|float> $population */
+    /** @param array<string,list<string>> $references @param list<array{label:string,value:string}> $details @param array<string,ExternalPerson> $people @param list<ExternalPersonRelation> $owners @param list<ExternalPersonRelation> $occupants @param array<string,int|float> $population @param list<list<array{label:string,value:string,url:string}>> $hierarchies */
     public function __construct(
         public readonly string $provider,
         public readonly string $value,
@@ -23,6 +23,7 @@ final class ExternalInformation
         public readonly array $occupants = [],
         public readonly array $population = [],
         public readonly ?string $typeId = null,
+        public readonly array $hierarchies = [],
     ) {
     }
 }

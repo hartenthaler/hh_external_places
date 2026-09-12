@@ -16,6 +16,7 @@ final class GeoNamesProvider implements ExternalProvider
 {
     private const ENDPOINT = 'https://secure.geonames.org/searchJSON';
     private const GET_ENDPOINT = 'https://secure.geonames.org/getJSON';
+    private const HIERARCHY_ENDPOINT = 'https://secure.geonames.org/hierarchyJSON';
     public const AUTHORITY_URI = 'https://www.geonames.org/';
 
     private readonly HttpTransport $http;
@@ -66,7 +67,7 @@ final class GeoNamesProvider implements ExternalProvider
             if ($payload === null) { return null; }
             $this->cache->write('geonames', $cacheKey, $payload);
         }
-        return is_array($payload) ? $this->information($identifier, $payload) : null;
+        return is_array($payload) ? $this->information($identifier, $payload, $language) : null;
     }
 
     /** @return list<array{id:string,label:string,url:string,description:?string,distanceKm:?float,details:list<array{label:string,value:string}>}> */
@@ -177,7 +178,9 @@ final class GeoNamesProvider implements ExternalProvider
     private function details(array $row): array
     {
         $details = [];
-        foreach (['countryName' => 'Country', 'adminName1' => 'Region', 'adminName2' => 'Administrative area', 'fcodeName' => 'Feature', 'population' => 'Population', 'elevation' => 'Elevation'] as $key => $label) {
+        // Keep the presentation order stable: administrative area, region,
+        // country, then the remaining descriptive values.
+        foreach (['adminName2' => 'Administrative area', 'adminName1' => 'Region', 'countryName' => 'Country', 'fcodeName' => 'Feature', 'elevation' => 'Elevation', 'population' => 'Population'] as $key => $label) {
             $value = $row[$key] ?? null;
             if (is_scalar($value) && (string) $value !== '' && (string) $value !== '0') { $details[] = ['label' => $label, 'value' => (string) $value]; }
         }
@@ -196,18 +199,36 @@ final class GeoNamesProvider implements ExternalProvider
             $seen[$key] = true;
             $details[] = ['label' => 'Alternate name (' . $language . ')', 'value' => $name];
         }
-        usort($details, static function (array $left, array $right): int {
-            $leftAlternate = str_starts_with($left['label'], 'Alternate name (');
-            $rightAlternate = str_starts_with($right['label'], 'Alternate name (');
-            if ($leftAlternate !== $rightAlternate) { return $leftAlternate ? 1 : -1; }
-            return strnatcasecmp($left['label'] . "\0" . $left['value'], $right['label'] . "\0" . $right['value']);
-        });
         return $details;
     }
 
     /** @param array<string,mixed> $row */
-    private function information(ExternalIdentifier $identifier, array $row): ExternalInformation
+    private function information(ExternalIdentifier $identifier, array $row, string $language): ExternalInformation
     {
-        return new ExternalInformation('geonames', $identifier->value, $identifier->url, is_string($row['name'] ?? null) ? $row['name'] : null, $this->description($row), null, [], [], $this->details($row));
+        return new ExternalInformation('geonames', $identifier->value, $identifier->url, is_string($row['name'] ?? null) ? $row['name'] : null, $this->description($row), null, [], [], $this->details($row), [], [], [], [], null, $this->hierarchies($identifier->value, $language));
+    }
+
+    /** @return list<list<array{label:string,value:string,url:string}>> */
+    private function hierarchies(string $geonameId, string $language): array
+    {
+        $username = $this->username();
+        if ($username === '') { return []; }
+        $language = $this->language($language);
+        $cacheKey = 'hierarchy|' . $geonameId . '|' . $language . '|' . $username;
+        $payload = $this->cache->read('geonames', $cacheKey);
+        if ($payload === null) {
+            $payload = $this->request(self::HIERARCHY_ENDPOINT, ['geonameId' => $geonameId, 'lang' => $language, 'username' => $username]);
+            if ($payload === null) { return []; }
+            $this->cache->write('geonames', $cacheKey, $payload);
+        }
+        $branch = [];
+        foreach ((array) ($payload['geonames'] ?? []) as $row) {
+            if (!is_array($row) || !isset($row['geonameId'])) { continue; }
+            $id = (string) $row['geonameId'];
+            $name = trim((string) ($row['name'] ?? $row['toponymName'] ?? ''));
+            if ($name === '') { continue; }
+            $branch[] = ['label' => trim((string) ($row['fcodeName'] ?? 'Place')), 'value' => $name, 'url' => self::AUTHORITY_URI . rawurlencode($id) . '/'];
+        }
+        return $branch === [] ? [] : [$branch];
     }
 }

@@ -20,6 +20,14 @@ GeoNames `alternateNames` values returned by the service are shown as
 language-labelled, deduplicated details. They are read-only contextual data;
 the module never writes them to `_LOC:NAME` automatically.
 
+For a GeoNames record, the optional parent hierarchy is requested in the
+current webtrees display language (with English as fallback). It is shown
+directly after the place name, from the broadest parent to the selected place.
+Each hierarchy item is linked to its GeoNames record and uses a translated
+type label on mouse-over. The remaining details follow in a stable order:
+administrative area, region, country, feature, elevation, population and
+alternate names.
+
 Nominatim is also optional. It performs a read-only contextual lookup against
 the public OpenStreetMap Nominatim API using the shared-place name. Results are
 cached locally and include the returned object type and address hierarchy where
