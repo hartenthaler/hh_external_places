@@ -61,8 +61,8 @@ The current release provides:
 
 ## 🖼️ Screenshots
 
-The screenshots below show the main workflow. The shared-place summary keeps
-the local genealogy record in webtrees and presents a button to the new pages of this module.
+The screenshots below show the main workflows. The shared-place summary keeps
+the local genealogy record in webtrees and presents links to the module's dedicated pages.
 
 ### Linking a shared place
 
@@ -119,9 +119,16 @@ When the optional Legal Notice module is active, it includes the selected extern
 
 ## 📥 Installation
 
+Install and use [Custom Module Manager](https://github.com/Jeferson49/CustomModuleManager) for a convenient installation of webtrees custom modules:
+
+1. Open **Control panel / Modules / Custom Module Manager** in webtrees.
+2. Find **External Places** and click **Install module**.
+
+**Manual installation**:
+
 1. Download the [latest release](https://github.com/hartenthaler/hh_external_places/releases/latest).
-2. Unzip it into the `modules_v4` directory of your webtrees installation.
-3. Ensure that the directory is named `hh_external_places`.
+2. Unzip it into the modules_v4 directory of your webtrees installation.
+3. Ensure that the directory is named hh_external_places.
 4. In the webtrees control panel, enable **External Places**.
 5. In the Vesta Shared Places configuration, enable **External Places** as a place-information provider.
 
