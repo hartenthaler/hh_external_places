@@ -1,5 +1,7 @@
 # Changelog
 
+## Unreleased
+
 ## 2.2.6.9 - 2026-09-12
 
 - GeoNames place hierarchies are now shown in the user's language directly
@@ -8,9 +10,6 @@
   region, country, feature, elevation, population and alternate names.
 - GeoNames feature names such as “populated place” and hierarchy labels are
   translated where a module translation is available.
-
-## Unreleased
-
 - Added safe links and documentation for GOV DCAT-AP.de political-geocoding
   identifiers.
 - GeoNames searches now include alternate names and administrative objects,
@@ -19,10 +18,6 @@
 - Added GeoNames `A.ZN` as the default federation filter type for zones such as
   the European Union.
 - Removed temporary provider diagnostics from the assignment page.
-- GeoNames parent hierarchies are now localized and displayed directly after
-  the place name; provider details use a stable, readable order.
-
-## Unreleased
 
 ## 2.2.6.8 - 2026-08-31
 
@@ -31,7 +26,6 @@
 - Editors can compare alternate names with the shared-place names and add a
   missing name together with its language.
 - Added the missing Wikidata default filter for sovereign states.
-
 - Added the requested GOV, Wikidata and house-level default filter types.
 - GOV population histories no longer interpret list positions as years; “from”
   and “until” values are retained as separate dated observations.
