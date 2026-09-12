@@ -21,7 +21,7 @@ Completed: show historical address data plus public Wikidata owners and occupant
 
 Future work is collected in the Version 2 milestone. It includes richer
 FactGrid/GOV metadata, subobjects, type-specific nearby-search behaviour,
-investigation of the Vesta scrollbar behaviour, and an editor-controlled
-comparison of public Wikidata/FactGrid/GOV data with local family-tree data.
+and an editor-controlled comparison of public Wikidata/FactGrid/GOV data
+with local family-tree data.
 No automatic GEDCOM changes are planned. The naming rationale is documented
 in [Module and repository naming proposal](RENAME_PROPOSAL.md).
