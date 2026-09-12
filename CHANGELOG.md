@@ -4,20 +4,20 @@
 
 ## 2.2.6.9 - 2026-09-12
 
-- GeoNames place hierarchies are now shown in the user's language directly
-  after the place name.
-- GeoNames details are presented in a clear order: administrative area,
-  region, country, feature, elevation, population and alternate names.
-- GeoNames feature names such as “populated place” and hierarchy labels are
-  translated where a module translation is available.
-- Added safe links and documentation for GOV DCAT-AP.de political-geocoding
-  identifiers.
-- GeoNames searches now include alternate names and administrative objects,
-  so searches such as “Deutschland” and “European Union” return their actual
-  GeoNames records.
+- GenWiki links can be resolved for GOV identifiers through the MediaWiki API.
+- Wikidata's P14871 GenWiki article identifier is read and shown as a link;
+  existing GenWiki links are checked for consistency and are not duplicated
+  (Issue #100).
+- GOV DCAT-AP.de political-geocoding identifiers are recognized and linked
+  safely (Issue #94).
+- GeoNames searches include alternate names and administrative objects, so
+  searches such as “Deutschland” and “European Union” return the actual
+  GeoNames records (Issue #96).
+- GeoNames parent hierarchies are requested in the user's language and shown
+  directly after the place name; provider details use a stable, readable
+  order (Issue #85).
 - Added GeoNames `A.ZN` as the default federation filter type for zones such as
   the European Union.
-- Removed temporary provider diagnostics from the assignment page.
 
 ## 2.2.6.8 - 2026-08-31
 
@@ -26,6 +26,7 @@
 - Editors can compare alternate names with the shared-place names and add a
   missing name together with its language.
 - Added the missing Wikidata default filter for sovereign states.
+
 - Added the requested GOV, Wikidata and house-level default filter types.
 - GOV population histories no longer interpret list positions as years; “from”
   and “until” values are retained as separate dated observations.
