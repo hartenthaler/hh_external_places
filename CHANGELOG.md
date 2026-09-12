@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.2.6.9 - 2026-09-12
+
+- GeoNames place hierarchies are now shown in the user's language directly
+  after the place name.
+- GeoNames details are presented in a clear order: administrative area,
+  region, country, feature, elevation, population and alternate names.
+- GeoNames feature names such as “populated place” and hierarchy labels are
+  translated where a module translation is available.
+
 ## Unreleased
 
 - Added safe links and documentation for GOV DCAT-AP.de political-geocoding
