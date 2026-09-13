@@ -343,7 +343,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                     $value = $this->externalDetailValue($detail['label'], $detail['value']);
                     $detailLabel = $this->externalDetailLabel($detail['label']);
                     $alternateLanguage = null;
-                    if ($provider->key() === 'geonames' && str_starts_with($detail['label'], 'Alternate name (')) {
+                    if (in_array($provider->key(), ['geonames', 'gov'], true) && str_starts_with($detail['label'], 'Alternate name (')) {
                         preg_match('/^Alternate name \(([a-z]{2,3}(?:[-_][a-z]{2,4})?)\)$/i', $detail['label'], $languageMatch);
                         $alternateLanguage = strtolower(explode('-', str_replace('_', '-', $languageMatch[1] ?? ''))[0]);
                         $sameLanguage = $this->locationNamesByLanguage($gedcom)[$alternateLanguage] ?? [];
@@ -352,7 +352,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                         }
                     }
                     $html .= '<br><small>' . e($detailLabel) . ': ' . ($detail['label'] === 'External identifier' ? $this->externalIdentifierHtml($value) : e($value)) . '</small>';
-                    if ($provider->key() === 'geonames' && str_starts_with($detail['label'], 'Alternate name (')) {
+                    if (in_array($provider->key(), ['geonames', 'gov'], true) && str_starts_with($detail['label'], 'Alternate name (')) {
                         $locNames = $this->locationNamesByLanguage($gedcom);
                         $sameLanguage = $locNames[$alternateLanguage] ?? [];
                         if (in_array($value, $sameLanguage, true)) {

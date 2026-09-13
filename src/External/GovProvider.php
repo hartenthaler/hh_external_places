@@ -265,8 +265,14 @@ final class GovProvider implements ExternalProvider
     {
         $details = [];
         foreach ((array) ($data['name'] ?? []) as $name) {
-            $value = is_array($name) ? ($name['value'] ?? $name['name'] ?? null) : $name;
-            if (is_string($value) && trim($value) !== '') { $details[] = ['label' => 'Name', 'value' => trim(strip_tags($value))]; }
+            $value = is_array($name) ? ($name['value'] ?? $name['name'] ?? $name['text'] ?? null) : $name;
+            if (!is_string($value) || trim($value) === '') { continue; }
+            $language = is_array($name) ? ($name['language'] ?? $name['languageCode'] ?? $name['lang'] ?? $name['code'] ?? null) : null;
+            if (is_string($language) && preg_match('/^[a-z]{2,3}(?:[-_][a-z]{2,4})?$/i', trim($language)) === 1) {
+                $details[] = ['label' => 'Alternate name (' . strtolower(trim($language)) . ')', 'value' => trim(strip_tags($value))];
+            } else {
+                $details[] = ['label' => 'Name', 'value' => trim(strip_tags($value))];
+            }
         }
         foreach ((array) ($data['externalReference'] ?? $data['extRef'] ?? []) as $reference) {
             $value = is_array($reference) ? ($reference['value'] ?? null) : $reference;
@@ -275,6 +281,19 @@ final class GovProvider implements ExternalProvider
                 $details[] = ['label' => 'External identifier', 'value' => trim($value)];
             }
         }
+        $seen = [];
+        $details = array_values(array_filter($details, static function (array $detail) use (&$seen): bool {
+            $key = $detail['label'] . "\0" . $detail['value'];
+            if (isset($seen[$key])) { return false; }
+            $seen[$key] = true;
+            return true;
+        }));
+        usort($details, static function (array $left, array $right): int {
+            $alternateLeft = str_starts_with($left['label'], 'Alternate name (');
+            $alternateRight = str_starts_with($right['label'], 'Alternate name (');
+            if ($alternateLeft !== $alternateRight) { return $alternateLeft ? -1 : 1; }
+            return strnatcasecmp($left['label'] . $left['value'], $right['label'] . $right['value']);
+        });
         return $details;
     }
 
