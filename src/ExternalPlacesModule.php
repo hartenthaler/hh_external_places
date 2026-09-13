@@ -271,9 +271,6 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         );
         if ($wikidataReference !== null) {
                     $assignmentUrl = $location->canEdit() ? self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]) : null;
-                    foreach ($wikidataReference->references['genwiki'] ?? [] as $genwikiUrl) {
-                        $html .= $this->genwikiReferenceHtml($genwikiUrl, $externalIdentifiers, $assignmentUrl, $genwikiShown);
-                    }
                     $html .= $this->crossReferenceHtml($wikidataReference, $externalIdentifiers, $assignmentUrl);
         }
         $html .= $this->sourceHtml('Wikidata', 'https://www.wikidata.org/') . '</section>';
@@ -308,7 +305,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         $registry = new ExternalProviderRegistry();
         $html = '';
         foreach ($registry->all() as $provider) {
-            if ($provider->key() === $skip || $provider->key() === 'genwiki' || !ExternalProviderSettings::isEnabled($provider->key())) {
+            if ($provider->key() === $skip || !ExternalProviderSettings::isEnabled($provider->key())) {
                 continue;
             }
             foreach ($identifiers as $identifier) {
@@ -387,13 +384,13 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                             $html .= ' <form method="post" action="' . e($assignmentUrl) . '" class="d-inline">' . csrf_field() . '<input type="hidden" name="operation" value="add-gov-type"><input type="hidden" name="gov_type" value="' . e($information->typeId) . '"><button class="btn btn-sm btn-outline-primary" type="submit">' . e(I18N::translate('Add GOV place type')) . '</button></form>';
                         }
                     }
-                    foreach ($information->references['genwiki'] ?? [] as $genwikiUrl) {
-                        $html .= $this->genwikiReferenceHtml($genwikiUrl, $identifiers, $assignmentUrl, $genwikiShown);
-                    }
                     $html .= $this->crossReferenceHtml($information, $identifiers, $assignmentUrl);
                     $html .= $this->externalPersonRelationsHtml($information);
                 }
                 $html .= $this->sourceHtml($provider->label(), $this->providerHomepage($provider->key())) . '</section>';
+                if ($provider->key() === 'genwiki') {
+                    $genwikiShown[] = $identifier->url;
+                }
             }
         }
         return $html;
@@ -420,10 +417,15 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                 break;
             }
         }
+        // An assigned GenWiki identifier is rendered by the GenWiki provider
+        // block (including its title and introduction). Hide only the shorter
+        // cross-reference line when consistent values are configured to be
+        // suppressed; otherwise show it with its consistency marker.
         if ($matching && !self::showConsistentReferences()) {
             return '';
         }
-        $html = '<br><small>' . e(I18N::translate('Article in GenWiki')) . ': <a href="' . e($canonical) . '" rel="noopener noreferrer" target="_blank">' . e($canonical) . '</a>';
+        $displayValue = $pageId ?? $canonical;
+        $html = '<br><small>' . e(I18N::translate('Reference to GenWiki')) . ': <a href="' . e($canonical) . '" rel="noopener noreferrer" target="_blank">' . e($displayValue) . '</a>';
         if ($matching) {
             $html .= ' <span class="text-success">(' . e(I18N::translate('consistent')) . ')</span>';
         } elseif ($pageId !== null && $assignmentUrl !== null) {
@@ -456,7 +458,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         $provider = new NominatimProvider();
         $information = $provider->lookup($placeName, $language);
         if ($information === null) {
-            return '';
+            return '<div class="alert alert-secondary small"><strong>Nominatim diagnostic:</strong> ' . e($provider->diagnostic() !== '' ? $provider->diagnostic() : 'no result') . '</div>';
         }
         $html = '<section class="mt-4">' . $this->providerHeading('nominatim', 'Nominatim') . '<a href="' . e($information['url']) . '" rel="noopener noreferrer" target="_blank">' . e($information['label']) . '</a>';
         if ($information['description'] !== null && $information['description'] !== '') {
@@ -508,6 +510,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             'factgrid' => 'https://database.factgrid.de/',
             'gov' => 'https://gov.genealogy.net/',
             'geonames' => 'https://www.geonames.org/',
+            'genwiki' => 'https://wiki.genealogy.net/',
             'nominatim' => 'https://nominatim.openstreetmap.org/',
             default => 'https://www.wikidata.org/',
         };
@@ -672,11 +675,19 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
     {
         $html = '';
         foreach ($information->references as $provider => $values) {
-            if ($provider === 'genwiki') { continue; }
             foreach ($values as $value) {
+                $displayValue = $value;
+                $url = null;
+                if ($provider === 'genwiki' && preg_match('~[?&]curid=([1-9][0-9]{0,11})~i', $value, $match) === 1) {
+                    $displayValue = $match[1];
+                    $url = 'https://wiki.genealogy.net/?curid=' . $displayValue;
+                }
+                $comparisonValue = $provider === 'genwiki' ? $displayValue : $value;
+                $referenceIdentifier = (new ExternalProviderRegistry())->byKey($provider)?->identifier($comparisonValue);
+                if ($referenceIdentifier !== null) { $url ??= $referenceIdentifier->url; }
                 $matching = false;
                 foreach ($identifiers as $identifier) {
-                    if ($identifier->provider === $provider && $identifier->value === $value) {
+                    if ($identifier->provider === $provider && $identifier->value === $comparisonValue) {
                         $matching = true;
                         break;
                     }
@@ -684,9 +695,10 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                 if ($matching && !self::showConsistentReferences()) {
                     continue;
                 }
-                $providerLabel = ['wikidata' => 'Wikidata', 'factgrid' => 'FactGrid', 'gov' => 'GOV', 'geonames' => 'GeoNames'][$provider] ?? $provider;
+                $providerLabel = ['wikidata' => 'Wikidata', 'factgrid' => 'FactGrid', 'gov' => 'GOV', 'geonames' => 'GeoNames', 'genwiki' => 'GenWiki'][$provider] ?? $provider;
                 $html .= '<br><span class="small">' . e(I18N::translate('Reference to %s', $providerLabel)) . ': '
-                    . e($value) . ' — ' . e($matching ? I18N::translate('consistent') : I18N::translate('not present in this shared place'));
+                    . ($url === null ? e($displayValue) : '<a href="' . e($url) . '" target="_blank" rel="noopener noreferrer">' . e($displayValue) . '</a>')
+                    . ' — <span class="' . ($matching ? 'text-success' : 'text-warning') . '">' . e($matching ? I18N::translate('consistent') : I18N::translate('not present in this shared place')) . '</span>';
                 $html .= '</span>';
                 if (!$matching && $assignmentUrl !== null) {
                     $html .= ' <form method="post" action="' . e($assignmentUrl) . '" class="d-inline ms-1">'

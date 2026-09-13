@@ -729,6 +729,24 @@ msgstr ""
 
 msgid "The GOV place type was not added."
 msgstr ""
+
+msgid "Search GenWiki"
+msgstr ""
+
+msgid "GenWiki search results"
+msgstr ""
+
+msgid "Article"
+msgstr ""
+
+msgid "Page ID"
+msgstr ""
+
+msgid "No GenWiki articles were found."
+msgstr ""
+
+msgid "Reference to GenWiki"
+msgstr ""
 msgid "Alternate name"
 msgstr ""
 

@@ -38,9 +38,9 @@ Wikidata, FactGrid and GOV use fixed provider adapters. Their public cross-refer
 
 The current release provides:
 
-* recognising typed Wikidata and FactGrid QIDs, GOV identifiers and GeoNames IDs;
-* loading and caching public information from Wikidata, FactGrid, GOV, GeoNames and Nominatim;
-* provider-specific searches and nearby searches where the provider supports them;
+* recognising typed Wikidata and FactGrid QIDs, GOV, GenWiki and GeoNames IDs;
+* loading and caching public information from Wikidata, FactGrid, GOV, GenWiki, GeoNames and Nominatim;
+* provider-specific searches (including GenWiki article search) and nearby searches where the provider supports them;
 * assigning, replacing and removing identifiers explicitly, without automatic GEDCOM changes;
 * checking cross-references between providers and showing whether they are consistent;
 * filtering provider searches by hierarchy level: house/farm, country, federation/international organisation, or planet;
@@ -110,6 +110,14 @@ When the optional Legal Notice module is active, it includes the selected extern
 * PHP with HTTPS access to the selected provider APIs for live enrichment; cached data remains usable while offline
 
 ## 📥 Installation
+
+Install and use [Custom Module Manager](https://github.com/Jeferson49/CustomModuleManager)
+for a convenient installation of webtrees custom modules:
+
+1. Open **Control panel / Modules / Custom Module Manager** in webtrees.
+2. Find **External Places** and click **Install module**.
+
+**Manual installation**:
 
 1. Download the [latest release](https://github.com/hartenthaler/hh_external_places/releases/latest).
 2. Unzip it into the `modules_v4` directory of your webtrees installation.

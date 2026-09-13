@@ -46,6 +46,16 @@ module renders it as a semi-transparent polygon on an interactive Leaflet map.
 The map is loaded only for a result that includes geometry; an unavailable
 map library does not affect the surrounding place information.
 
+GenWiki is available as a searchable, read-only MediaWiki provider. Editors
+can search the public GenWiki API by place name and assign the selected
+numeric page ID as a typed `_EXID` (`https://wiki.genealogy.net/?curid={id}`).
+For an assigned page the module loads only the article title and introductory
+plain-text extract; it does not execute or embed arbitrary wiki markup. Search
+results and extracts are cached, requests use a bounded response size and
+timeout, and failures never block the shared-place page. Existing GenWiki
+links discovered through GOV or Wikidata are de-duplicated against assigned
+GenWiki page IDs.
+
 ## Dedicated external-information page
 
 The module provides a dedicated shared-place page at the **External

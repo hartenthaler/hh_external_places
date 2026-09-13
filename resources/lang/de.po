@@ -765,6 +765,24 @@ msgstr "Der GOV-Ortstyp wurde hinzugefügt."
 
 msgid "The GOV place type was not added."
 msgstr "Der GOV-Ortstyp wurde nicht hinzugefügt."
+
+msgid "Search GenWiki"
+msgstr "GenWiki durchsuchen"
+
+msgid "GenWiki search results"
+msgstr "GenWiki-Suchergebnisse"
+
+msgid "Article"
+msgstr "Artikel"
+
+msgid "Page ID"
+msgstr "Seiten-ID"
+
+msgid "No GenWiki articles were found."
+msgstr "Keine GenWiki-Artikel gefunden."
+
+msgid "Reference to GenWiki"
+msgstr "Verweis auf GenWiki"
 msgid "Alternate name"
 msgstr "Alternativname"
 
