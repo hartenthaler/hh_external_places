@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- GenWiki is now a searchable provider. Editors can assign a GenWiki page ID
+  and view its title and introductory paragraph; API responses are cached and
+  existing GenWiki references are de-duplicated.
+
 ## 2.2.6.9 - 2026-09-12
 
 - GenWiki links can be resolved for GOV identifiers through the MediaWiki API.

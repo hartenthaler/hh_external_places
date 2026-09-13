@@ -11,11 +11,14 @@ use Throwable;
 final class NominatimProvider
 {
     private const ENDPOINT = 'https://nominatim.openstreetmap.org/search';
+    private string $diagnostic = '';
     public function __construct(
         private readonly ?HttpTransport $http = null,
         private readonly ExternalProviderCache $cache = new ExternalProviderCache(),
     ) {
     }
+
+    public function diagnostic(): string { return $this->diagnostic; }
 
     /** @return array{label:string,url:string,description:?string,details:list<array{label:string,value:string}>}|null */
     public function lookup(string $place, string $language): ?array
@@ -25,6 +28,7 @@ final class NominatimProvider
         // external search service.
         $place = trim(html_entity_decode(strip_tags($place), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
         if ($place === '' || mb_strlen($place) > 240) {
+            $this->diagnostic = 'invalid or empty place query';
             return null;
         }
 
@@ -42,9 +46,11 @@ final class NominatimProvider
             $payload = $this->cache->read('nominatim', $cacheKey);
             if ($payload !== null) {
                 $attempts[] = $query . ' (cache hit)';
+                $this->diagnostic = 'cache hit';
                 break;
             }
             if (!$this->cache->allowRequest('nominatim')) {
+                $this->diagnostic = 'request throttled by local rate limit';
                 break;
             }
             $attempts[] = $query . ' (request)';
@@ -55,6 +61,7 @@ final class NominatimProvider
             }
         }
         if ($payload === null) {
+            if ($this->diagnostic === '') { $this->diagnostic = 'request returned no usable payload'; }
             return null;
         }
 
@@ -82,16 +89,19 @@ final class NominatimProvider
                     'User-Agent' => 'webtrees External Places/0.3 (+https://github.com/hartenthaler/hh_external_places)',
                 ], 10.0);
                 if ($response === null || $response->getStatusCode() !== 200) {
+                    $this->diagnostic = 'HTTP status ' . ($response?->getStatusCode() ?? 'no response');
                     return null;
                 }
                 $body = $response->getBody()->getContents();
                 if (strlen($body) > 500_000) {
+                    $this->diagnostic = 'response exceeded 500000 bytes';
                     return null;
                 }
                 $decoded = json_decode($body, true, 20, JSON_THROW_ON_ERROR);
                 if (!is_array($decoded)) { return null; }
                 $candidates = array_values(array_filter($decoded, 'is_array'));
-                if ($candidates === []) { return null; }
+                if ($candidates === []) { $this->diagnostic = 'HTTP 200; candidates=0'; return null; }
+                $this->diagnostic = 'HTTP 200; candidates=' . count($candidates);
                 // Prefer a result whose locality matches the requested place
                 // name. Nominatim ranks administrative regions highly for
                 // ambiguous names, even when a settlement is available.

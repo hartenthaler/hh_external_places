@@ -15,6 +15,7 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalProviderR
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\ExternalPlacesModule;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalProviderSettings;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\GeoNamesProvider;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\GenWikiProvider;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\PlaceTypeFilterSettings;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\MoreI18N;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikidata\WikidataClient;
@@ -44,7 +45,7 @@ final class WikidataLocationAssignmentPage implements RequestHandlerInterface
         $language        = explode('-', str_replace('_', '-', I18N::languageTag()))[0] ?: 'en';
         $submittedSearch = trim(Validator::queryParams($request)->string('search', ''));
         $providerKey      = Validator::queryParams($request)->string('provider', 'wikidata');
-        $enabledProviders = array_values(array_intersect(['wikidata', 'factgrid', 'gov', 'geonames'], ExternalProviderSettings::enabled()));
+        $enabledProviders = array_values(array_intersect(['wikidata', 'factgrid', 'gov', 'geonames', 'genwiki'], ExternalProviderSettings::enabled()));
         if (!in_array($providerKey, $enabledProviders, true)) {
             $providerKey = $enabledProviders[0] ?? 'wikidata';
         }
@@ -55,6 +56,7 @@ final class WikidataLocationAssignmentPage implements RequestHandlerInterface
         $client          = new WikidataClient();
         $govProvider      = (new ExternalProviderRegistry())->byKey('gov');
         $geoNamesProvider = new GeoNamesProvider();
+        $genWikiProvider  = new GenWikiProvider();
         $wikibaseClient   = new ReadOnlyWikibaseClient();
         $nearbyRequested = ($request->getQueryParams()['nearby'] ?? '') === '1';
         $requestedFilter = (string) ($request->getQueryParams()['filter'] ?? '');
@@ -88,6 +90,9 @@ final class WikidataLocationAssignmentPage implements RequestHandlerInterface
         $geonamesCandidates = $providerEnabled && $providerKey === 'geonames' && $submittedSearch !== ''
             ? $geoNamesProvider->search($submittedSearch, $language, $houseOnly, $filterLevel ?? 'house')
             : [];
+        $genwikiCandidates = $providerEnabled && $providerKey === 'genwiki' && $submittedSearch !== ''
+            ? $genWikiProvider->search($submittedSearch, $language)
+            : [];
 
         return $this->viewResponse('hh_external_places::assignment', [
             'assignment_url' => ExternalPlacesModule::assignmentUrl(['tree' => $tree->name(), 'xref' => $location->xref()]),
@@ -97,6 +102,7 @@ final class WikidataLocationAssignmentPage implements RequestHandlerInterface
             'external_candidates' => $providerEnabled && $providerKey === 'gov' && $submittedSearch !== '' && $govProvider !== null && method_exists($govProvider, 'search') ? array_values(array_filter($govProvider->search($submittedSearch, $language), static fn (array $candidate): bool => !$houseOnly || PlaceTypeFilterSettings::matches('gov', $candidate, $filterLevel ?? 'house'))) : [],
             'factgrid_candidates' => $providerEnabled && $providerKey === 'factgrid' && $submittedSearch !== '' ? $wikibaseClient->search('factgrid', $submittedSearch, $language, $houseOnly, $filterLevel ?? 'house') : [],
             'geonames_candidates' => $geonamesCandidates,
+            'genwiki_candidates' => $genwikiCandidates,
             'factgrid_nearby_candidates' => $factgridNearbyCandidates,
             'coordinates'    => $coordinates,
             'current'        => $current,

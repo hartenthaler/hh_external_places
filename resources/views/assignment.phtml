@@ -29,6 +29,7 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\ExternalPlacesModule;
 /** @var list<array{id:string,label:string,description:?string,distanceKm:?float}> $external_nearby_candidates */
 /** @var list<array{qid:string,label:string,description:?string}> $factgrid_candidates */
 /** @var list<array{qid:string,label:string,description:?string,distanceKm:float}> $factgrid_nearby_candidates */
+/** @var list<array{id:string,label:string,url:string,description:?string}> $genwiki_candidates */
 /** @var list<Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\ExternalIdentifier> $external_identifiers */
 /** @var bool $can_edit */
 ?>
@@ -49,12 +50,12 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\ExternalPlacesModule;
 <?php endif ?>
 
 <nav class="mb-3" aria-label="<?= e(I18N::translate('External providers')) ?>">
-    <?php foreach (array_intersect_key(['wikidata' => 'Wikidata', 'factgrid' => 'FactGrid', 'gov' => 'GOV', 'geonames' => 'GeoNames'], array_flip($enabled_providers)) as $key => $label) : ?>
+    <?php foreach (array_intersect_key(['wikidata' => 'Wikidata', 'factgrid' => 'FactGrid', 'gov' => 'GOV', 'geonames' => 'GeoNames', 'genwiki' => 'GenWiki'], array_flip($enabled_providers)) as $key => $label) : ?>
         <a class="btn <?= $provider_key === $key ? 'btn-primary' : 'btn-outline-primary' ?> btn-sm me-1" href="<?= e(ExternalPlacesModule::assignmentUrl(['tree' => $tree->name(), 'xref' => $location->xref(), 'provider' => $key])) ?>"><?= e(I18N::translate('Assign %s identifier', $label)) ?></a>
     <?php endforeach ?>
 </nav>
 
-<h2><?= e($provider_key === 'geonames' ? I18N::translate('GeoNames search') : I18N::translate('%s search', ['wikidata' => 'Wikidata', 'factgrid' => 'FactGrid', 'gov' => 'GOV'][$provider_key] ?? $provider_key)) ?></h2>
+<h2><?= e($provider_key === 'geonames' ? I18N::translate('GeoNames search') : I18N::translate('%s search', ['wikidata' => 'Wikidata', 'factgrid' => 'FactGrid', 'gov' => 'GOV', 'genwiki' => 'GenWiki'][$provider_key] ?? $provider_key)) ?></h2>
 
 <p>
     <?= I18N::translate('Choose the external identifier that describes this shared place.') ?>
@@ -84,6 +85,14 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\ExternalPlacesModule;
         <?php foreach (['house' => 'Filter house', 'country' => 'Filter country', 'federation' => 'Filter federation', 'planet' => 'Filter planet'] as $level => $text) : ?><button class="btn <?= $filter_level === $level ? 'btn-primary' : 'btn-outline-primary' ?>" name="filter" value="<?= $filter_level === $level ? '' : e($level) ?>" type="submit"><?= I18N::translate($filter_level === $level ? 'Remove filter' : $text) ?></button><?php endforeach ?>
     </div>
 </form>
+<?php elseif ($provider_key === 'genwiki') : ?>
+<form method="get" action="<?= e($search_url) ?>" class="row g-2 mb-4">
+    <?php if ($route_parameter !== null) : ?><input type="hidden" name="route" value="<?= e($route_parameter) ?>"><?php endif ?>
+    <input type="hidden" name="provider" value="genwiki">
+    <div class="col-sm-8"><label class="visually-hidden" for="genwiki-search"><?= I18N::translate('Search GenWiki') ?></label><input class="form-control" id="genwiki-search" maxlength="240" minlength="2" name="search" required type="search" value="<?= e($search) ?>" placeholder="<?= e(I18N::translate('Search GenWiki')) ?>"></div>
+    <div class="col-sm-4"><button class="btn btn-outline-secondary" type="submit"><?= MoreI18N::xlate('Search') ?></button></div>
+</form>
+<?php if ($genwiki_candidates !== []) : ?><h3><?= I18N::translate('GenWiki search results') ?></h3><div class="table-responsive"><table class="table table-sm table-hover"><thead><tr><th><?= I18N::translate('Article') ?></th><th><?= I18N::translate('Page ID') ?></th><th></th></tr></thead><tbody><?php foreach ($genwiki_candidates as $candidate) : ?><?php $isAssigned = in_array($candidate['id'], array_map(static fn ($id): string => $id->value, array_filter($external_identifiers, static fn ($id): bool => $id->provider === 'genwiki')), true) ?><tr<?= $isAssigned ? ' class="table-success"' : '' ?>><td><a href="<?= e($candidate['url']) ?>" target="_blank" rel="noopener noreferrer"><?= e($candidate['label']) ?></a></td><td><?= e($candidate['id']) ?></td><td><?php if ($can_edit) : ?><form method="post" action="<?= e($assignment_url) ?>"><?= csrf_field() ?><input type="hidden" name="operation" value="add-external-id"><input type="hidden" name="provider" value="genwiki"><input type="hidden" name="external_id" value="<?= e($candidate['id']) ?>"><button class="btn btn-sm btn-primary" type="submit"><?= I18N::translate('Assign') ?></button></form><?php endif ?></td></tr><?php endforeach ?></tbody></table></div><?php elseif ($has_search) : ?><div class="alert alert-secondary"><?= I18N::translate('No GenWiki articles were found.') ?></div><?php endif ?>
 <?php else : ?>
 <form method="get" action="<?= e($search_url) ?>" class="row g-2 mb-4">
     <?php if ($route_parameter !== null) : ?><input type="hidden" name="route" value="<?= e($route_parameter) ?>"><?php endif ?>

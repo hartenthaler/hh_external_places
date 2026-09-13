@@ -47,16 +47,17 @@ Domus is a separate public research application; the module only provides links 
 
 The current release provides:
 
-* recognising typed Wikidata and FactGrid QIDs, GOV identifiers and GeoNames IDs;
-* loading and caching public information from Wikidata, FactGrid, GOV, GeoNames and Nominatim;
-* provider-specific searches and nearby searches where the provider supports them;
+* recognising typed Wikidata and FactGrid QIDs, GOV, GenWiki and GeoNames IDs;
+* loading and caching public information from Wikidata, FactGrid, GOV, GenWiki, GeoNames and Nominatim;
+* provider-specific searches (including GenWiki article search) and nearby searches where the provider supports them;
 * assigning, replacing and removing identifiers explicitly, without automatic GEDCOM changes;
 * checking cross-references between providers and showing whether they are consistent;
 * filtering provider searches by hierarchy level: house/farm, country, federation/international organisation, or planet;
 * showing historical addresses, owners and occupants from Wikidata or FactGrid;
-* showing a localised GeoNames parent hierarchy;
-* searching public people associated with external places and linking them to their provider records and, when available, to WikiTree;
-* configuring enabled providers and one global nearby-search radius with optional tree exceptions;
+* showing a localized GeoNames parent hierarchy and translated type labels;
+* searching public people and organisations associated with external places;
+* linking displayed external people to their provider records and, when available, to WikiTree (`P2949`);
+* configuring enabled providers and one global nearby-search radius with optional tree exceptions; and
 * opening linked Wikidata places in Domus.
 
 ## 🖼️ Screenshots
@@ -119,7 +120,8 @@ When the optional Legal Notice module is active, it includes the selected extern
 
 ## 📥 Installation
 
-Install and use [Custom Module Manager](https://github.com/Jeferson49/CustomModuleManager) for a convenient installation of webtrees custom modules:
+Install and use [Custom Module Manager](https://github.com/Jeferson49/CustomModuleManager)
+for a convenient installation of webtrees custom modules:
 
 1. Open **Control panel / Modules / Custom Module Manager** in webtrees.
 2. Find **External Places** and click **Install module**.
@@ -127,8 +129,8 @@ Install and use [Custom Module Manager](https://github.com/Jeferson49/CustomModu
 **Manual installation**:
 
 1. Download the [latest release](https://github.com/hartenthaler/hh_external_places/releases/latest).
-2. Unzip it into the modules_v4 directory of your webtrees installation.
-3. Ensure that the directory is named hh_external_places.
+2. Unzip it into the `modules_v4` directory of your webtrees installation.
+3. Ensure that the directory is named `hh_external_places`.
 4. In the webtrees control panel, enable **External Places**.
 5. In the Vesta Shared Places configuration, enable **External Places** as a place-information provider.
 

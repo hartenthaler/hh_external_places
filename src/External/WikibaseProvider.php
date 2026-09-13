@@ -45,8 +45,9 @@ final class WikibaseProvider implements ExternalProvider
 
     public function fetch(ExternalIdentifier $identifier, string $language): ?ExternalInformation
     {
-        // v2 invalidates payloads cached before sitelinks were requested.
-        $cacheKey = 'v2|' . $identifier->value . '|' . $language;
+        // v3 invalidates payloads cached before the GenWiki (P14871)
+        // cross-reference was requested.
+        $cacheKey = 'v3|' . $identifier->value . '|' . $language;
         $payload = $this->cache->read($this->key(), $cacheKey);
         if ($payload === null) {
             $payload = $this->client->entity($this->key(), $identifier->value, $language);
