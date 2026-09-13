@@ -24,15 +24,24 @@ External Places is a [webtrees](https://www.webtrees.net) module for enriching [
 
 ## 🎯 Purpose
 
-A shared place can represent a building, farm, church, cemetery, street, square, district, village or another real-world place. The module stores validated external identifiers alongside the shared-place record and displays provider-specific public information such as names, descriptions, types, images, addresses, relationships, external references and population data where available.
+A shared place can represent a building, farm, church, cemetery, street, square, district, village or another real-world place.
+The module stores validated external identifiers alongside the shared-place record and displays provider-specific public information such as
+names, descriptions, types, images, addresses, relationships, external references and population data where available.
 
-The module does not synchronize with Wikidata, FactGrid or GOV and does not send genealogical person data to these services. Assigning, replacing or removing an identifier, or transferring a reviewed value into the shared-place record, is always an explicit action by a user who may edit the shared place. Read-only display never changes GEDCOM data.
+The module does not synchronise with Wikidata, FactGrid or GOV and does not send genealogical person data to these services.
+Assigning, replacing or removing an identifier, or transferring a reviewed value into the shared-place record,
+is always an explicit action by a user who may edit the shared place.
 
-Wikidata, FactGrid and GOV use fixed provider adapters. Their public cross-references can be checked for consistency; missing identifiers are added only after an editor explicitly submits them. See [External providers and identifier consistency](docs/EXTERNAL_PROVIDERS.md).
+Wikidata, FactGrid, GOV and GeoNames use fixed provider adapters.
+Their public cross-references can be checked for consistency; missing identifiers are added only after an editor explicitly submits them.
+See [External providers and identifier consistency](docs/EXTERNAL_PROVIDERS.md).
 
 ## 🏠 Domus (Wikidata)
 
-[Domus](https://domus.genealogy.net) is an open application for researching the history of houses and buildings. It complements webtrees: webtrees remains the place for private genealogical data, while Domus can provide specialised public research and map views. **Show in Domus** opens the linked Wikidata item in Domus in a new tab. Without a Wikidata link, it opens the Domus map start page. Domus is a separate public research application; the module only provides links to it.
+[Domus](https://domus.genealogy.net) is an open application for researching the history of houses and buildings. It complements webtrees: webtrees remains the place for private genealogical data, while Domus can provide specialised public research and map views.
+**Show in Domus** opens the linked Wikidata item in Domus in a new browser tab.
+Without a Wikidata link, it opens the Domus map start page.
+Domus is a separate public research application; the module only provides links to it.
 
 ## ⚙️ Main features
 
@@ -54,16 +63,14 @@ The current release provides:
 ## 🖼️ Screenshots
 
 The screenshots below show the main workflows. The shared-place summary keeps
-the local genealogy record in webtrees and adds compact, read-only links and
-external-provider panels.
+the local genealogy record in webtrees and presents links to the module's dedicated pages.
 
 ### Linking a shared place
 
-The **External ID** action is available on the standard Vesta shared-place
-page. It links the shared place to external systems using the `EXID` tag
-introduced with GEDCOM 7.
+The **External pages** action is available on the standard Vesta shared-place
+page (see summary section). The `EXID` tags (introduced with GEDCOM 7) link to external databases.
 
-![External-ID link and summary actions](docs/images/link_exid.png)
+![External-ID links and summary action](docs/images/link_exid.png)
 
 ### Provider information and consistency
 
@@ -82,9 +89,8 @@ owners, the module displays these additional details as well.
 
 ### Searching and assigning an external ID
 
-Editors can search each provider by name or by geographic radius. Result lists
-can be filtered for the relevant hierarchy level when a provider returns many
-matches.
+Editors can search each provider by name or by geographic radius.
+Result lists can be filtered for the relevant hierarchy level when a provider returns many matches.
 
 ![External-ID assignment and provider searches](docs/images/zuordnung.png)
 
@@ -98,7 +104,10 @@ and show Wikidata residents or owners for houses and farms where available.
 
 ## 🔒 Privacy
 
-When an external entry is loaded, the server requests only the validated identifier and requested display language. Nearby searches send the shared place's coordinates and configured radius to the selected provider. Standard technical request metadata is sent by the server. The module never sends names of living people, family relationships, private notes, sources or other genealogical data.
+When an external entry is loaded, the server requests only the validated identifier and requested display language.
+Nearby searches send the shared place's coordinates and configured radius to the selected provider.
+Standard technical request metadata is sent by the server. The module never sends names of living people,
+family relationships, private notes, sources or other genealogical data.
 
 Responses are cached locally. If a provider is temporarily unavailable, the normal Vesta Shared Place page remains available.
 When the optional Legal Notice module is active, it includes the selected external providers in the generated privacy policy together with the purpose of the request and the transferred technical data.
@@ -131,8 +140,7 @@ External provider data is available from the shared-place page through the
 **External information** link. This dedicated page uses the normal webtrees
 layout, identifies the place in its heading and links back to the shared-place
 record. It keeps provider details, cross-reference checks, population data and
-assignment actions together. The summary link remains for compatibility with
-Vesta Shared Places.
+assignment actions together.
 
 An editor can use **Assign external identifier** on the shared-place page. The provider-specific sections offer search and, where supported, nearby search; the editor must explicitly choose the result. The module stores a selected provider identifier as a typed external identifier. For example, a GeoNames assignment uses the numeric GeoNames ID:
 
@@ -149,7 +157,7 @@ Search results use a compact table. They show the provider label and identifier,
 
 Administrators can maintain provider-specific type lists for four hierarchy
 levels: house/farm, country, federation/international organisation, and planet.
-The lists are presented in an accordion and each provider has a **Reset to
+The lists are presented in an accordion, and each provider has a **Reset to
 default** action. Editors can activate one level filter separately for each
 provider; the normal unfiltered search remains available. Nearby-search
 buttons are disabled until the shared place has valid coordinates; a tooltip
@@ -182,9 +190,10 @@ The module uses the standard webtrees gettext translation system. Translation fi
 
 * [webtrees](https://www.webtrees.net)
 * [Vesta Shared Places](https://github.com/vesta-webtrees-2-custom-modules/vesta_shared_places)
+* David Straub for developing [Domus](https://domus.genealogy.net), and the Domus community
 * [Wikidata](https://www.wikidata.org) and [Wikimedia Commons](https://commons.wikimedia.org)
 * [FactGrid](https://database.factgrid.de) and [GOV](https://gov.genealogy.net)
-* David Straub for developing [Domus](https://domus.genealogy.net), and the Domus community
+* GeoNames, GOV, Nominatim, ...
 
 ## ⚖️ License
 
