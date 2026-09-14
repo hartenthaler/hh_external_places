@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.2.6.10 - 2026-09-14
+
+- Nominatim searches now retain useful locality context while removing country
+  codes and the synthetic Earth level.
+- Search results can prefer the known place level, such as house, city, county
+  or state, reducing ambiguous matches.
+- Photon is used as a cached fallback when Nominatim is temporarily unavailable;
+  unsuitable map features are filtered out.
+- Exact OSM geometry is loaded for Photon ways and relations when available, so
+  buildings and administrative areas can be shown with their real outlines.
+- OSM links, map extents and provider diagnostics were improved for reliable
+  troubleshooting and safer fallback behavior.
+
 ## Unreleased
 
 - GenWiki is now a searchable provider. Editors can assign a GenWiki page ID
