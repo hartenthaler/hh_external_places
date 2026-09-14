@@ -132,9 +132,15 @@ the configured prefix and non-empty path value; it does not follow arbitrary
 URLs supplied by a GOV record.
 
 When GOV supplies historical population figures, the module normalizes them
-into a year-indexed `population` object. The shared-place summary presents
+into a date-labelled `population` object. The shared-place summary presents
 these values in chronological order in a two-column table and a compact line
-chart; no external data is written back to GOV.
+chart; GOV's `beginYear` and `endYear` bounds are retained as `ab` and `bis`
+observations. An imprecise year represents an unknown day within that year;
+for chart positioning, `bis YYYY` is placed at 1 January and `ab YYYY` at
+31 December. A year without a qualifier is placed at 1 July, while a month
+without a qualifier uses its approximate midpoint. The same boundary rule uses the first and last
+day for an imprecise month.
+No external data is written back to GOV.
 
 GeoNames supplies a current population value, but its standard `getJSON`
 response does not include a census or reference year. The module therefore
