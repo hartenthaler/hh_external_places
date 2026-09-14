@@ -31,7 +31,7 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalInformati
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalProviderRegistry;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalProviderSettings;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\GeoNamesProvider;
-use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\GeoNamesLanguage;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\LanguageCode;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\NominatimProvider;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\GovExternalIdentifierCatalog;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\PlaceTypeFilterSettings;
@@ -345,7 +345,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                     $alternateLanguage = null;
                     if (in_array($provider->key(), ['geonames', 'gov'], true) && str_starts_with($detail['label'], 'Alternate name (')) {
                         preg_match('/^Alternate name \(([a-z]{2,3}(?:[-_][a-z]{2,4})?)\)$/i', $detail['label'], $languageMatch);
-                        $alternateLanguage = strtolower(explode('-', str_replace('_', '-', $languageMatch[1] ?? ''))[0]);
+                        $alternateLanguage = LanguageCode::normalize($languageMatch[1] ?? '');
                         $sameLanguage = $this->locationNamesByLanguage($gedcom)[$alternateLanguage] ?? [];
                         if (in_array($value, $sameLanguage, true) && !self::showConsistentReferences()) {
                             continue;
@@ -565,8 +565,8 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                 $names[''] ??= [];
                 $names[''][] = $currentName;
             } elseif ($currentName !== null && preg_match('/^2 LANG (.+)$/', $line, $match) === 1) {
-                $language = strtolower(trim($match[1]));
-                $language = GeoNamesLanguage::code($language);
+                $language = LanguageCode::normalize($match[1]);
+                if ($language === '') { continue; }
                 $names[$language][] = $currentName;
             }
         }

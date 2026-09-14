@@ -165,8 +165,7 @@ final class WikibaseProvider implements ExternalProvider
     private function languageValue(mixed $values, string $language): ?string
     {
         if (!is_array($values)) { return null; }
-        $language = strtolower(str_replace('_', '-', trim($language)));
-        $language = explode('-', $language)[0] ?: 'en';
+        $language = LanguageCode::normalize($language) ?: 'en';
         foreach (array_unique([$language, 'en']) as $candidate) {
             $value = $values[$candidate]['value'] ?? null;
             if (is_string($value) && trim($value) !== '') { return trim($value); }

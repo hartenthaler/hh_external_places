@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikibase;
 
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Http\HttpTransport;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\LanguageCode;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\PlaceTypeFilterSettings;
 use JsonException;
 use Throwable;
@@ -245,8 +246,6 @@ final class ReadOnlyWikibaseClient
 
     private function language(string $language): string
     {
-        $language = str_replace('_', '-', trim($language));
-
-        return preg_match('/^([a-z]{2,3})(?:-[A-Za-z]{2,4})?$/', $language, $matches) === 1 ? $matches[1] : 'en';
+        return LanguageCode::normalize($language) ?: 'en';
     }
 }

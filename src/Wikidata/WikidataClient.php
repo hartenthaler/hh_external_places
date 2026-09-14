@@ -6,6 +6,7 @@ namespace Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikidata;
 
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\WikidataIdentifier;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Http\HttpTransport;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\LanguageCode;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\PlaceTypeFilterSettings;
 use JsonException;
 use Throwable;
@@ -465,14 +466,9 @@ final class WikidataClient
 
     private function language(string $language): string
     {
-        $language = str_replace('_', '-', trim($language));
-        if (preg_match('/^([a-z]{2,3})(?:-[A-Za-z]{2,4})?$/', $language, $matches) !== 1) {
-            return 'en';
-        }
-
-        // Wikidata labels use language codes such as "de" rather than webtrees'
-        // regional UI tags such as "de-DE".
-        return $matches[1];
+        // Wikidata labels use ISO 639-1 keys such as "de". The shared
+        // normalizer also accepts webtrees regional tags such as "de-DE".
+        return LanguageCode::normalize($language) ?: 'en';
     }
 
     /** @param mixed $statements */
