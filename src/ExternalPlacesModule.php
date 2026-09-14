@@ -503,6 +503,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             'factgrid' => 'https://database.factgrid.de/favicon.ico',
             'gov' => 'https://gov.genealogy.net/favicon.ico',
             'geonames' => 'https://www.geonames.org/favicon.ico',
+            'genwiki' => 'https://wiki.genealogy.net/images/favicon.ico',
             'nominatim' => 'https://nominatim.openstreetmap.org/favicon.ico',
             default => null,
         };
