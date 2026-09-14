@@ -50,6 +50,7 @@ final class PlaceTypeFilterSettings
         '21' => 'Manor (building)',
         '24' => 'Farm',
         '193' => 'Alpine pasture',
+        '54' => 'Part of town',
         '229' => 'Group of houses',
         '231' => 'Farms',
         '236' => 'Houses',

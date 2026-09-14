@@ -20,6 +20,9 @@
 
 ## Unreleased
 
+- GOV type 54 is now shown as the translated human-readable label “Part of
+  town” (German: “Stadtteil”) instead of a numeric code (Issue #93).
+
 - Language codes from GEDCOM, GOV, GeoNames and Wikibase are now normalized
   centrally for reliable place-name comparisons (Issue #121).
 
