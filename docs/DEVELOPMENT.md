@@ -12,3 +12,12 @@ query sent to the provider, provider and operation, cache state, HTTP status,
 response/candidate counts, filtering criteria and the selected result (or the
 reason why no result was selected). Temporary diagnostics must be removed or
 disabled before a release.
+
+## Reuse before implementation
+
+“Etwas nicht zu programmieren ist die beste Art zu programmieren.”
+Before adding code, search the repository and the other modules for an
+equivalent implementation. Prefer reusing or extending a shared function or
+class over duplicating provider-specific logic. Add a new shared abstraction
+when it removes genuine duplication, and keep provider adapters focused on
+mapping their external data to that common model.

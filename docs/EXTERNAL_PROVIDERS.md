@@ -8,6 +8,13 @@ The module uses one provider-neutral read model for public place information.
 Each adapter has a fixed endpoint, identifier validator and reviewed property
 mapping. GEDCOM values are never used as arbitrary URLs.
 
+Language values used for place-name comparison are normalized centrally. The
+comparison key is lower-case ISO 639-1 (`de`, `en`, ...). GEDCOM language names
+such as `GERMAN` and ISO 639-2 terminological or bibliographic codes such as
+`deu` and `ger` therefore compare as `de`; unknown valid two- or three-letter
+codes are retained rather than discarded. This same normalizer is used by
+GeoNames, GOV and the Wikibase clients.
+
 GeoNames is an optional provider. It uses the existing webtrees GeoNames
 username, offers a multi-result name search and can be explicitly assigned
 like the other providers. A selected GeoNames identifier is stored in GEDCOM

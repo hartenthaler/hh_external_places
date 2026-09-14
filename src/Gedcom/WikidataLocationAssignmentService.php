@@ -9,7 +9,7 @@ use Fisharebest\Webtrees\Location;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\WikidataIdentifier;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\ExternalIdentifier;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\PlaceTypeFilterSettings;
-use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\GeoNamesLanguage;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\LanguageCode;
 
 /**
  * Applies an explicit Wikidata assignment to a shared-place record.
@@ -94,9 +94,7 @@ final class WikidataLocationAssignmentService
             if (preg_match('/^1 NAME(?: |$)(.*)$/', $line, $match) === 1 && trim($match[1]) === $name) { return false; }
         }
         $updated = rtrim($location->gedcom()) . "\n1 NAME " . $name;
-        $language = strtolower(trim(str_replace('_', '-', $language)));
-        $language = explode('-', $language)[0];
-        $gedcomLanguage = GeoNamesLanguage::gedcom($language);
+        $gedcomLanguage = LanguageCode::gedcom($language);
         if ($gedcomLanguage !== null) {
             $updated .= "\n2 LANG " . $gedcomLanguage;
         }
