@@ -132,7 +132,6 @@ for a convenient installation of webtrees custom modules:
 2. Unzip it into the `modules_v4` directory of your webtrees installation.
 3. Ensure that the directory is named `hh_external_places`.
 4. In the webtrees control panel, enable **External Places**.
-5. In the Vesta Shared Places configuration, enable **External Places** as a place-information provider.
 
 ## Usage
 
