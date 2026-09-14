@@ -201,7 +201,13 @@ their configured meaning and, where a public URL template is known, as links.
 
 ## 🌐 Translation
 
-The module uses the standard webtrees gettext translation system. Translation files are kept in `resources/lang`; German is currently available. Contributions are welcome as pull requests.
+The module uses the standard webtrees gettext system (`.po`/`.mo`) for its
+user interface: headings, buttons, messages and other operating texts are
+translated through `resources/lang`. GOV object types are not maintained as
+interface strings; their multilingual labels come from the
+bundled source `resources/config/gov-types.owl`. See [the GOV type catalogue
+documentation](docs/GOV_TYPE_CATALOG.md) for the source and fallback rules.
+German is currently available. Contributions are welcome as pull requests.
 
 ## 🙏 Credits
 
