@@ -187,7 +187,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         if ($identifier === null || !$wikidataEnabled) {
             $language = explode('-', str_replace('_', '-', I18N::languageTag()))[0] ?: 'en';
             $geoNamesHtml = $this->geoNamesHtml($location->fullName(), $language);
-            $nominatimHtml = $this->nominatimHtml($place->getGedcomName() !== '' ? $place->getGedcomName() : $location->fullName(), $language, $location->gedcom());
+            $nominatimHtml = $this->nominatimHtml($this->nominatimPlaceName($location->gedcom(), $place->getGedcomName() !== '' ? $place->getGedcomName() : $location->fullName()), $language, $location->gedcom());
             if ($externalIdentifiers === [] && !$location->canEdit() && $geoNamesHtml === '' && $nominatimHtml === '') {
                 return null;
             }
@@ -277,7 +277,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         $assignmentUrl = $location->canEdit() ? self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]) : null;
         $html .= $this->externalInformationHtml($externalIdentifiers, $language, 'wikidata', $location->fullName(), $assignmentUrl, $location->gedcom(), $genwikiShown);
         $html .= $this->geoNamesHtml($location->fullName(), $language);
-        $html .= $this->nominatimHtml($place->getGedcomName() !== '' ? $place->getGedcomName() : $location->fullName(), $language, $location->gedcom());
+        $html .= $this->nominatimHtml($this->nominatimPlaceName($location->gedcom(), $place->getGedcomName() !== '' ? $place->getGedcomName() : $location->fullName()), $language, $location->gedcom());
         $html .= '<div class="d-flex gap-2 flex-wrap mt-2">';
         if ($location->canEdit()) {
             $html .= '<a class="btn btn-primary btn-sm" href="' . e(self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()])) . '">' . e(I18N::translate('Assign external identifier')) . '</a>';
@@ -451,6 +451,26 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             $html .= '<br><small>' . e($this->externalDetailLabel($detail['label'])) . ': ' . e($this->externalDetailValue($detail['label'], $detail['value'])) . '</small>';
         }
         return $html . $this->sourceHtml('GeoNames', 'https://www.geonames.org/') . '</section>';
+    }
+
+    /**
+     * Use the first NAME in the shared-place GEDCOM as the geocoder query.
+     * Vesta's primaryPlace() may select another NAME after language/date
+     * sorting, but alternate names should not replace the record's first name
+     * for an address lookup.
+     */
+    private function nominatimPlaceName(string $gedcom, string $fallback): string
+    {
+        foreach (preg_split('/\r?\n/', $gedcom) ?: [] as $line) {
+            if (preg_match('/^1 NAME(?:\s+)(.+)$/', $line, $match) === 1) {
+                $name = trim($match[1]);
+                if ($name !== '') {
+                    return $name;
+                }
+            }
+        }
+
+        return $fallback;
     }
 
     private function nominatimHtml(string $placeName, string $language, string $gedcom = ''): string
