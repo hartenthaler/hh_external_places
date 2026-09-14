@@ -20,6 +20,9 @@
 
 ## Unreleased
 
+- Language codes from GEDCOM, GOV, GeoNames and Wikibase are now normalized
+  centrally for reliable place-name comparisons (Issue #121).
+
 ## 2.2.6.9 - 2026-09-12
 
 - GenWiki links can be resolved for GOV identifiers through the MediaWiki API.
