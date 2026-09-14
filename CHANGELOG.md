@@ -20,6 +20,10 @@
 
 ## Unreleased
 
+- GOV population observations using the API's `beginYear` and `endYear`
+  fields are now shown in the population table and chart with their temporal
+  precision and correct `bis`/`ab` ordering (Issue #92).
+
 - GOV type 54 is now shown as the translated human-readable label “Part of
   town” (German: “Stadtteil”) instead of a numeric code (Issue #93).
 

@@ -582,7 +582,11 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
     private function populationHtml(array $population): string
     {
         if ($population === []) { return ''; }
-        ksort($population, SORT_NUMERIC);
+        uksort($population, static function (string $left, string $right): int {
+            $leftKey = self::populationSortKey($left);
+            $rightKey = self::populationSortKey($right);
+            return $leftKey <=> $rightKey ?: strnatcasecmp($left, $right);
+        });
         $html = '<div class="d-flex flex-wrap gap-3 align-items-start mt-2"><div><strong>' . e(I18N::translate('Population')) . '</strong><table class="table table-sm mb-0"><thead><tr><th>' . e(MoreI18N::xlate('Year')) . '</th><th>' . e(I18N::translate('Population')) . '</th></tr></thead><tbody>';
         foreach ($population as $year => $value) {
             $html .= '<tr><td>' . e((string) $year) . '</td><td>' . e(I18N::number($value)) . '</td></tr>';
@@ -594,17 +598,27 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
     /** @param array<string,int|float> $population */
     private function populationChartHtml(array $population): string
     {
-        if (count($population) < 3) {
+        if (count($population) < 2) {
             return '';
         }
 
+        uksort($population, static function (string $left, string $right): int {
+            $leftKey = self::populationSortKey($left);
+            $rightKey = self::populationSortKey($right);
+            return $leftKey <=> $rightKey ?: strnatcasecmp($left, $right);
+        });
         $points = array_keys($population);
         $values = array_values($population);
         $min = min($values); $max = max($values); $range = $max - $min ?: 1;
+        $timestamps = array_map(static fn (string $point): int => self::populationPointTimestamp($point), $points);
+        $minTimestamp = min($timestamps); $maxTimestamp = max($timestamps);
+        $timestampRange = $maxTimestamp - $minTimestamp ?: 1;
         $coordinates = [];
-        $last = max(1, count($values) - 1);
         foreach ($values as $index => $value) {
-            $x = 35 + (270 * $index / $last);
+            $x = 35 + (270 * ($timestamps[$index] - $minTimestamp) / $timestampRange);
+            if ($maxTimestamp === $minTimestamp) {
+                $x = 35 + (270 * $index / max(1, count($values) - 1));
+            }
             $y = 145 - (115 * ((float) $value - $min) / $range);
             $coordinates[] = round($x, 2) . ',' . round($y, 2);
         }
@@ -618,6 +632,85 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         $svg .= '<text x="170" y="178" text-anchor="middle" font-size="11">' . e($yearLabel) . '</text>';
         $svg .= '<text x="11" y="83" text-anchor="middle" font-size="11" transform="rotate(-90 11 83)">' . e($populationLabel) . '</text>';
         return '<div>' . $svg . '</svg></div>';
+    }
+
+    /** @return array{0:int,1:int,2:string} */
+    private static function populationSortKey(string $point): array
+    {
+        $point = trim((string) preg_replace('/\s+\(\d+\)$/u', '', $point));
+        $qualifier = 2;
+        if (preg_match('/^(bis|ab)\s+(.+)$/iu', $point, $matches) === 1) {
+            $qualifier = strtolower($matches[1]) === 'bis' ? 0 : 1;
+            $point = trim($matches[2]);
+        }
+        return [self::populationTimestamp($point, $qualifier), $qualifier, $point];
+    }
+
+    private static function populationPointTimestamp(string $point): int
+    {
+        $point = trim((string) preg_replace('/\s+\(\d+\)$/u', '', $point));
+        $qualifier = 2;
+        if (preg_match('/^(bis|ab)\s+(.+)$/iu', $point, $matches) === 1) {
+            $qualifier = strtolower($matches[1]) === 'bis' ? 0 : 1;
+            $point = trim($matches[2]);
+        }
+        return self::populationTimestamp($point, $qualifier);
+    }
+
+    private static function populationTimestamp(string $point, int $qualifier = 2): int
+    {
+        $point = trim(strtoupper($point));
+        $year = null;
+        $month = null;
+        $day = null;
+        if (preg_match('/^(\d{1,2})\s+([A-ZÄÖÜ]{3,12})\.?\s+(\d{4})$/u', $point, $matches) === 1) {
+            $day = (int) $matches[1];
+            $month = self::populationMonthNumber($matches[2]);
+            $year = (int) $matches[3];
+        } elseif (preg_match('/^([A-ZÄÖÜ]{3,12})\.?\s+(\d{4})$/u', $point, $matches) === 1) {
+            $month = self::populationMonthNumber($matches[1]);
+            $year = (int) $matches[2];
+        } elseif (preg_match('/^(\d{4})$/', $point, $matches) === 1) {
+            $year = (int) $matches[1];
+        } elseif (preg_match('/\b(\d{4})\b/', $point, $matches) === 1) {
+            $year = (int) $matches[1];
+        }
+        if ($year === null) { return 0; }
+        $month ??= match ($qualifier) {
+            0 => 1,
+            1 => 12,
+            default => 7,
+        };
+        if ($day === null) {
+            $day = match ($qualifier) {
+                0 => 1,
+                1 => (int) gmdate('t', gmmktime(0, 0, 0, $month, 1, $year)),
+                default => $month === 7 ? 1 : 15,
+            };
+        }
+        if ($qualifier === 1 && $day === 1 && preg_match('/^[A-ZÄÖÜ]{3,12}\.?\s+\d{4}$/u', $point) === 1) {
+            $day = (int) gmdate('t', gmmktime(0, 0, 0, $month, 1, $year));
+        }
+        return gmmktime(0, 0, 0, $month, $day, $year);
+    }
+
+    private static function populationMonthNumber(string $month): ?int
+    {
+        return match (rtrim(strtoupper(trim($month)), '.')) {
+            'JAN', 'JANUARY' => 1,
+            'FEB', 'FEBRUARY' => 2,
+            'MAR', 'MARCH', 'MÄR', 'MAER' => 3,
+            'APR', 'APRIL' => 4,
+            'MAY', 'MAI' => 5,
+            'JUN', 'JUNE' => 6,
+            'JUL', 'JULY' => 7,
+            'AUG', 'AUGUST' => 8,
+            'SEP', 'SEPTEMBER' => 9,
+            'OCT', 'OCTOBER', 'OKT' => 10,
+            'NOV', 'NOVEMBER' => 11,
+            'DEC', 'DECEMBER', 'DEZ' => 12,
+            default => is_numeric($month) && (int) $month >= 1 && (int) $month <= 12 ? (int) $month : null,
+        };
     }
 
     private function externalDetailValue(string $label, string $value): string

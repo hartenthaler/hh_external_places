@@ -302,6 +302,7 @@ final class GovProvider implements ExternalProvider
     {
         $result = [];
         $add = static function (string $year, int|float $amount, string $qualifier = '') use (&$result): void {
+            $year = trim((string) preg_replace('/\s+/u', ' ', strtoupper($year)));
             $base = $qualifier !== '' ? $qualifier . ' ' . $year : $year;
             $key = $base;
             $suffix = 2;
@@ -310,9 +311,12 @@ final class GovProvider implements ExternalProvider
         };
         $collect = function (mixed $value) use (&$collect, &$add): void {
             if (is_string($value)) {
-                if (preg_match('/\b(ab|bis)\s+(\d{3,4})\D+(\d+(?:[.,]\d+)?)/iu', $value, $match) === 1) {
+                if (preg_match('/\b(ab|bis)\s+((?:[[:alpha:]ÄÖÜäöü]{3,12}\s+)?\d{3,4})\D+(\d+(?:[.,]\d+)?)/iu', $value, $match) === 1) {
                     $amount = (float) str_replace(',', '.', $match[3]);
-                    $add($match[2], $amount == (int) $amount ? (int) $amount : $amount, mb_strtolower($match[1]));
+                    $date = self::populationDateLabel($match[2]);
+                    if ($date !== null) {
+                        $add($date, $amount == (int) $amount ? (int) $amount : $amount, mb_strtolower($match[1]));
+                    }
                 }
                 return;
             }
@@ -331,17 +335,26 @@ final class GovProvider implements ExternalProvider
             if ($amount !== null) {
                 $numericAmount = $amount == (int) $amount ? (int) $amount : $amount;
                 $bounds = [];
-                foreach (['from' => 'ab', 'timeBegin' => 'ab', 'until' => 'bis', 'timeEnd' => 'bis', 'year' => '', 'date' => ''] as $field => $qualifier) {
+                foreach (['from' => 'ab', 'beginDate' => 'ab', 'beginYear' => 'ab', 'timeBegin' => 'ab', 'until' => 'bis', 'endDate' => 'bis', 'endYear' => 'bis', 'timeEnd' => 'bis', 'year' => '', 'date' => ''] as $field => $qualifier) {
                     if (!is_scalar($value[$field] ?? null)) { continue; }
-                    if (preg_match('/\b(\d{3,4})\b/', (string) $value[$field], $match) !== 1) { continue; }
-                    $bounds[$qualifier][] = $match[1];
+                    $monthField = match ($qualifier) {
+                        'ab' => 'beginMonth',
+                        'bis' => 'endMonth',
+                        default => null,
+                    };
+                    $date = self::populationDateLabel($value[$field], $monthField !== null ? ($value[$monthField] ?? null) : null);
+                    if ($date !== null) { $bounds[$qualifier][] = $date; }
                 }
                 if (($bounds['ab'] ?? []) !== [] || ($bounds['bis'] ?? []) !== []) {
                     foreach (['ab', 'bis'] as $qualifier) {
-                        foreach (array_unique($bounds[$qualifier] ?? []) as $year) { $add($year, $numericAmount, $qualifier); }
+                        $dates = array_values(array_unique($bounds[$qualifier] ?? []));
+                        usort($dates, static fn (string $left, string $right): int => strlen($right) <=> strlen($left));
+                        if (isset($dates[0])) { $add($dates[0], $numericAmount, $qualifier); }
                     }
                 } elseif (($bounds[''] ?? []) !== []) {
-                    foreach (array_unique($bounds[''] ) as $year) { $add($year, $numericAmount); }
+                    $dates = array_values(array_unique($bounds['']));
+                    usort($dates, static fn (string $left, string $right): int => strlen($right) <=> strlen($left));
+                    if (isset($dates[0])) { $add($dates[0], $numericAmount); }
                 }
             }
             foreach ($value as $key => $child) {
@@ -359,7 +372,55 @@ final class GovProvider implements ExternalProvider
         foreach (['population', 'populationCount', 'inhabitants', 'inhabitantCount', 'populationHistory'] as $key) {
             $collect($data[$key] ?? null);
         }
-        uksort($result, static function (string $a, string $b): int { return ((int) preg_replace('/\D.*/', '', $a)) <=> ((int) preg_replace('/\D.*/', '', $b)); });
         return $result;
+    }
+
+    private static function populationDateLabel(mixed $value, mixed $month = null): ?string
+    {
+        if (!is_scalar($value)) { return null; }
+        $text = trim((string) $value);
+        if ($text === '') { return null; }
+
+        $monthLabel = self::populationMonthLabel($month);
+        if (preg_match('/^(\d{4})$/', $text, $match) === 1) {
+            return $monthLabel === null ? $match[1] : $monthLabel . ' ' . $match[1];
+        }
+        if (preg_match('/^(\d{4})[-\/.](\d{1,2})(?:[-\/.](\d{1,2}))?$/', $text, $match) === 1) {
+            $monthLabel = self::populationMonthLabel($match[2]);
+            if ($monthLabel === null) { return $match[1]; }
+            return isset($match[3]) ? $match[3] . ' ' . $monthLabel . ' ' . $match[1] : $monthLabel . ' ' . $match[1];
+        }
+        if (preg_match('/^(\d{1,2})\s+([[:alpha:]ÄÖÜäöü]{3,12})\.?\s+(\d{4})$/u', $text, $match) === 1) {
+            $monthLabel = self::populationMonthLabel($match[2]);
+            return $monthLabel === null ? $match[3] : $match[1] . ' ' . $monthLabel . ' ' . $match[3];
+        }
+        if (preg_match('/^([[:alpha:]ÄÖÜäöü]{3,12})\.?\s+(\d{4})$/u', $text, $match) === 1) {
+            $monthLabel = self::populationMonthLabel($match[1]);
+            return $monthLabel === null ? $match[2] : $monthLabel . ' ' . $match[2];
+        }
+        if (preg_match('/\b(\d{4})\b/', $text, $match) === 1) { return $match[1]; }
+        return null;
+    }
+
+    private static function populationMonthLabel(mixed $month): ?string
+    {
+        if (!is_scalar($month)) { return null; }
+        $month = strtoupper(trim((string) $month));
+        $month = rtrim($month, '.');
+        $months = [
+            '1' => 'JAN', '01' => 'JAN', 'JAN' => 'JAN', 'JANUARY' => 'JAN',
+            '2' => 'FEB', '02' => 'FEB', 'FEB' => 'FEB', 'FEBRUARY' => 'FEB',
+            '3' => 'MAR', '03' => 'MAR', 'MAR' => 'MAR', 'MARCH' => 'MAR', 'MÄR' => 'MAR', 'MAER' => 'MAR',
+            '4' => 'APR', '04' => 'APR', 'APR' => 'APR', 'APRIL' => 'APR',
+            '5' => 'MAY', '05' => 'MAY', 'MAY' => 'MAY', 'MAI' => 'MAY',
+            '6' => 'JUN', '06' => 'JUN', 'JUN' => 'JUN', 'JUNE' => 'JUN',
+            '7' => 'JUL', '07' => 'JUL', 'JUL' => 'JUL', 'JULY' => 'JUL',
+            '8' => 'AUG', '08' => 'AUG', 'AUG' => 'AUG', 'AUGUST' => 'AUG',
+            '9' => 'SEP', '09' => 'SEP', 'SEP' => 'SEP', 'SEPTEMBER' => 'SEP',
+            '10' => 'OCT', 'OCT' => 'OCT', 'OCTOBER' => 'OCT', 'OKT' => 'OCT',
+            '11' => 'NOV', 'NOV' => 'NOV', 'NOVEMBER' => 'NOV',
+            '12' => 'DEC', 'DEC' => 'DEC', 'DECEMBER' => 'DEC', 'DEZ' => 'DEC',
+        ];
+        return $months[$month] ?? null;
     }
 }
