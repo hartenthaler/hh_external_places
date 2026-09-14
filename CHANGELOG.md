@@ -12,12 +12,13 @@
   buildings and administrative areas can be shown with their real outlines.
 - OSM links, map extents and provider diagnostics were improved for reliable
   troubleshooting and safer fallback behavior.
+- GOV alternate names are displayed with their language codes and can be
+  compared with shared-place names (Issue #109).
+- GenWiki is available as a searchable provider. Editors can assign a GenWiki
+  page ID and view its title and introductory paragraph; responses are cached
+  and existing GenWiki references are de-duplicated (Issue #110).
 
 ## Unreleased
-
-- GenWiki is now a searchable provider. Editors can assign a GenWiki page ID
-  and view its title and introductory paragraph; API responses are cached and
-  existing GenWiki references are de-duplicated.
 
 ## 2.2.6.9 - 2026-09-12
 
