@@ -12,10 +12,10 @@ final class ExternalProviderCache
     public const TTL = 86400;
 
     /** @return array<string,mixed>|null */
-    public function read(string $provider, string $identifier): ?array
+    public function read(string $provider, string $identifier, int $ttlSeconds = self::TTL): ?array
     {
         $file = $this->file($provider, $identifier);
-        if (!is_file($file) || filemtime($file) === false || time() - (int) filemtime($file) >= self::TTL) {
+        if (!is_file($file) || filemtime($file) === false || time() - (int) filemtime($file) >= $ttlSeconds) {
             return null;
         }
         $data = json_decode((string) file_get_contents($file), true);
