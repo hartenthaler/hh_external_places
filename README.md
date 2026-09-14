@@ -174,6 +174,11 @@ provider; the normal unfiltered search remains available. Nearby-search
 buttons are disabled until the shared place has valid coordinates; a tooltip
 explains what is missing.
 
+GOV type labels come from the complete public vocabulary snapshot in
+[`resources/config/gov-types.owl`](resources/config/gov-types.owl), not only
+from the initial filter defaults. See [the GOV type catalogue
+documentation](docs/GOV_TYPE_CATALOG.md) for provenance and updates.
+
 When Wikidata provides address statements, the shared-place page shows a read-only address table with house number, street, postal code, place and optional validity dates. It is intentionally omitted for items without address data, such as most settlements or administrative areas.
 
 Where Wikidata or FactGrid contains them, the same panel also shows public owners and occupants. These are external facts: no webtrees person is linked, changed or created. The table gives the public name and provider link, known birth/death dates, the period of the relationship and available WikiTree links.
@@ -185,6 +190,7 @@ their configured meaning and, where a public URL template is known, as links.
 ## 📖 Documentation
 * [Concept: Wikidata and Domus integration](docs/WIKIDATA_DOMUS_CONCEPT.md)
 * [External providers and identifier consistency](docs/EXTERNAL_PROVIDERS.md)
+* [GOV type catalogue](docs/GOV_TYPE_CATALOG.md)
 * [Module and repository naming proposal](docs/RENAME_PROPOSAL.md)
 * [Roadmap](docs/ROADMAP.md)
 * [Development notes](docs/DEVELOPMENT.md)

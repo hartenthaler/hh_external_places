@@ -179,9 +179,15 @@ The existing house defaults remain unchanged. The GOV defaults
 are 8 (castle), 17 (building), 21 (manor), 24 (farm), 193 (alpine pasture),
 229 (group of houses), 231 (farms), 236 (houses), 261 (farm hamlet), 111
 (palace), 102 (forester's house), and 87 (mill). Labels are module strings
-and can be translated independently of the provider IDs. Each provider has a
+and are resolved independently of the provider IDs. Each provider has a
 reset-to-default action. The editor activates one filter level per provider,
 so an unfiltered search is always still available.
+
+The complete GOV vocabulary is maintained separately from these defaults. It
+is bundled as `resources/config/gov-types.owl` and resolved by the central
+`GovTypeCatalog`; see [GOV_TYPE_CATALOG.md](GOV_TYPE_CATALOG.md) for its source,
+language fallback, and update procedure. This keeps all GOV labels consistent
+in provider output, type validation, and the administration interface.
 
 The initial Wikidata list includes Q23413, Q751876, Q3947, Q16560, Q41176,
 Q44613, Q365627, Q1802963 and Q131596; administrators can extend or reduce it.

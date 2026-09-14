@@ -7,7 +7,12 @@ namespace Hartenthaler\Webtrees\Module\ExternalPlacesModule\External;
 use Fisharebest\Webtrees\Site;
 use JsonException;
 
-/** Administrator-managed type identifiers for the optional hierarchy filters. */
+require_once __DIR__ . '/GovTypeCatalog.php';
+
+/**
+ * Administrator-managed provider type identifiers for the optional hierarchy
+ * filters. This is intentionally not the complete GOV type catalogue.
+ */
 final class PlaceTypeFilterSettings
 {
     public const PREFERENCE = 'HH_EP_HOUSE_TYPES';
@@ -41,25 +46,6 @@ final class PlaceTypeFilterSettings
             'gov' => ['8', '17', '21', '24', '193', '229', '231', '236', '261', '111', '102', '87'],
             'geonames' => ['S.BLDA', 'S.BLDG', 'S.BRKS', 'S.CH', 'S.CSTL', 'S.CSTM', 'S.EST', 'S.FRM', 'S.FRMQ', 'S.FRMS', 'S.FRMT', 'S.GHSE', 'S.HSE', 'S.HSEC', 'S.HTL', 'S.HUT', 'S.HUTS', 'S.LTHSE', 'S.ML', 'S.PAL', 'S.PRN', 'S.RNCH', 'S.RSRT', 'S.RUIN', 'S.SNTR', 'S.CVNT', 'S.MSSN'],
         ],
-    ];
-
-    /** English labels from the GOV type vocabulary (German labels are in the PO files). */
-    private const GOV_LABELS = [
-        '8' => 'Castle',
-        '17' => 'Building',
-        '21' => 'Manor (building)',
-        '24' => 'Farm',
-        '193' => 'Alpine pasture',
-        '229' => 'Group of houses',
-        '231' => 'Farms',
-        '236' => 'Houses',
-        '261' => 'Farm hamlet',
-        '111' => 'Palace',
-        '102' => "Forester's house",
-        '87' => 'Mill',
-        '71' => 'Confederation',
-        '72' => 'State',
-        '130' => 'Country',
     ];
 
     /** @return array<string,list<string>> */
@@ -184,8 +170,11 @@ final class PlaceTypeFilterSettings
             if ($type === '') { continue; }
             foreach ($values as $value) {
                 if (str_contains($type, mb_strtolower($value))) { return true; }
-                $label = self::GOV_LABELS[$value] ?? null;
-                if ($provider === 'gov' && $label !== null && str_contains($type, mb_strtolower($label))) { return true; }
+                if ($provider === 'gov') {
+                    foreach (GovTypeCatalog::labels($value) as $label) {
+                        if (str_contains($type, mb_strtolower($label))) { return true; }
+                    }
+                }
             }
         }
         return false;
@@ -221,9 +210,9 @@ final class PlaceTypeFilterSettings
         return array_intersect($typeIds, $allowed) !== [];
     }
 
-    public static function govLabel(string $typeId): string
+    public static function govLabel(string $typeId, string $language = 'en'): string
     {
-        return self::GOV_LABELS[$typeId] ?? $typeId;
+        return GovTypeCatalog::label($typeId, $language) ?? $typeId;
     }
 
     public static function geonamesLabel(string $code): string

@@ -664,6 +664,9 @@ msgstr ""
 msgid "Alpine pasture"
 msgstr ""
 
+msgid "Part of town"
+msgstr ""
+
 msgid "Group of houses"
 msgstr ""
 
