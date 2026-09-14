@@ -65,6 +65,18 @@ The current release provides:
 The screenshots below show the main workflows. The shared-place summary keeps
 the local genealogy record in webtrees and presents links to the module's dedicated pages.
 
+### Administration and search filters
+
+Administrators can enable the external information providers and configure
+their optional search filters. For every hierarchy level (house/farm, country,
+federation or international organisation, and planet), each provider has a
+list of typical type values that an editor can use to narrow a search. These
+provider- and level-specific lists are shown in collapsible accordion panels;
+each panel can be opened or closed independently and its values can be reset
+to the provider defaults.
+
+![Administration settings with provider search-filter types](docs/images/control_panel.png)
+
 ### Linking a shared place
 
 The **External pages** action is available on the standard Vesta shared-place
