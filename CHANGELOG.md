@@ -18,7 +18,7 @@
   page ID and view its title and introductory paragraph; responses are cached
   and existing GenWiki references are de-duplicated (Issue #110).
 
-## Unreleased
+## 2.2.6.11 - 2026-09-15
 
 - GOV population observations using the API's `beginYear` and `endYear`
   fields are now shown in the population table and chart with their temporal
