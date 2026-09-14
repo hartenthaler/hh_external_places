@@ -14,6 +14,7 @@ final class NominatimProvider
     private const PHOTON_ENDPOINT = 'https://photon.komoot.io/api';
     private const GEOCODER_CACHE_TTL = 2592000; // 30 days
     private string $diagnostic = '';
+    private bool $lastNominatimResponseEmpty = false;
     public function __construct(
         private readonly ?HttpTransport $http = null,
         private readonly ExternalProviderCache $cache = new ExternalProviderCache(),
@@ -41,9 +42,13 @@ final class NominatimProvider
         }
 
         $language = $this->language($language);
-        // One page render must never trigger several immediate requests. This
-        // is required by the public Nominatim usage policy (one request/sec).
+        // If the complete hierarchy has no result, retry once without its
+        // highest component. This handles historical or obsolete parent names
+        // (for example a former state) while keeping the request count bounded.
         $queries = [$place];
+        if (count($components) > 1) {
+            $queries[] = implode(', ', array_slice($components, 0, -1));
+        }
 
         $payload = null;
         $attempts = [];
@@ -57,6 +62,11 @@ final class NominatimProvider
                 $this->diagnostic = 'Nominatim query="' . $query . '"; cache hit';
                 break;
             }
+            if ($this->lastNominatimResponseEmpty && $query !== $queries[0]) {
+                // allowRequest() deliberately rejects requests made within a
+                // second. Wait out that interval before the bounded fallback.
+                usleep(1_000_000);
+            }
             if (!$this->cache->allowRequest('nominatim')) {
                 $this->diagnostic = 'request throttled by local rate limit';
                 break;
@@ -65,6 +75,9 @@ final class NominatimProvider
             $payload = $this->request($query, $language, $preferredLayer);
             if ($payload !== null) {
                 $this->cache->write('nominatim', $cacheKey, $payload);
+                if ($query !== $queries[0]) {
+                    $this->diagnostic = 'Nominatim hierarchy fallback query="' . $query . '"; ' . $this->diagnostic;
+                }
                 break;
             }
         }
@@ -108,6 +121,7 @@ final class NominatimProvider
     private function request(string $place, string $language, ?string $preferredLayer = null): ?array
     {
         $transport = $this->http ?? HttpTransport::default();
+        $this->lastNominatimResponseEmpty = false;
         try {
                 $query = [
                     'q' => $place,
@@ -148,7 +162,11 @@ final class NominatimProvider
                     return !in_array($category, $excludedCategories, true)
                         && ($addressType === '' || in_array($addressType, $allowedAddressTypes, true));
                 }));
-                if ($candidates === []) { $this->diagnostic = 'Nominatim query="' . $place . '"; HTTP 200; raw candidates=' . $rawCandidateCount . '; usable candidates=0'; return null; }
+                if ($candidates === []) {
+                    $this->lastNominatimResponseEmpty = true;
+                    $this->diagnostic = 'Nominatim query="' . $place . '"; HTTP 200; raw candidates=' . $rawCandidateCount . '; usable candidates=0';
+                    return null;
+                }
                 $this->diagnostic = 'Nominatim query="' . $place . '"; HTTP 200; raw candidates=' . $rawCandidateCount . '; usable candidates=' . count($candidates);
                 // Prefer a result whose locality matches the requested place
                 // name. Nominatim ranks administrative regions highly for
