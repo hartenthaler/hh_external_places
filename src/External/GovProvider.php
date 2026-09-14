@@ -42,7 +42,7 @@ final class GovProvider implements ExternalProvider
     {
         $cached = $this->cache->read($this->key(), $identifier->value);
         if ($cached !== null) {
-            return $this->map($identifier, $cached);
+            return $this->map($identifier, $cached, $language);
         }
         try {
             // Use the same endpoint as Vesta's Gov4Webtrees module.  The
@@ -57,7 +57,7 @@ final class GovProvider implements ExternalProvider
         } catch (JsonException) { return null; }
         if (!is_array($data)) { return null; }
         $this->cache->write($this->key(), $identifier->value, $data);
-        return $this->map($identifier, $data);
+        return $this->map($identifier, $data, $language);
     }
 
     /** @return list<array{id:string,label:string,description:?string,typeId:?string,typeIds:list<string>,distanceKm:?float}> */
@@ -117,18 +117,18 @@ final class GovProvider implements ExternalProvider
     }
 
     /** @param array<string,mixed> $data */
-    private function map(ExternalIdentifier $identifier, array $data): ExternalInformation
+    private function map(ExternalIdentifier $identifier, array $data, string $language = 'en'): ExternalInformation
     {
         $label = $this->firstString($data, ['name', 'label', 'title', 'placeName']);
         if ($label !== null) { $label = trim(strip_tags($label)); }
         $description = $this->firstString($data, ['description', 'type', 'objectType']);
         $typeId = $this->firstScalarString($data, ['typeId', 'govType', 'objectTypeId', 'type']);
         // GOV often returns the numeric vocabulary identifier as the type
-        // description (for example "24"). Present the configured, readable
-        // label instead; the label is translated at rendering time.
+        // description (for example "24"). Present the readable label from
+        // the GOV vocabulary in the requested language instead.
         if ($description !== null && preg_match('/^\\d+$/', $description) === 1) {
             $typeId = $description;
-            $description = PlaceTypeFilterSettings::govLabel($description);
+            $description = PlaceTypeFilterSettings::govLabel($description, $language);
         }
         return new ExternalInformation('gov', $identifier->value, $identifier->url, $label, $description, null, [], $this->references($data, $identifier->value), $this->details($data), [], [], [], $this->population($data), $typeId);
     }

@@ -820,7 +820,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             }
             foreach (['gov', 'geonames'] as $provider) {
                 foreach ($filters[$provider] ?? [] as $value) {
-                    $label = $provider === 'geonames' ? PlaceTypeFilterSettings::geonamesLabel($value) : PlaceTypeFilterSettings::govLabel($value);
+                    $label = $provider === 'geonames' ? PlaceTypeFilterSettings::geonamesLabel($value) : PlaceTypeFilterSettings::govLabel($value, $language);
                     $typeLabels[$level][$provider][$value] = I18N::translate($label);
                 }
             }
