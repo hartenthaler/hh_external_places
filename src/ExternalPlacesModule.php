@@ -187,7 +187,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         if ($identifier === null || !$wikidataEnabled) {
             $language = explode('-', str_replace('_', '-', I18N::languageTag()))[0] ?: 'en';
             $geoNamesHtml = $this->geoNamesHtml($location->fullName(), $language);
-            $nominatimHtml = $this->nominatimHtml($place->getGedcomName() !== '' ? $place->getGedcomName() : $location->fullName(), $language);
+            $nominatimHtml = $this->nominatimHtml($place->getGedcomName() !== '' ? $place->getGedcomName() : $location->fullName(), $language, $location->gedcom());
             if ($externalIdentifiers === [] && !$location->canEdit() && $geoNamesHtml === '' && $nominatimHtml === '') {
                 return null;
             }
@@ -277,7 +277,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         $assignmentUrl = $location->canEdit() ? self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]) : null;
         $html .= $this->externalInformationHtml($externalIdentifiers, $language, 'wikidata', $location->fullName(), $assignmentUrl, $location->gedcom(), $genwikiShown);
         $html .= $this->geoNamesHtml($location->fullName(), $language);
-        $html .= $this->nominatimHtml($place->getGedcomName() !== '' ? $place->getGedcomName() : $location->fullName(), $language);
+        $html .= $this->nominatimHtml($place->getGedcomName() !== '' ? $place->getGedcomName() : $location->fullName(), $language, $location->gedcom());
         $html .= '<div class="d-flex gap-2 flex-wrap mt-2">';
         if ($location->canEdit()) {
             $html .= '<a class="btn btn-primary btn-sm" href="' . e(self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()])) . '">' . e(I18N::translate('Assign external identifier')) . '</a>';
@@ -450,13 +450,13 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         return $html . $this->sourceHtml('GeoNames', 'https://www.geonames.org/') . '</section>';
     }
 
-    private function nominatimHtml(string $placeName, string $language): string
+    private function nominatimHtml(string $placeName, string $language, string $gedcom = ''): string
     {
         if (!ExternalProviderSettings::isEnabled('nominatim')) {
             return '';
         }
         $provider = new NominatimProvider();
-        $information = $provider->lookup($placeName, $language);
+        $information = $provider->lookup($placeName, $language, $this->nominatimLayer($gedcom));
         if ($information === null) {
             return '<div class="alert alert-secondary small"><strong>Nominatim diagnostic:</strong> ' . e($provider->diagnostic() !== '' ? $provider->diagnostic() : 'no result') . '</div>';
         }
@@ -464,13 +464,8 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         if ($information['description'] !== null && $information['description'] !== '') {
             $html .= ' — ' . e($information['description']);
         }
-        $parts = [];
-        foreach ($information['details'] as $detail) {
-            $label = $this->externalDetailLabel($detail['label']);
-            $parts[] = '<span title="' . e($label) . '" aria-label="' . e($label) . '">' . e($detail['value']) . '</span>';
-        }
-        if ($parts !== []) {
-            $html .= '<br><small>' . implode(', ', $parts) . '</small>';
+        if ($provider->diagnostic() !== '') {
+            $html .= '<div class="alert alert-info small mt-2"><strong>Nominatim diagnostic:</strong> ' . e($provider->diagnostic()) . '</div>';
         }
         if (is_array($information['geometry'] ?? null)) {
             $mapId = 'nominatim-map-' . substr(md5($information['url']), 0, 10);
@@ -478,9 +473,19 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             $html .= '<div id="' . e($mapId) . '" style="height:320px;min-height:240px" class="mt-3 rounded border" role="img" aria-label="' . e(I18N::translate('Map showing the Nominatim geometry')) . '"></div>';
             // Dedicated module pages do not necessarily load webtrees map
             // assets. Load Leaflet only when a polygon is actually present.
-            $html .= '<script>(function(){const el=document.getElementById(' . json_encode($mapId, JSON_THROW_ON_ERROR) . ');const geometry=' . $geometry . ';function draw(){if(!el||typeof L === "undefined"){return;}const map=L.map(el);L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"&copy; OpenStreetMap contributors"}).addTo(map);const layer=L.geoJSON({type:"Feature",geometry:geometry},{style:{color:"#3388ff",weight:2,fillColor:"#3388ff",fillOpacity:0.35}}).addTo(map);map.fitBounds(layer.getBounds(),{padding:[12,12]});setTimeout(function(){map.invalidateSize();},100);}if(typeof L!=="undefined"){draw();return;}if(!document.querySelector("[data-hh-leaflet]")){const css=document.createElement("link");css.rel="stylesheet";css.href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";document.head.appendChild(css);const script=document.createElement("script");script.src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";script.async=true;script.dataset.hhLeaflet="1";script.onload=draw;document.head.appendChild(script);}else{const timer=setInterval(function(){if(typeof L!=="undefined"){clearInterval(timer);draw();}},50);}})();</script>';
+        $html .= '<script>(function(){const el=document.getElementById(' . json_encode($mapId, JSON_THROW_ON_ERROR) . ');const geometry=' . $geometry . ';function draw(){if(!el||typeof L === "undefined"){return;}const map=L.map(el);L.tileLayer("https://{s}.tile.openstreetmap.de/{z}/{x}/{y}.png",{attribution:"&copy; OpenStreetMap contributors"}).addTo(map);const layer=L.geoJSON({type:"Feature",geometry:geometry},{style:{color:"#3388ff",weight:2,fillColor:"#3388ff",fillOpacity:0.35}}).addTo(map);map.fitBounds(layer.getBounds(),{padding:[12,12]});setTimeout(function(){map.invalidateSize();},100);}if(typeof L!=="undefined"){draw();return;}if(!document.querySelector("[data-hh-leaflet]")){const css=document.createElement("link");css.rel="stylesheet";css.href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";document.head.appendChild(css);const script=document.createElement("script");script.src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";script.async=true;script.dataset.hhLeaflet="1";script.onload=draw;document.head.appendChild(script);}else{const timer=setInterval(function(){if(typeof L!=="undefined"){clearInterval(timer);draw();}},50);}})();</script>';
         }
         return $html . $this->sourceHtml('Nominatim', 'https://nominatim.openstreetmap.org/') . '</section>';
+    }
+
+    private function nominatimLayer(string $gedcom): ?string
+    {
+        if (preg_match('/^1 TYPE .*?(Landkreis|county)/im', $gedcom)) { return 'county'; }
+        if (preg_match('/^1 TYPE .*?(Bundesland|state|Land)/im', $gedcom)) { return 'state'; }
+        if (preg_match('/^1 TYPE .*?(Stadt|city|town)/im', $gedcom)) { return 'city'; }
+        if (preg_match('/^1 TYPE .*?(Dorf|village|Ortsteil)/im', $gedcom)) { return 'locality'; }
+        if (preg_match('/^1 TYPE .*?(Haus|Hof|house|building)/im', $gedcom)) { return 'house'; }
+        return null;
     }
 
     private function sourceHtml(string $name, string $url): string

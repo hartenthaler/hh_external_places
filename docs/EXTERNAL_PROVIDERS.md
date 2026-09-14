@@ -37,6 +37,12 @@ service's [Nominatim usage policy](https://operations.osmfoundation.org/policies
 is binding: at most one request per second, an identifying User-Agent, visible
 OpenStreetMap attribution, and no autocomplete or systematic downloads.
 
+The query retains the place and useful locality context, but removes ISO country
+codes and the synthetic `Earth` level. Where available, the GEDCOM place type
+is used as a preference for house/building, locality, city, county or state.
+For country, federation, continent and Earth records no Nominatim or Photon
+lookup is performed; the empty-query diagnostic remains available for testing.
+
 The lookup uses the public endpoint
 `https://nominatim.openstreetmap.org/search` with `format=jsonv2`, address
 details, name details and a single best result. The returned `type` and
