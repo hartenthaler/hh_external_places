@@ -35,6 +35,8 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\LanguageCode;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\NominatimProvider;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\GovExternalIdentifierCatalog;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\PlaceTypeFilterSettings;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\CoordinateConsistencySettings;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Geo\Coordinates;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikibase\ReadOnlyWikibaseClient;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domus\DomusMapLinkProvider;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Http\WikidataLocationAssignmentPage;
@@ -178,6 +180,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
 
         $identifier = $lookup->identifier();
         $coordinates = LocationCoordinates::fromGedcom($location->gedcom());
+        $sharedCoordinates = $coordinates === null ? null : Coordinates::fromArray($coordinates);
         // Domus deep-links are meaningful only for a known Wikidata item.
         // Do not show a generic Domus start-page button for places without a
         // Wikidata assignment.
@@ -193,7 +196,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             }
 
             $assignmentUrl = $location->canEdit() ? self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]) : null;
-            $html = $this->externalInformationHtml($externalIdentifiers, $language, '', $location->fullName(), $assignmentUrl, $location->gedcom());
+            $html = $this->externalInformationHtml($externalIdentifiers, $language, '', $location->fullName(), $assignmentUrl, $location->gedcom(), [], $sharedCoordinates);
             $html .= $geoNamesHtml;
             $html .= $nominatimHtml;
             $html .= '<div class="d-flex gap-2 flex-wrap mt-2">';
@@ -227,6 +230,9 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             $typeLabels = (new WikidataClient())->labels($entity->instanceOfQids, $language);
             $types      = array_map(static fn (string $qid): string => $typeLabels[$qid] ?? $qid, $entity->instanceOfQids);
             $html .= '<br>' . e(MoreI18N::xlate('Type')) . ': ' . e(implode(', ', $types));
+        }
+        if ($entity?->coordinates !== null) {
+            $html .= $this->coordinateConsistencyHtml($entity->coordinates, $sharedCoordinates, 'Wikidata', $location->gedcom(), $location->canEdit() ? self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]) : null);
         }
         if ($entity !== null && $entity->historicAddresses !== []) {
             $addressQids = [];
@@ -275,7 +281,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         }
         $html .= $this->sourceHtml('Wikidata', 'https://www.wikidata.org/') . '</section>';
         $assignmentUrl = $location->canEdit() ? self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]) : null;
-        $html .= $this->externalInformationHtml($externalIdentifiers, $language, 'wikidata', $location->fullName(), $assignmentUrl, $location->gedcom(), $genwikiShown);
+        $html .= $this->externalInformationHtml($externalIdentifiers, $language, 'wikidata', $location->fullName(), $assignmentUrl, $location->gedcom(), $genwikiShown, $sharedCoordinates);
         $html .= $this->geoNamesHtml($location->fullName(), $language);
         $html .= $this->nominatimHtml($place->getGedcomName() !== '' ? $place->getGedcomName() : $location->fullName(), $language, $location->gedcom());
         $html .= '<div class="d-flex gap-2 flex-wrap mt-2">';
@@ -296,7 +302,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
      *
      * @param list<\Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\ExternalIdentifier> $identifiers
      */
-    private function externalInformationHtml(array $identifiers, string $language, string $skip = '', string $placeName = '', ?string $assignmentUrl = null, string $gedcom = '', array &$genwikiShown = []): string
+    private function externalInformationHtml(array $identifiers, string $language, string $skip = '', string $placeName = '', ?string $assignmentUrl = null, string $gedcom = '', array &$genwikiShown = [], ?Coordinates $sharedCoordinates = null): string
     {
         if ($identifiers === []) {
             return '';
@@ -371,6 +377,9 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                 }
                 if (($information?->population ?? []) !== []) {
                     $html .= $this->populationHtml($information->population ?? []);
+                }
+                if ($information?->coordinates !== null) {
+                    $html .= $this->coordinateConsistencyHtml($information->coordinates, $sharedCoordinates, $provider->label(), $gedcom, $assignmentUrl);
                 }
                 if ($information?->imageUrl !== null) {
                     $html .= '<br><img src="' . e($information->imageUrl) . '" alt="" loading="lazy" style="max-width:500px;max-height:500px;width:auto;height:auto">';
@@ -479,6 +488,29 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         $html .= '<script>(function(){const el=document.getElementById(' . json_encode($mapId, JSON_THROW_ON_ERROR) . ');const geometry=' . $geometry . ';function draw(){if(!el||typeof L === "undefined"){return;}const map=L.map(el);L.tileLayer("https://{s}.tile.openstreetmap.de/{z}/{x}/{y}.png",{attribution:"&copy; OpenStreetMap contributors"}).addTo(map);const layer=L.geoJSON({type:"Feature",geometry:geometry},{style:{color:"#3388ff",weight:2,fillColor:"#3388ff",fillOpacity:0.35}}).addTo(map);map.fitBounds(layer.getBounds(),{padding:[12,12]});setTimeout(function(){map.invalidateSize();},100);}if(typeof L!=="undefined"){draw();return;}if(!document.querySelector("[data-hh-leaflet]")){const css=document.createElement("link");css.rel="stylesheet";css.href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";document.head.appendChild(css);const script=document.createElement("script");script.src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";script.async=true;script.dataset.hhLeaflet="1";script.onload=draw;document.head.appendChild(script);}else{const timer=setInterval(function(){if(typeof L!=="undefined"){clearInterval(timer);draw();}},50);}})();</script>';
         }
         return $html . $this->sourceHtml('Nominatim', 'https://nominatim.openstreetmap.org/') . '</section>';
+    }
+
+    private function coordinateConsistencyHtml(Coordinates $providerCoordinates, ?Coordinates $sharedCoordinates, string $providerLabel, string $gedcom, ?string $assignmentUrl): string
+    {
+        if ($sharedCoordinates === null) {
+            if ($assignmentUrl === null) { return '<br><small>' . e(I18N::translate('Coordinates are available from %s.', $providerLabel)) . '</small>'; }
+            return '<br><small>' . e(I18N::translate('Coordinates are available from %s.', $providerLabel)) . '</small> <form method="post" action="' . e($assignmentUrl) . '" class="d-inline">' . csrf_field()
+                . '<input type="hidden" name="operation" value="add-coordinates"><input type="hidden" name="latitude" value="' . e((string) $providerCoordinates->latitude) . '"><input type="hidden" name="longitude" value="' . e((string) $providerCoordinates->longitude) . '"><button class="btn btn-sm btn-outline-primary" type="submit">' . e(I18N::translate('Add coordinates')) . '</button></form>';
+        }
+
+        $level = CoordinateConsistencySettings::hierarchyForGedcom($gedcom);
+        $tolerance = CoordinateConsistencySettings::forLevel($level);
+        if ($tolerance === null) { return ''; }
+        $distance = $sharedCoordinates->distanceTo($providerCoordinates);
+        $unit = $level === 'house' ? 'm' : 'km';
+        $displayDistance = $unit === 'm' ? $distance : $distance / 1000.0;
+        $formatted = number_format($displayDistance, $unit === 'm' && $displayDistance < 10 ? 2 : 1);
+        $formattedTolerance = number_format($unit === 'm' ? $tolerance : $tolerance / 1000.0, $unit === 'm' ? 2 : 0);
+        $message = I18N::translate('Coordinate distance from %s: %s %s (tolerance %s %s).', $providerLabel, $formatted, $unit, $formattedTolerance, $unit);
+        if ($distance <= $tolerance) {
+            return self::showConsistentReferences() ? '<br><small class="text-success">' . e($message . ' ' . I18N::translate('consistent')) . '</small>' : '';
+        }
+        return '<br><small class="text-danger">' . e($message . ' ' . I18N::translate('inconsistent')) . '</small>';
     }
 
     private function nominatimLayer(string $gedcom): ?string
@@ -923,6 +955,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             'all_trees' => $trees,
             'default_radius_km' => NearbyDiscoverySettings::globalRadius(),
             'radius_exceptions' => $radiusExceptions,
+            'coordinate_tolerances' => CoordinateConsistencySettings::all(),
             'enabled_providers' => ExternalProviderSettings::enabled(),
             'provider_labels' => ExternalProviderSettings::labels(),
             'type_filters' => $typeFilters,
@@ -938,6 +971,11 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         $providers = is_array($body['providers'] ?? null) ? array_map('strval', $body['providers']) : [];
         ExternalProviderSettings::save($providers);
         Site::setPreference(self::SHOW_CONSISTENT_REFERENCES_PREFERENCE, isset($body['show-consistent-references']) ? '1' : '0');
+        $coordinateSettingsChanged = false;
+        if (is_array($body['coordinate-tolerances'] ?? null)) {
+            CoordinateConsistencySettings::save($body['coordinate-tolerances']);
+            $coordinateSettingsChanged = true;
+        }
         if (in_array('geonames', $providers, true)) {
             $geoNamesStatus = (new GeoNamesProvider())->configurationStatus();
             if (!$geoNamesStatus['active']) {
@@ -1018,7 +1056,10 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                 : I18N::translate('The nearby-search radius for family tree %s is now %s km.', $treeTitle, number_format($parsedExceptionValue, 1));
             FlashMessages::addMessage($message, 'success');
         } elseif ($resetProvider === '') {
-            FlashMessages::addMessage(I18N::translate($radiusChanged ? 'Nearby search settings have been updated.' : 'External Places settings have been updated.'), 'success');
+            $message = $coordinateSettingsChanged
+                ? I18N::translate('Coordinate consistency settings have been updated.')
+                : I18N::translate($radiusChanged ? 'Nearby search settings have been updated.' : 'External Places settings have been updated.');
+            FlashMessages::addMessage($message, 'success');
         }
 
         return redirect($this->getConfigLink());

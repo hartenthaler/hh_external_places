@@ -121,6 +121,14 @@ Nearby searches send the shared place's coordinates and configured radius to the
 Standard technical request metadata is sent by the server. The module never sends names of living people,
 family relationships, private notes, sources or other genealogical data.
 
+Provider coordinates are normalised to WGS84 and compared with the shared
+place using a great-circle distance. The administration page contains a
+**Coordinate consistency tolerances** table for house/farm/building,
+state/country and federation/international organisation records. The default
+tolerances are 5 m, 200 km and 500 km respectively; planets do not use
+coordinates. If a provider supplies a validated coordinate and the shared
+place has none, an editor can explicitly add it to the GEDCOM record.
+
 Responses are cached locally. If a provider is temporarily unavailable, the normal Vesta Shared Place page remains available.
 When the optional Legal Notice module is active, it includes the selected external providers in the generated privacy policy together with the purpose of the request and the transferred technical data.
 

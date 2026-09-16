@@ -13,6 +13,7 @@ use Fisharebest\Webtrees\Validator;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\WikidataIdentifier;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalProviderRegistry;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Gedcom\WikidataLocationAssignmentService;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Geo\Coordinates;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\MoreI18N;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -76,6 +77,13 @@ final class WikidataLocationAssignmentAction implements RequestHandlerInterface
             $language = Validator::parsedBody($request)->string('language', '');
             $added = $service->addLocationName($location, $name, $language);
             FlashMessages::addMessage($added ? I18N::translate('The place name has been added.') : I18N::translate('The place name was not added.'), $added ? 'success' : 'danger');
+        } elseif ($operation === 'add-coordinates') {
+            $latitude = Validator::parsedBody($request)->string('latitude', '');
+            $longitude = Validator::parsedBody($request)->string('longitude', '');
+            $coordinates = Coordinates::fromStrings($latitude, $longitude);
+            if ($coordinates === null) { throw new HttpBadRequestException(I18N::translate('Invalid coordinates.')); }
+            $added = $service->addCoordinates($location, $coordinates);
+            FlashMessages::addMessage($added ? I18N::translate('The coordinates have been added to the shared place.') : I18N::translate('The coordinates were not added because coordinates already exist.'), $added ? 'success' : 'danger');
         } else {
             throw new HttpBadRequestException(I18N::translate('Invalid Wikidata assignment operation.'));
         }

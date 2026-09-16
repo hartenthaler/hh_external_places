@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikidata;
 
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\WikidataIdentifier;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Geo\Coordinates;
 
 /** @internal Maps the fixed wbgetentities response subset to a value object. */
 final class WikidataEntityMapper
@@ -53,6 +54,7 @@ final class WikidataEntityMapper
             $this->historicAddresses($claims),
             $this->personRelations($claims['P127'] ?? []),
             $this->personRelations($claims['P466'] ?? []),
+            Coordinates::fromWikibase($this->claimValue($claims['P625'] ?? [])),
         );
     }
 
@@ -137,6 +139,15 @@ final class WikidataEntityMapper
             }
         }
 
+        return null;
+    }
+
+    private function claimValue(mixed $statements): mixed
+    {
+        foreach (is_array($statements) ? $statements : [] as $statement) {
+            $value = $statement['mainsnak']['datavalue']['value'] ?? null;
+            if ($value !== null) { return $value; }
+        }
         return null;
     }
 

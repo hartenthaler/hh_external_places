@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- Coordinates from GEDCOM, Wikidata, FactGrid, GOV and GeoNames now use one
+  shared WGS84 value object with support for compass directions, German `Ost`
+  notation and distance calculation (Issue #83).
+- Administrators can configure hierarchy-specific coordinate tolerances: 5 m
+  for buildings, 200 km for states/countries and 500 km for federations;
+  planetary records do not use coordinates.
+- Editors see coordinate consistency results and can explicitly import a
+  validated provider coordinate when the shared place has no coordinates.
+
 ## 2.2.6.10 - 2026-09-14
 
 - Nominatim searches now retain useful locality context while removing country

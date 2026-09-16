@@ -7,6 +7,7 @@ namespace Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikibase;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Http\HttpTransport;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\LanguageCode;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\PlaceTypeFilterSettings;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Geo\Coordinates;
 use JsonException;
 use Throwable;
 
@@ -237,11 +238,9 @@ final class ReadOnlyWikibaseClient
 
     private function distanceKm(float $lat1, float $lon1, float $lat2, float $lon2): float
     {
-        $earth = 6371.0;
-        $dLat = deg2rad($lat2 - $lat1);
-        $dLon = deg2rad($lon2 - $lon1);
-        $a = sin($dLat / 2) ** 2 + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon / 2) ** 2;
-        return $earth * 2 * asin(min(1.0, sqrt($a)));
+        $first = Coordinates::fromDecimal($lat1, $lon1);
+        $second = Coordinates::fromDecimal($lat2, $lon2);
+        return $first === null || $second === null ? INF : $first->distanceKmTo($second);
     }
 
     private function language(string $language): string

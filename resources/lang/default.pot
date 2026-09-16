@@ -767,3 +767,54 @@ msgstr ""
 
 msgid "The place name was not added."
 msgstr ""
+
+msgid "Coordinate consistency tolerances"
+msgstr ""
+
+msgid "Set the maximum distance between the shared-place coordinates and provider coordinates that is considered consistent."
+msgstr ""
+
+msgid "Hierarchy level"
+msgstr ""
+
+msgid "Maximum distance"
+msgstr ""
+
+msgid "Meaning"
+msgstr ""
+
+msgid "House / farm / building"
+msgstr ""
+
+msgid "No coordinates"
+msgstr ""
+
+msgid "Planetary records do not have coordinates."
+msgstr ""
+
+msgid "Used when comparing enabled providers."
+msgstr ""
+
+msgid "Coordinates are available from %s."
+msgstr ""
+
+msgid "Add coordinates"
+msgstr ""
+
+msgid "Invalid coordinates."
+msgstr ""
+
+msgid "The coordinates have been added to the shared place."
+msgstr ""
+
+msgid "The coordinates were not added because coordinates already exist."
+msgstr ""
+
+msgid "Coordinate distance from %s: %s %s (tolerance %s %s)."
+msgstr ""
+
+msgid "inconsistent"
+msgstr ""
+
+msgid "Coordinate consistency settings have been updated."
+msgstr ""

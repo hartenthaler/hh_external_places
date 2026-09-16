@@ -205,6 +205,26 @@ in `resources/config/geonames-feature-codes.json`, based on GeoNames'
 be translated without duplicating provider identifiers. Nearby-search controls
 remain disabled until the shared place has valid coordinates.
 
+## Coordinates and consistency tolerances
+
+The module normalises coordinates from GEDCOM and the providers to WGS84
+decimal latitude/longitude. It accepts signed decimal values, N/S/E/W
+directions, the German `O` (Ost) direction, and degree/minute/second values.
+Distances use the great-circle (Haversine) calculation in the shared
+`Coordinates` value object; provider adapters do not implement their own
+distance formula.
+
+When a provider returns coordinates, the External information page compares
+them with the coordinates in the shared place. The default tolerances are 5 m
+for a house/farm/building, 200 km for a state/country and 500 km for a
+federation/international organisation. Planetary records have no coordinate
+tolerance. Administrators can change these values in the **Coordinate
+consistency tolerances** table.
+
+If a provider has coordinates while the shared place has none, an editor sees
+an explicit **Add coordinates** action. It is offered only for validated
+coordinates and never overwrites an existing MAP block.
+
 ## Privacy and failures
 
 The providers expose public research data and are not used to match or alter

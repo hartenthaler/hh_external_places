@@ -8,6 +8,7 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\WikidataIdentifier;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Http\HttpTransport;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\LanguageCode;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\PlaceTypeFilterSettings;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Geo\Coordinates;
 use JsonException;
 use Throwable;
 
@@ -548,10 +549,9 @@ final class WikidataClient
 
     private function distanceKm(float $latitude1, float $longitude1, float $latitude2, float $longitude2): float
     {
-        $a = sin(deg2rad($latitude2 - $latitude1) / 2) ** 2
-            + cos(deg2rad($latitude1)) * cos(deg2rad($latitude2)) * sin(deg2rad($longitude2 - $longitude1) / 2) ** 2;
-
-        return 6371.0088 * 2 * asin(min(1.0, sqrt($a)));
+        $first = Coordinates::fromDecimal($latitude1, $longitude1);
+        $second = Coordinates::fromDecimal($latitude2, $longitude2);
+        return $first === null || $second === null ? INF : $first->distanceKmTo($second);
     }
 
     private function rankingScore(string $label, string $placeName, float $distanceKm): int
