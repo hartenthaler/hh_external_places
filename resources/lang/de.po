@@ -803,3 +803,54 @@ msgstr "Der Ortsname wurde hinzugefügt."
 
 msgid "The place name was not added."
 msgstr "Der Ortsname wurde nicht hinzugefügt."
+
+msgid "Coordinate consistency tolerances"
+msgstr "Toleranzen für die Koordinatenkonsistenz"
+
+msgid "Set the maximum distance between the shared-place coordinates and provider coordinates that is considered consistent."
+msgstr "Legen Sie den maximalen Abstand zwischen den Koordinaten des gemeinsamen Ortes und den Koordinaten der Anbieter fest, der noch als konsistent gilt."
+
+msgid "Hierarchy level"
+msgstr "Hierarchieebene"
+
+msgid "Maximum distance"
+msgstr "Maximaler Abstand"
+
+msgid "Meaning"
+msgstr "Bedeutung"
+
+msgid "House / farm / building"
+msgstr "Haus / Hof / Gebäude"
+
+msgid "No coordinates"
+msgstr "Keine Koordinaten"
+
+msgid "Planetary records do not have coordinates."
+msgstr "Für Planeteneinträge gibt es keine Koordinaten."
+
+msgid "Used when comparing enabled providers."
+msgstr "Wird beim Vergleich der aktivierten Anbieter verwendet."
+
+msgid "Coordinates are available from %s."
+msgstr "Koordinaten sind bei %s verfügbar."
+
+msgid "Add coordinates"
+msgstr "Koordinaten hinzufügen"
+
+msgid "Invalid coordinates."
+msgstr "Ungültige Koordinaten."
+
+msgid "The coordinates have been added to the shared place."
+msgstr "Die Koordinaten wurden zum gemeinsamen Ort hinzugefügt."
+
+msgid "The coordinates were not added because coordinates already exist."
+msgstr "Die Koordinaten wurden nicht hinzugefügt, weil bereits Koordinaten vorhanden sind."
+
+msgid "Coordinate distance from %s: %s %s (tolerance %s %s)."
+msgstr "Koordinatenabstand zu %s: %s %s (Toleranz %s %s)."
+
+msgid "inconsistent"
+msgstr "inkonsistent"
+
+msgid "Coordinate consistency settings have been updated."
+msgstr "Die Einstellungen für die Koordinatenkonsistenz wurden aktualisiert."

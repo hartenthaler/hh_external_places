@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Hartenthaler\Webtrees\Module\ExternalPlacesModule\External;
 
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Geo\Coordinates;
+
 /** Small, provider-neutral read model used by the shared-place summary. */
 final class ExternalInformation
 {
@@ -24,6 +26,7 @@ final class ExternalInformation
         public readonly array $population = [],
         public readonly ?string $typeId = null,
         public readonly array $hierarchies = [],
+        public readonly ?Coordinates $coordinates = null,
     ) {
     }
 }

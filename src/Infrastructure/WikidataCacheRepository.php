@@ -8,6 +8,7 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\WikidataIdentifier;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikidata\WikidataEntity;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikidata\HistoricAddress;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikidata\HistoricPersonRelation;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Geo\Coordinates;
 use Illuminate\Database\Capsule\Manager as DB;
 use JsonException;
 
@@ -81,6 +82,7 @@ final class WikidataCacheRepository
             $addresses,
             $relations($payload['owners']),
             $relations($payload['occupants']),
+            is_array($payload['coordinates'] ?? null) ? Coordinates::fromArray($payload['coordinates']) : null,
         );
     }
 
@@ -93,6 +95,7 @@ final class WikidataCacheRepository
             'description'       => $entity->description,
             'instance_of'       => $entity->instanceOfQids,
             'commons_file_name' => $entity->commonsFileName,
+            'coordinates' => $entity->coordinates?->toArray(),
             'historic_addresses' => array_map(static fn (HistoricAddress $address): array => [
                 'street_qid' => $address->streetQid, 'street_text' => $address->streetText,
                 'house_number' => $address->houseNumber, 'postal_code' => $address->postalCode,

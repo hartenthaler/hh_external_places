@@ -10,6 +10,7 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\WikidataIdentifier;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\ExternalIdentifier;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\PlaceTypeFilterSettings;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\LanguageCode;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Geo\Coordinates;
 
 /**
  * Applies an explicit Wikidata assignment to a shared-place record.
@@ -21,7 +22,7 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\LanguageCode;
  */
 final class WikidataLocationAssignmentService
 {
-    public function __construct(private readonly WikidataExternalIdEditor $editor = new WikidataExternalIdEditor(), private readonly ExternalIdEditor $externalEditor = new ExternalIdEditor(), private readonly GovTypeEditor $govTypeEditor = new GovTypeEditor())
+    public function __construct(private readonly WikidataExternalIdEditor $editor = new WikidataExternalIdEditor(), private readonly ExternalIdEditor $externalEditor = new ExternalIdEditor(), private readonly GovTypeEditor $govTypeEditor = new GovTypeEditor(), private readonly CoordinateEditor $coordinateEditor = new CoordinateEditor())
     {
     }
 
@@ -80,6 +81,15 @@ final class WikidataLocationAssignmentService
     {
         if (!$location->canEdit() || preg_match('/^\d+$/', $typeId) !== 1) { return false; }
         $updated = $this->govTypeEditor->add($location->gedcom(), $typeId, PlaceTypeFilterSettings::govLabel($typeId));
+        if ($updated === $location->gedcom()) { return false; }
+        $location->updateRecord($this->withUpdatedChange($updated), false);
+        return true;
+    }
+
+    public function addCoordinates(Location $location, Coordinates $coordinates): bool
+    {
+        if (!$location->canEdit() || preg_match('/(?:^|\n)1 MAP\b|(?:^|\n)[1-9] LATI\s|(?:^|\n)[1-9] LONG\s/', $location->gedcom()) === 1) { return false; }
+        $updated = $this->coordinateEditor->add($location->gedcom(), $coordinates);
         if ($updated === $location->gedcom()) { return false; }
         $location->updateRecord($this->withUpdatedChange($updated), false);
         return true;

@@ -205,6 +205,13 @@ in `resources/config/geonames-feature-codes.json`, based on GeoNames'
 be translated without duplicating provider identifiers. Nearby-search controls
 remain disabled until the shared place has valid coordinates.
 
+## Coordinates and consistency tolerances
+
+Coordinates from GEDCOM and external providers are normalised to WGS84 and
+compared with provider-neutral great-circle calculations. The accepted input
+formats, hierarchy classification, tolerances and explicit coordinate-import
+rules are documented in [Coordinates and consistency](COORDINATES.md).
+
 ## Privacy and failures
 
 The providers expose public research data and are not used to match or alter

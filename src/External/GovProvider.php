@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Hartenthaler\Webtrees\Module\ExternalPlacesModule\External;
 
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\ExternalIdentifier;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Geo\Coordinates;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Http\HttpTransport;
 use JsonException;
 use Throwable;
@@ -72,13 +73,13 @@ final class GovProvider implements ExternalProvider
     /** @return list<array{id:string,label:string,description:?string,typeId:?string,typeIds:list<string>,distanceKm:?float}> */
     public function nearby(float $latitude, float $longitude, float $radiusKm): array
     {
-        if ($latitude < -90 || $latitude > 90 || $longitude < -180 || $longitude > 180) { return []; }
+        $center = Coordinates::fromDecimal($latitude, $longitude);
+        if ($center === null) { return []; }
         $radiusKm = max(0.1, min(100.0, $radiusKm));
-        $latDelta = $radiusKm / 111.32;
-        $lonDelta = $radiusKm / max(1.0, 111.32 * cos(deg2rad($latitude)));
+        $box = $center->boundingBox($radiusKm);
         $payload = $this->requestJson('https://gov.genealogy.net/api/searchByBoundingBox', [
-            'latitude0' => max(-90, $latitude - $latDelta), 'latitude1' => min(90, $latitude + $latDelta),
-            'longitude0' => max(-180, $longitude - $lonDelta), 'longitude1' => min(180, $longitude + $lonDelta),
+            'latitude0' => $box['latitude0'], 'latitude1' => $box['latitude1'],
+            'longitude0' => $box['longitude0'], 'longitude1' => $box['longitude1'],
         ]);
         return $this->candidateList($payload);
     }
@@ -130,7 +131,22 @@ final class GovProvider implements ExternalProvider
             $typeId = $description;
             $description = PlaceTypeFilterSettings::govLabel($description, $language);
         }
-        return new ExternalInformation('gov', $identifier->value, $identifier->url, $label, $description, null, [], $this->references($data, $identifier->value), $this->details($data), [], [], [], $this->population($data), $typeId);
+        return new ExternalInformation('gov', $identifier->value, $identifier->url, $label, $description, null, [], $this->references($data, $identifier->value), $this->details($data), [], [], [], $this->population($data), $typeId, [], $this->coordinates($data));
+    }
+
+    /** @param array<string,mixed> $data */
+    private function coordinates(array $data): ?Coordinates
+    {
+        foreach (['coordinates', 'coordinate', 'position', 'location', 'map'] as $key) {
+            $candidate = $data[$key] ?? null;
+            if (is_array($candidate)) {
+                $coordinates = Coordinates::fromArray($candidate);
+                if ($coordinates !== null) { return $coordinates; }
+            }
+        }
+        $latitude = $data['latitude'] ?? $data['lat'] ?? $data['lati'] ?? null;
+        $longitude = $data['longitude'] ?? $data['lon'] ?? $data['long'] ?? $data['lng'] ?? null;
+        return is_scalar($latitude) && is_scalar($longitude) ? Coordinates::fromStrings((string) $latitude, (string) $longitude) : null;
     }
 
     /** @param array<string,mixed> $data @param list<string> $keys */

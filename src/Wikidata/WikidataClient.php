@@ -8,6 +8,7 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\WikidataIdentifier;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Http\HttpTransport;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\LanguageCode;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\PlaceTypeFilterSettings;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Geo\Coordinates;
 use JsonException;
 use Throwable;
 
@@ -402,7 +403,8 @@ final class WikidataClient
      */
     public function nearby(float $latitude, float $longitude, float $radiusKm, string $language, string $placeName = '', bool $houseOnly = false, string $filterLevel = 'house'): array
     {
-        if ($latitude < -90.0 || $latitude > 90.0 || $longitude < -180.0 || $longitude > 180.0) {
+        $centerCoordinates = Coordinates::fromDecimal($latitude, $longitude);
+        if ($centerCoordinates === null) {
             return [];
         }
 
@@ -448,7 +450,7 @@ final class WikidataClient
             if ($coordinates === null) {
                 continue;
             }
-            $distance = $this->distanceKm($latitude, $longitude, $coordinates['latitude'], $coordinates['longitude']);
+            $distance = $centerCoordinates->distanceKmTo($coordinates);
             $description = $binding['itemDescription']['value'] ?? null;
             $candidates[] = new WikidataNearbyCandidate(
                 $qid[1],
@@ -536,22 +538,9 @@ final class WikidataClient
         return $localized;
     }
 
-    /** @return array{latitude:float,longitude:float}|null */
-    private function wktCoordinates(string $wkt): ?array
+    private function wktCoordinates(string $wkt): ?Coordinates
     {
-        if (preg_match('/^Point\\((-?[0-9.]+) (-?[0-9.]+)\\)$/', $wkt, $matches) !== 1) {
-            return null;
-        }
-
-        return ['latitude' => (float) $matches[2], 'longitude' => (float) $matches[1]];
-    }
-
-    private function distanceKm(float $latitude1, float $longitude1, float $latitude2, float $longitude2): float
-    {
-        $a = sin(deg2rad($latitude2 - $latitude1) / 2) ** 2
-            + cos(deg2rad($latitude1)) * cos(deg2rad($latitude2)) * sin(deg2rad($longitude2 - $longitude1) / 2) ** 2;
-
-        return 6371.0088 * 2 * asin(min(1.0, sqrt($a)));
+        return Coordinates::fromWikibase($wkt);
     }
 
     private function rankingScore(string $label, string $placeName, float $distanceKm): int

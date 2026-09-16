@@ -8,6 +8,7 @@ use Fisharebest\Webtrees\Site;
 use Fisharebest\Webtrees\Registry;
 use Fisharebest\Webtrees\Services\ModuleService;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\ExternalIdentifier;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Geo\Coordinates;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Http\HttpTransport;
 use Throwable;
 
@@ -205,7 +206,7 @@ final class GeoNamesProvider implements ExternalProvider
     /** @param array<string,mixed> $row */
     private function information(ExternalIdentifier $identifier, array $row, string $language): ExternalInformation
     {
-        return new ExternalInformation('geonames', $identifier->value, $identifier->url, is_string($row['name'] ?? null) ? $row['name'] : null, $this->description($row), null, [], [], $this->details($row), [], [], [], [], null, $this->hierarchies($identifier->value, $language));
+        return new ExternalInformation('geonames', $identifier->value, $identifier->url, is_string($row['name'] ?? null) ? $row['name'] : null, $this->description($row), null, [], [], $this->details($row), [], [], [], [], null, $this->hierarchies($identifier->value, $language), Coordinates::fromArray($row));
     }
 
     /** @return list<list<array{label:string,value:string,url:string}>> */

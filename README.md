@@ -121,6 +121,11 @@ Nearby searches send the shared place's coordinates and configured radius to the
 Standard technical request metadata is sent by the server. The module never sends names of living people,
 family relationships, private notes, sources or other genealogical data.
 
+Provider coordinates are normalised to WGS84 and compared with the shared
+place using a provider-neutral great-circle distance. The hierarchy levels,
+tolerances and coordinate-import rules are documented in
+[Coordinates and consistency](docs/COORDINATES.md).
+
 Responses are cached locally. If a provider is temporarily unavailable, the normal Vesta Shared Place page remains available.
 When the optional Legal Notice module is active, it includes the selected external providers in the generated privacy policy together with the purpose of the request and the transferred technical data.
 
@@ -190,6 +195,7 @@ their configured meaning and, where a public URL template is known, as links.
 ## 📖 Documentation
 * [Concept: Wikidata and Domus integration](docs/WIKIDATA_DOMUS_CONCEPT.md)
 * [External providers and identifier consistency](docs/EXTERNAL_PROVIDERS.md)
+* [Coordinates and consistency](docs/COORDINATES.md)
 * [GOV type catalogue](docs/GOV_TYPE_CATALOG.md)
 * [Module and repository naming proposal](docs/RENAME_PROPOSAL.md)
 * [Roadmap](docs/ROADMAP.md)

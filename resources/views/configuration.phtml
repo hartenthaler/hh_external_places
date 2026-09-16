@@ -7,6 +7,7 @@ use Fisharebest\Webtrees\Http\RequestHandlers\ModulesAllPage;
 use Fisharebest\Webtrees\I18N;
 use Fisharebest\Webtrees\Tree;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\MoreI18N;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\CoordinateConsistencySettings;
 use Illuminate\Support\Collection;
 
 /** @var Collection<int,Tree> $all_trees */
@@ -17,6 +18,7 @@ use Illuminate\Support\Collection;
 /** @var array<string,array<string,list<string>>> $type_filters */
 /** @var array<string,array<string,array<string,string>>> $type_labels */
 /** @var bool $show_consistent_references */
+/** @var array<string,float|null> $coordinate_tolerances */
 /** @var string $title */
 ?>
 
@@ -60,6 +62,13 @@ use Illuminate\Support\Collection;
             <div class="col-sm-3"><button class="btn btn-secondary" name="radius_exception_action" type="submit" value="add"><?= I18N::translate('Add exception') ?></button></div>
         </div>
     <?php endif ?>
+    <h2 class="mt-4"><?= I18N::translate('Coordinate consistency tolerances') ?></h2>
+    <p><?= I18N::translate('Set the maximum distance between the shared-place coordinates and provider coordinates that is considered consistent.') ?></p>
+    <div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th><?= I18N::translate('Hierarchy level') ?></th><th><?= I18N::translate('Maximum distance') ?></th><th><?= I18N::translate('Meaning') ?></th></tr></thead><tbody>
+    <?php foreach (['house' => 'House / farm / building', 'country' => 'State / country', 'federation' => 'Federation / international organisation', 'planet' => 'Planet (Earth)'] as $level => $label) : ?>
+        <tr><th scope="row"><?= e(I18N::translate($label)) ?></th><td><?php if ($level === 'planet') : ?><span class="text-muted"><?= e(I18N::translate('No coordinates')) ?></span><?php else : ?><div class="input-group" style="max-width:14rem"><input class="form-control" min="0" step="<?= $level === 'house' ? '0.01' : '1' ?>" type="number" name="coordinate-tolerances[<?= e($level) ?>]" value="<?= e(CoordinateConsistencySettings::displayValue($level, $coordinate_tolerances[$level] ?? null)) ?>"><span class="input-group-text"><?= e(CoordinateConsistencySettings::unit($level)) ?></span></div><?php endif ?></td><td class="text-muted"><?= $level === 'planet' ? e(I18N::translate('Planetary records do not have coordinates.')) : e(I18N::translate('Used when comparing enabled providers.')) ?></td></tr>
+    <?php endforeach ?>
+    </tbody></table></div>
     <h2 class="mt-4"><?= I18N::translate('Search filter types') ?></h2>
     <p><?= I18N::translate('Configure optional provider-specific type filters for each hierarchy level. Users with edit permission can activate these filters when searching.') ?></p>
     <div class="accordion" id="type-filter-accordion">

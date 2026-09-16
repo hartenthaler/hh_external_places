@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikidata;
 
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Geo\Coordinates;
+
 /**
  * Read-only subset of a Wikidata entity used by the first module release.
  */
@@ -24,6 +26,7 @@ final class WikidataEntity
         public readonly array $historicAddresses,
         public readonly array $owners,
         public readonly array $occupants,
+        public readonly ?Coordinates $coordinates = null,
     ) {
     }
 

@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace Hartenthaler\Webtrees\Module\ExternalPlacesModule\External;
 
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\ExternalIdentifier;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Geo\Coordinates;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikibase\ReadOnlyWikibaseClient;
 
 /** Provider adapter for Wikidata-like, read-only Wikibase installations. */
 final class WikibaseProvider implements ExternalProvider
 {
-    /** @param array{authority:string, label:string, type:string, image:string, factgrid:?string, wikidata:?string, gov:?string, geonames:?string, genwiki:?string, wikitree:string, owner:string, occupant:string, begin:string, end:string} $definition */
+    /** @param array{authority:string, label:string, type:string, image:string, coordinate:string, factgrid:?string, wikidata:?string, gov:?string, geonames:?string, genwiki:?string, wikitree:string, owner:string, occupant:string, begin:string, end:string} $definition */
     public function __construct(private readonly string $key, private readonly array $definition, private readonly ReadOnlyWikibaseClient $client = new ReadOnlyWikibaseClient(), private readonly ExternalProviderCache $cache = new ExternalProviderCache())
     {
     }
@@ -103,6 +104,10 @@ final class WikibaseProvider implements ExternalProvider
             $people,
             $owners,
             $occupants,
+            [],
+            null,
+            [],
+            Coordinates::fromWikibase($this->claimValue($claims[$this->definition['coordinate']] ?? [])),
         );
     }
 
@@ -214,6 +219,15 @@ final class WikibaseProvider implements ExternalProvider
             if (is_string($value) && $value !== '') {
                 return 'https://commons.wikimedia.org/wiki/Special:FilePath/' . rawurlencode($value);
             }
+        }
+        return null;
+    }
+
+    private function claimValue(mixed $statements): mixed
+    {
+        foreach (is_array($statements) ? $statements : [] as $statement) {
+            $value = $statement['mainsnak']['datavalue']['value'] ?? null;
+            if ($value !== null) { return $value; }
         }
         return null;
     }
