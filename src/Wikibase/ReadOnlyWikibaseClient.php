@@ -190,16 +190,15 @@ final class ReadOnlyWikibaseClient
     /** @return list<array{qid:string,label:string,description:?string,distanceKm:float}> */
     public function nearby(string $provider, float $latitude, float $longitude, float $radiusKm, string $language, bool $houseOnly = false, string $filterLevel = 'house'): array
     {
-        if ($provider !== 'factgrid' || $latitude < -90 || $latitude > 90 || $longitude < -180 || $longitude > 180) { return []; }
+        $center = Coordinates::fromDecimal($latitude, $longitude);
+        if ($provider !== 'factgrid' || $center === null) { return []; }
         $radiusKm = max(0.1, min(100.0, $radiusKm));
         // FactGrid's query service supports the box service reliably for its
         // P48 coordinate values.  Use a slightly enlarged bounding box and
         // apply the exact great-circle distance below.
-        $latDelta = $radiusKm / 111.32;
-        $lonScale = max(0.01, cos(deg2rad($latitude)));
-        $lonDelta = $radiusKm / (111.32 * $lonScale);
-        $southWest = sprintf('Point(%.6F %.6F)', $longitude - $lonDelta, $latitude - $latDelta);
-        $northEast = sprintf('Point(%.6F %.6F)', $longitude + $lonDelta, $latitude + $latDelta);
+        $box = $center->boundingBox($radiusKm);
+        $southWest = sprintf('Point(%.6F %.6F)', $box['longitude0'], $box['latitude0']);
+        $northEast = sprintf('Point(%.6F %.6F)', $box['longitude1'], $box['latitude1']);
         $houseTypes = array_values(array_filter(PlaceTypeFilterSettings::forLevel('factgrid', $filterLevel), static fn (string $value): bool => preg_match('/^Q[1-9][0-9]*$/', $value) === 1));
         $types = $houseOnly && $houseTypes !== [] ? ' VALUES ?houseType { ' . implode(' ', array_map(static fn (string $value): string => 'wd:' . $value, $houseTypes)) . ' } ?item wdt:P2 ?houseType .' : '';
         // FactGrid calls its coordinate-location property P48 (the local
@@ -219,28 +218,16 @@ final class ReadOnlyWikibaseClient
             if (!is_string($uri) || !is_string($coord) || preg_match('~/Q([1-9][0-9]*)$~', $uri, $qid) !== 1) { continue; }
             // Wikibase normally serializes coordinates as Point(lon lat);
             // FactGrid exports may also use the compact @lat/lon notation.
-            if (preg_match('/Point\\(([-0-9.]+) ([-0-9.]+)\\)/', $coord, $point) === 1) {
-                $candidateLongitude = (float) $point[1];
-                $candidateLatitude = (float) $point[2];
-            } elseif (preg_match('/@([-0-9.]+)\\/([-0-9.]+)/', $coord, $point) === 1) {
-                $candidateLatitude = (float) $point[1];
-                $candidateLongitude = (float) $point[2];
-            } else {
+            $candidate = Coordinates::fromWikibase($coord);
+            if ($candidate === null) {
                 continue;
             }
-            $distance = $this->distanceKm($latitude, $longitude, $candidateLatitude, $candidateLongitude);
+            $distance = $center->distanceKmTo($candidate);
             if ($distance > $radiusKm) { continue; }
             $results[] = ['qid' => 'Q' . $qid[1], 'label' => (string) ($binding['itemLabel']['value'] ?? ('Q' . $qid[1])), 'description' => isset($binding['itemDescription']['value']) ? (string) $binding['itemDescription']['value'] : null, 'distanceKm' => $distance];
         }
         usort($results, static fn (array $a, array $b): int => $a['distanceKm'] <=> $b['distanceKm']);
         return $results;
-    }
-
-    private function distanceKm(float $lat1, float $lon1, float $lat2, float $lon2): float
-    {
-        $first = Coordinates::fromDecimal($lat1, $lon1);
-        $second = Coordinates::fromDecimal($lat2, $lon2);
-        return $first === null || $second === null ? INF : $first->distanceKmTo($second);
     }
 
     private function language(string $language): string

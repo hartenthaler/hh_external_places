@@ -56,6 +56,9 @@ final class Coordinates
         if (is_string($value) && preg_match('/Point\s*\(\s*([+-]?[0-9]+(?:\.[0-9]+)?)\s+([+-]?[0-9]+(?:\.[0-9]+)?)\s*\)/i', $value, $match) === 1) {
             return self::fromDecimal((float) $match[2], (float) $match[1]);
         }
+        if (is_string($value) && preg_match('/@\s*([+-]?[0-9]+(?:\.[0-9]+)?)\s*\/\s*([+-]?[0-9]+(?:\.[0-9]+)?)/', $value, $match) === 1) {
+            return self::fromDecimal((float) $match[1], (float) $match[2]);
+        }
         return null;
     }
 
@@ -68,6 +71,28 @@ final class Coordinates
     }
 
     public function distanceKmTo(self $other): float { return $this->distanceTo($other) / 1000.0; }
+
+    /**
+     * Return an approximate WGS84 bounding box for a radius around this point.
+     * The box is used only to narrow provider queries; callers must still apply
+     * the exact great-circle distance afterwards.
+     *
+     * @return array{latitude0:float,latitude1:float,longitude0:float,longitude1:float}
+     */
+    public function boundingBox(float $radiusKm): array
+    {
+        $radiusKm = max(0.0, $radiusKm);
+        $latDelta = $radiusKm / 111.32;
+        $lonScale = max(0.01, abs(cos(deg2rad($this->latitude))));
+        $lonDelta = $radiusKm / (111.32 * $lonScale);
+
+        return [
+            'latitude0'  => max(-90.0, $this->latitude - $latDelta),
+            'latitude1'  => min(90.0, $this->latitude + $latDelta),
+            'longitude0' => max(-180.0, $this->longitude - $lonDelta),
+            'longitude1' => min(180.0, $this->longitude + $lonDelta),
+        ];
+    }
 
     /** @return array{latitude:float,longitude:float} */
     public function toArray(): array { return ['latitude' => $this->latitude, 'longitude' => $this->longitude]; }

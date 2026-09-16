@@ -122,12 +122,9 @@ Standard technical request metadata is sent by the server. The module never send
 family relationships, private notes, sources or other genealogical data.
 
 Provider coordinates are normalised to WGS84 and compared with the shared
-place using a great-circle distance. The administration page contains a
-**Coordinate consistency tolerances** table for house/farm/building,
-state/country and federation/international organisation records. The default
-tolerances are 5 m, 200 km and 500 km respectively; planets do not use
-coordinates. If a provider supplies a validated coordinate and the shared
-place has none, an editor can explicitly add it to the GEDCOM record.
+place using a provider-neutral great-circle distance. The hierarchy levels,
+tolerances and coordinate-import rules are documented in
+[Coordinates and consistency](docs/COORDINATES.md).
 
 Responses are cached locally. If a provider is temporarily unavailable, the normal Vesta Shared Place page remains available.
 When the optional Legal Notice module is active, it includes the selected external providers in the generated privacy policy together with the purpose of the request and the transferred technical data.
@@ -198,6 +195,7 @@ their configured meaning and, where a public URL template is known, as links.
 ## 📖 Documentation
 * [Concept: Wikidata and Domus integration](docs/WIKIDATA_DOMUS_CONCEPT.md)
 * [External providers and identifier consistency](docs/EXTERNAL_PROVIDERS.md)
+* [Coordinates and consistency](docs/COORDINATES.md)
 * [GOV type catalogue](docs/GOV_TYPE_CATALOG.md)
 * [Module and repository naming proposal](docs/RENAME_PROPOSAL.md)
 * [Roadmap](docs/ROADMAP.md)

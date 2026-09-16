@@ -43,7 +43,6 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Http\WikidataLocationAssig
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Http\ExternalInformationPage;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikidata\WikidataClient;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikidata\NearbyDiscoverySettings;
-use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikidata\LocationCoordinates;
 use Vesta\Model\GenericViewElement;
 use Vesta\Model\GovReference;
 use Vesta\Model\LocReference;
@@ -179,8 +178,8 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         }
 
         $identifier = $lookup->identifier();
-        $coordinates = LocationCoordinates::fromGedcom($location->gedcom());
-        $sharedCoordinates = $coordinates === null ? null : Coordinates::fromArray($coordinates);
+        $sharedCoordinates = Coordinates::fromGedcom($location->gedcom());
+        $coordinates = $sharedCoordinates?->toArray();
         // Domus deep-links are meaningful only for a known Wikidata item.
         // Do not show a generic Domus start-page button for places without a
         // Wikidata assignment.

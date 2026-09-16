@@ -19,7 +19,7 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\GenWikiProvider;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\PlaceTypeFilterSettings;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\MoreI18N;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikidata\WikidataClient;
-use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikidata\LocationCoordinates;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Geo\Coordinates;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikidata\NearbyDiscoverySettings;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikibase\ReadOnlyWikibaseClient;
 use Psr\Http\Message\ResponseInterface;
@@ -70,7 +70,8 @@ final class WikidataLocationAssignmentPage implements RequestHandlerInterface
                 FlashMessages::addMessage(I18N::translate('No GeoNames username is configured. Enter it in Control panel / Geographical data / Geolocation / GeoNames.'), 'warning');
             }
         }
-        $coordinates     = LocationCoordinates::fromGedcom($location->gedcom());
+        $coordinateObject = Coordinates::fromGedcom($location->gedcom());
+        $coordinates       = $coordinateObject?->toArray();
         $radiusKm        = NearbyDiscoverySettings::radius($tree);
         $query           = [];
         parse_str($request->getUri()->getQuery(), $query);

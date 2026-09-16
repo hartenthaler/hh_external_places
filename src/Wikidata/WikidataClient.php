@@ -403,7 +403,8 @@ final class WikidataClient
      */
     public function nearby(float $latitude, float $longitude, float $radiusKm, string $language, string $placeName = '', bool $houseOnly = false, string $filterLevel = 'house'): array
     {
-        if ($latitude < -90.0 || $latitude > 90.0 || $longitude < -180.0 || $longitude > 180.0) {
+        $centerCoordinates = Coordinates::fromDecimal($latitude, $longitude);
+        if ($centerCoordinates === null) {
             return [];
         }
 
@@ -449,7 +450,7 @@ final class WikidataClient
             if ($coordinates === null) {
                 continue;
             }
-            $distance = $this->distanceKm($latitude, $longitude, $coordinates['latitude'], $coordinates['longitude']);
+            $distance = $centerCoordinates->distanceKmTo($coordinates);
             $description = $binding['itemDescription']['value'] ?? null;
             $candidates[] = new WikidataNearbyCandidate(
                 $qid[1],
@@ -537,21 +538,9 @@ final class WikidataClient
         return $localized;
     }
 
-    /** @return array{latitude:float,longitude:float}|null */
-    private function wktCoordinates(string $wkt): ?array
+    private function wktCoordinates(string $wkt): ?Coordinates
     {
-        if (preg_match('/^Point\\((-?[0-9.]+) (-?[0-9.]+)\\)$/', $wkt, $matches) !== 1) {
-            return null;
-        }
-
-        return ['latitude' => (float) $matches[2], 'longitude' => (float) $matches[1]];
-    }
-
-    private function distanceKm(float $latitude1, float $longitude1, float $latitude2, float $longitude2): float
-    {
-        $first = Coordinates::fromDecimal($latitude1, $longitude1);
-        $second = Coordinates::fromDecimal($latitude2, $longitude2);
-        return $first === null || $second === null ? INF : $first->distanceKmTo($second);
+        return Coordinates::fromWikibase($wkt);
     }
 
     private function rankingScore(string $label, string $placeName, float $distanceKm): int
