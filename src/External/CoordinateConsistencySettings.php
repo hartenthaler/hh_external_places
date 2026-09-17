@@ -32,7 +32,15 @@ final class CoordinateConsistencySettings
         return $result;
     }
 
-    public static function forLevel(string $level): ?float { return self::all()[$level] ?? null; }
+    public static function forLevel(string $level): ?float
+    {
+        $values = self::all();
+        // A missing or ambiguous TYPE is compared conservatively at the
+        // country/state tolerance.  The separate hierarchy classifier still
+        // returns "unknown" so geocoder queries are not suppressed as if the
+        // place were a country.
+        return $values[$level] ?? ($level === 'unknown' ? $values['country'] : null);
+    }
 
     /** @param array<string,mixed> $values Values are entered in the displayed unit. */
     public static function save(array $values): void
@@ -62,11 +70,11 @@ final class CoordinateConsistencySettings
         if (preg_match('/^1 TYPE .*?(Haus|Hof|Hofstelle|Bauernhof|Wohnung|Gebäude|Burg|Schloss|house|farm|building|castle|palace)/imu', $gedcom) === 1) { return 'house'; }
         if (preg_match('/^1 TYPE .*?(Staatenbund|Bund|Union|Internationale Organisation|federation|international organization)/imu', $gedcom) === 1) { return 'federation'; }
         if (preg_match('/^1 TYPE .*?(Planet|Erde|world|planet)/imu', $gedcom) === 1) { return 'planet'; }
-        if (preg_match('/^1 TYPE .*?(Landkreis|Bundesland|Staat|Land|county|state|country)/imu', $gedcom) === 1) { return 'country'; }
-        // An unknown or missing place type must not be treated as a country.
-        // Otherwise local places such as villages are incorrectly excluded
-        // from Nominatim lookups. Coordinate comparison remains disabled for
-        // this level because no tolerance is configured for it.
+        if (preg_match('/^1 TYPE .*?(Landkreis|county)/imu', $gedcom) === 1) { return 'county'; }
+        if (preg_match('/^1 TYPE .*?(Bundesland|Staat|Land|state|country)/imu', $gedcom) === 1) { return 'country'; }
+        // An unknown or missing place type must not be treated as a country
+        // for geocoder filtering. Coordinate comparison uses the conservative
+        // country/state tolerance through forLevel('unknown').
         return 'unknown';
     }
 }

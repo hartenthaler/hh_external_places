@@ -23,6 +23,13 @@
   generation (Issue #134).
 - Places without an explicit hierarchy type are no longer misclassified as
   countries, so local places such as villages remain eligible for Nominatim.
+- Coordinate comparisons for such unknown place types now use the conservative
+  country/state tolerance instead of hiding provider distances and consistency
+  results.
+- Photon fallback retries once without a restrictive type layer when that layer
+  returns no candidates, and stale fallback cache entries are invalidated.
+- Counties such as Landkreis Sigmaringen are no longer treated as countries
+  for Nominatim suppression and can therefore receive their own map block.
 
 ## 2.2.6.10 - 2026-09-14
 

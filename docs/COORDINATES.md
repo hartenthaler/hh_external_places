@@ -45,8 +45,11 @@ The module classifies a shared place into one of the levels used by issue #83:
 | Federation | federation, union, international organisation | 500 km |
 | Planet | Earth, planet, world | no coordinates |
 
-The GEDCOM `TYPE` text is used for this classification. If it is missing or
-ambiguous, the conservative country/state level is used. The same hierarchy
+The GEDCOM `TYPE` text is used for this classification. Counties are kept as
+their own level so that Nominatim can still be queried for them; coordinate
+comparison uses the conservative country/state tolerance. If the type is
+missing or ambiguous, geocoder filtering keeps the level as unknown, while
+coordinate comparison uses the same conservative tolerance. The same hierarchy
 value is also available to the provider search filters, so issue #91 can use
 one classification instead of reimplementing it.
 
