@@ -9,18 +9,18 @@ External Places is a [webtrees](https://www.webtrees.net) module for enriching [
 
 ## 📚 Contents
 
-* [Purpose](#purpose)
-* [Main features](#main-features)
-* [Screenshots](#screenshots)
-* [Domus (Wikidata)](#domus-wikidata)
-* [Privacy](#privacy)
-* [Requirements](#requirements)
-* [Installation](#installation)
+* [Purpose](#-purpose)
+* [Main features](#-main-features)
+* [Screenshots](#-screenshots)
+* [Domus (Wikidata)](#-domus-wikidata)
+* [Privacy](#-privacy)
+* [Requirements](#-requirements)
+* [Installation](#-installation)
 * [Usage](#usage)
-* [Documentation](#documentation)
-* [Translation](#translation)
-* [Credits](#credits)
-* [License](#license)
+* [Documentation](#-documentation)
+* [Translation](#-translation)
+* [Credits](#-credits)
+* [License](#-license)
 
 ## 🎯 Purpose
 
