@@ -90,7 +90,7 @@ final class NominatimProvider
             {
                 // Version the Photon key when its candidate filtering changes,
                 // so stale unrelated results cannot mask a better match.
-                $photonKey = 'v7|' . $language . '|' . ($preferredLayer ?? '') . '|' . $place;
+                $photonKey = 'v8|' . $language . '|' . ($preferredLayer ?? '') . '|' . $place;
                 $payload = $this->cache->read('photon', $photonKey, self::GEOCODER_CACHE_TTL);
                 if ($payload !== null) {
                     $this->diagnostic = ($nominatimDiagnostic !== '' ? $nominatimDiagnostic . '; ' : '') . 'Photon query="' . $place . '"; fallback active (cache hit)';
@@ -235,35 +235,28 @@ final class NominatimProvider
                 return !in_array($key, ['waterway', 'highway', 'railway', 'natural', 'landuse', 'amenity', 'shop', 'leisure', 'tourism'], true);
             }));
             $this->diagnostic .= '; after category filter=' . count($features);
-            if ($features === []) {
-                // Some Photon installations omit osm_key or classify an
-                // otherwise valid administrative result unusually. Keep only
-                // candidates whose own name contains a query token as a safe
-                // reserve; unrelated landuse/water features remain rejected.
-                $tokens = array_values(array_filter(preg_split('/\s+/u', mb_strtolower($place)) ?: [], static fn (string $token): bool => mb_strlen($token) >= 3));
-                $features = array_values(array_filter($rawFeatures, static function (array $feature) use ($tokens): bool {
-                    $name = mb_strtolower(trim((string) (($feature['properties'] ?? [])['name'] ?? '')));
-                    $key = strtolower(trim((string) (($feature['properties'] ?? [])['osm_key'] ?? '')));
-                    if (in_array($key, ['waterway', 'highway', 'railway', 'natural', 'landuse', 'amenity', 'shop', 'leisure', 'tourism'], true)) {
-                        return false;
-                    }
-                    return $name !== '' && ($tokens === [] || (bool) array_filter($tokens, static fn (string $token): bool => str_contains($name, $token)));
-                }));
-                $this->diagnostic .= '; name-matching reserve=' . count($features);
-            }
-            if ($features === []) {
-                $this->diagnostic = 'Photon returned no usable candidates';
-                return null;
-            }
             $needle = mb_strtolower(trim($place));
             $queryTokens = array_values(array_filter(preg_split('/\s*,\s*|\s+/u', $needle) ?: [], static fn (string $token): bool => mb_strlen($token) >= 3));
+            $matchedFeatures = array_values(array_filter($features, fn (array $feature): bool => $this->photonCandidateName(is_array($feature['properties'] ?? null) ? $feature['properties'] : []) !== '' && $this->photonCandidateMatches($feature, $queryTokens)));
+            if ($matchedFeatures === []) {
+                $this->diagnostic .= '; no candidate matched the query';
+                $rejections = array_map(fn (array $feature): string => $this->photonCandidateRejection($feature, $queryTokens), $rawFeatures);
+                $rejections = array_values(array_filter($rejections, static fn (string $value): bool => $value !== ''));
+                if ($rejections !== []) {
+                    $this->diagnostic .= '; rejected candidates: ' . implode(' | ', $rejections);
+                }
+                return null;
+            }
+            $features = $matchedFeatures;
+            $this->diagnostic .= '; matched candidates=' . count($features);
             usort($features, static function (array $left, array $right) use ($needle, $queryTokens): int {
                 $score = static function (array $feature) use ($needle, $queryTokens): int {
                     $properties = is_array($feature['properties'] ?? null) ? $feature['properties'] : [];
                     $name = mb_strtolower(trim((string) ($properties['name'] ?? '')));
                     $label = mb_strtolower(trim(implode(', ', array_filter(array_map('strval', [
-                        $properties['name'] ?? '', $properties['street'] ?? '', $properties['city'] ?? ($properties['locality'] ?? ''),
-                        $properties['state'] ?? '', $properties['country'] ?? '',
+                        $properties['name'] ?? '', $properties['label'] ?? '', $properties['street'] ?? '', $properties['housenumber'] ?? '',
+                        $properties['district'] ?? '', $properties['city'] ?? ($properties['locality'] ?? ''), $properties['village'] ?? '',
+                        $properties['municipality'] ?? '', $properties['county'] ?? '', $properties['state'] ?? '', $properties['postcode'] ?? '', $properties['country'] ?? '',
                     ])))));
                     $tokenMatches = count(array_filter($queryTokens, static fn (string $token): bool => str_contains($label, $token)));
                     return ($name === $needle ? 100 : 0) + ($name !== '' && $needle !== '' && str_contains($name, $needle) ? 30 : 0) + ($label !== '' && $needle !== '' && str_contains($label, $needle) ? 5 : 0) + ($tokenMatches * 10);
@@ -299,27 +292,8 @@ final class NominatimProvider
                     $this->diagnostic .= '; exact OSM relation geometry loaded';
                 }
             }
-            $name = trim((string) ($properties['name'] ?? ''));
-            if ($name === '') {
-                $street = trim((string) ($properties['street'] ?? ''));
-                $houseNumber = trim((string) ($properties['housenumber'] ?? ''));
-                $name = trim($street . ($houseNumber !== '' ? ' ' . $houseNumber : ''));
-            }
+            $name = $this->photonCandidateName($properties);
             if ($name === '') { $this->diagnostic .= '; selected candidate has no name'; return null; }
-            $tokens = array_values(array_filter(preg_split('/\s+/u', mb_strtolower($place)) ?: [], static fn (string $token): bool => mb_strlen($token) >= 3));
-            $nameLower = mb_strtolower($name);
-            $searchText = mb_strtolower(implode(' ', array_filter(array_map('strval', [
-                $name,
-                $properties['street'] ?? '',
-                $properties['housenumber'] ?? '',
-                $properties['city'] ?? ($properties['locality'] ?? ''),
-                $properties['state'] ?? '',
-                $properties['country'] ?? '',
-            ]))));
-            if ($tokens !== [] && !array_filter($tokens, static fn (string $token): bool => str_contains($searchText, $token))) {
-                $this->diagnostic = 'Photon candidates=' . count($features) . '; no candidate matched the query';
-                return null;
-            }
             $this->diagnostic .= '; selected=' . $name . ' (' . (string) ($properties['osm_key'] ?? '') . ':' . (string) ($properties['osm_value'] ?? '') . ', osm=' . (string) ($properties['osm_type'] ?? '') . '/' . (string) ($properties['osm_id'] ?? '') . ', country=' . (string) ($properties['country'] ?? '') . ', extent=' . implode(',', $extent) . ')';
             $parts = array_filter([
                 $name,
@@ -348,6 +322,76 @@ final class NominatimProvider
         } catch (Throwable) {
             return null;
         }
+    }
+
+    /** @param array<string,mixed> $properties */
+    private function photonCandidateName(array $properties): string
+    {
+        $name = trim((string) ($properties['name'] ?? ''));
+        if ($name !== '') {
+            return $name;
+        }
+
+        $street = trim((string) ($properties['street'] ?? ''));
+        $houseNumber = trim((string) ($properties['housenumber'] ?? ''));
+        $name = trim($street . ($houseNumber !== '' ? ' ' . $houseNumber : ''));
+
+        return $name !== '' ? $name : trim((string) ($properties['label'] ?? ''));
+    }
+
+    /** @param array<string,mixed> $feature @param list<string> $tokens */
+    private function photonCandidateMatches(array $feature, array $tokens): bool
+    {
+        if ($tokens === []) {
+            return true;
+        }
+
+        $properties = is_array($feature['properties'] ?? null) ? $feature['properties'] : [];
+        $name = $this->photonCandidateName($properties);
+        $values = [
+            $name,
+            $properties['label'] ?? '',
+            $properties['street'] ?? '',
+            $properties['housenumber'] ?? '',
+            $properties['district'] ?? '',
+            $properties['locality'] ?? '',
+            $properties['village'] ?? '',
+            $properties['town'] ?? '',
+            $properties['city'] ?? '',
+            $properties['municipality'] ?? '',
+            $properties['county'] ?? '',
+            $properties['state'] ?? '',
+            $properties['postcode'] ?? '',
+            $properties['country'] ?? '',
+            $properties['osm_value'] ?? '',
+        ];
+        $searchText = mb_strtolower(implode(' ', array_filter(array_map('strval', $values))));
+
+        return (bool) array_filter($tokens, static fn (string $token): bool => str_contains($searchText, $token));
+    }
+
+    /** @param array<string,mixed> $feature @param list<string> $tokens */
+    private function photonCandidateRejection(array $feature, array $tokens): string
+    {
+        $properties = is_array($feature['properties'] ?? null) ? $feature['properties'] : [];
+        $name = $this->photonCandidateName($properties);
+        $key = strtolower(trim((string) ($properties['osm_key'] ?? '')));
+        $osmType = (string) ($properties['osm_type'] ?? '');
+        $osmId = (string) ($properties['osm_id'] ?? '');
+        $label = $name !== '' ? $name : '(ohne Namen)';
+        $location = $osmType !== '' || $osmId !== '' ? ' osm=' . $osmType . '/' . $osmId : '';
+        $excluded = ['waterway', 'highway', 'railway', 'natural', 'landuse', 'amenity', 'shop', 'leisure', 'tourism'];
+        if (in_array($key, $excluded, true)) {
+            return $label . $location . ': Kategorie ' . ($key !== '' ? $key : '(unbekannt)') . ' ausgeschlossen';
+        }
+        if ($name === '') {
+            return $label . $location . ': kein auswertbarer Name';
+        }
+        if (!$this->photonCandidateMatches($feature, $tokens)) {
+            return $label . $location . ': Suchbegriffe nicht in Name/Adresse/Verwaltung gefunden';
+        }
+
+        return '';
     }
 
     /** @return array{type:string,coordinates:array}|null */

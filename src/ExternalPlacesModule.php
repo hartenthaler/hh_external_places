@@ -211,9 +211,10 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
 
         $language = explode('-', str_replace('_', '-', I18N::languageTag()))[0] ?: 'en';
         $cache    = new WikidataCacheRepository();
-        $entity   = $cache->find($identifier, $language);
+        $wikidataClient = new WikidataClient();
+        $entity   = $cache->find($identifier, $language, true);
         if ($entity === null) {
-            $entity = (new WikidataClient())->fetch($identifier, $language);
+            $entity = $wikidataClient->fetch($identifier, $language);
             if ($entity !== null) {
                 $cache->store($entity, $language);
             }
@@ -486,6 +487,14 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         if (!ExternalProviderSettings::isEnabled('nominatim')) {
             return '';
         }
+        // Geocoding is useful for concrete places and administrative units
+        // below the country level.  For countries, federations and planets
+        // the shared-place name is often only an ISO/hierarchy code (for
+        // example DEU, EU, Erde), so querying public geocoders produces no
+        // useful result and must be skipped entirely.
+        if (in_array(CoordinateConsistencySettings::hierarchyForGedcom($gedcom), ['country', 'federation', 'planet'], true)) {
+            return '';
+        }
         $provider = new NominatimProvider();
         $information = $provider->lookup($placeName, $language, $this->nominatimLayer($gedcom));
         if ($information === null) {
@@ -511,13 +520,19 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
 
     private function coordinateConsistencyHtml(Coordinates $providerCoordinates, ?Coordinates $sharedCoordinates, string $providerLabel, string $gedcom, ?string $assignmentUrl): string
     {
+        $level = CoordinateConsistencySettings::hierarchyForGedcom($gedcom);
+        if ($level === 'planet') {
+            // Planetary records deliberately have no meaningful point
+            // coordinate, even if a provider returns a technical fallback
+            // such as GeoNames N0 E0.
+            return '';
+        }
         if ($sharedCoordinates === null) {
             if ($assignmentUrl === null) { return '<br><small>' . e(I18N::translate('Coordinates are available from %s.', $providerLabel)) . '</small>'; }
             return '<br><small>' . e(I18N::translate('Coordinates are available from %s.', $providerLabel)) . '</small> <form method="post" action="' . e($assignmentUrl) . '" class="d-inline">' . csrf_field()
                 . '<input type="hidden" name="operation" value="add-coordinates"><input type="hidden" name="latitude" value="' . e((string) $providerCoordinates->latitude) . '"><input type="hidden" name="longitude" value="' . e((string) $providerCoordinates->longitude) . '"><button class="btn btn-sm btn-outline-primary" type="submit">' . e(I18N::translate('Add coordinates')) . '</button></form>';
         }
 
-        $level = CoordinateConsistencySettings::hierarchyForGedcom($gedcom);
         $tolerance = CoordinateConsistencySettings::forLevel($level);
         if ($tolerance === null) { return ''; }
         $distance = $sharedCoordinates->distanceTo($providerCoordinates);

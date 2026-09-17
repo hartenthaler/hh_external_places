@@ -520,6 +520,9 @@ msgstr "GeoNames ist in webtrees nicht aktiviert. Aktivieren Sie es unter Verwal
 msgid "No GeoNames username is configured. Enter it in Control panel / Geographical data / Geolocation / GeoNames."
 msgstr "Es ist kein GeoNames-Nutzername hinterlegt. Tragen Sie ihn unter Verwaltung / Geografische Daten / Geolokalisierung / GeoNames ein."
 
+msgid "zone"
+msgstr "Zone"
+
 msgid "apartment building"
 msgstr "Mehrfamilienhaus"
 

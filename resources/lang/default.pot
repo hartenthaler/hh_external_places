@@ -112,6 +112,9 @@ msgstr ""
 msgid "No GeoNames username is configured. Enter it in Control panel / Geographical data / Geolocation / GeoNames."
 msgstr ""
 
+msgid "zone"
+msgstr ""
+
 msgid "apartment building"
 msgstr ""
 

@@ -25,6 +25,7 @@ final class WikidataClient
     private const MAX_RESPONSE_BYTES = 1_000_000;
     private const MAX_SEARCH_RESULTS = 10;
     private const MAX_NEARBY_RESULTS = 20;
+    private string $diagnostic = '';
 
     public function __construct(
         ?HttpTransport $httpClient = null,
@@ -35,9 +36,15 @@ final class WikidataClient
 
     private readonly HttpTransport $httpClient;
 
+    public function diagnostic(): string
+    {
+        return $this->diagnostic;
+    }
+
     public function fetch(WikidataIdentifier $identifier, string $language): ?WikidataEntity
     {
         $language = $this->language($language);
+        $this->diagnostic = 'id=' . $identifier->qid();
 
         try {
             $response = $this->httpClient->request('GET', self::ENDPOINT, [
@@ -63,26 +70,30 @@ final class WikidataClient
                 ],
                 'timeout'         => 6.0,
             ]);
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
+            $this->diagnostic .= '; full request exception=' . $exception::class;
             return null;
         }
 
         if ($response === null || $response->getStatusCode() !== 200) {
-            return $this->fetchCompact($identifier, $language);
+            return $this->fetchCompact($identifier, $language, 'full HTTP ' . ($response?->getStatusCode() ?? 'no response'));
         }
 
         $body = $response->getBody()->getContents();
         if (strlen($body) > self::MAX_RESPONSE_BYTES) {
-            return $this->fetchCompact($identifier, $language);
+            return $this->fetchCompact($identifier, $language, 'full response exceeded ' . self::MAX_RESPONSE_BYTES . ' bytes');
         }
 
         try {
             $payload = json_decode($body, true, 32, JSON_THROW_ON_ERROR);
         } catch (JsonException) {
-            return $this->fetchCompact($identifier, $language);
+            return $this->fetchCompact($identifier, $language, 'full response contained invalid JSON');
         }
 
-        return is_array($payload) ? $this->mapper->map($identifier, $payload, $language) : null;
+        $claims = is_array($payload) && is_array($payload['entities'][$identifier->qid()]['claims'] ?? null) ? $payload['entities'][$identifier->qid()]['claims'] : [];
+        $this->diagnostic .= '; P625 statements=' . (is_array($claims['P625'] ?? null) ? count($claims['P625']) : 0);
+        $entity = is_array($payload) ? $this->mapper->map($identifier, $payload, $language) : null;
+        return $this->finishDiagnostic($entity, 'full');
     }
 
     /**
@@ -91,26 +102,31 @@ final class WikidataClient
      * exceed the normal safety limit. Only properties consumed by the module
      * are requested in the fallback path.
      */
-    private function fetchCompact(WikidataIdentifier $identifier, string $language): ?WikidataEntity
+    private function fetchCompact(WikidataIdentifier $identifier, string $language, string $reason = 'fallback'): ?WikidataEntity
     {
+        $this->diagnostic = 'id=' . $identifier->qid() . '; compact fallback reason=' . $reason;
         $entityResponse = $this->httpClient->request('GET', self::ENDPOINT, [
             'action' => 'wbgetentities', 'format' => 'json', 'formatversion' => '2',
             'ids' => $identifier->qid(), 'languages' => $language . '|en',
             'props' => 'labels|descriptions',
         ], ['Accept' => 'application/json', 'User-Agent' => 'webtrees External Places/0.1 (https://github.com/hartenthaler/hh_external_places)'], 6.0);
         if ($entityResponse === null || $entityResponse->getStatusCode() !== 200) {
+            $this->diagnostic .= '; labels HTTP ' . ($entityResponse?->getStatusCode() ?? 'no response');
             return null;
         }
         $entityBody = $entityResponse->getBody()->getContents();
         if (strlen($entityBody) > 100_000) {
+            $this->diagnostic .= '; labels response exceeded 100000 bytes';
             return null;
         }
         try {
             $payload = json_decode($entityBody, true, 20, JSON_THROW_ON_ERROR);
         } catch (JsonException) {
+            $this->diagnostic .= '; labels response contained invalid JSON';
             return null;
         }
         if (!is_array($payload) || !is_array($payload['entities'][$identifier->qid()] ?? null)) {
+            $this->diagnostic .= '; entity missing in compact response';
             return null;
         }
 
@@ -118,7 +134,7 @@ final class WikidataClient
         $claimsResponse = $this->httpClient->request('GET', self::ENDPOINT, [
             'action' => 'wbgetclaims', 'format' => 'json', 'formatversion' => '2',
             'entity' => $identifier->qid(),
-            'property' => 'P31|P18|P127|P466|P669|P6375|P14871|P2503|P1566',
+            'property' => 'P31|P18|P127|P466|P669|P6375|P14871|P2503|P1566|P625',
         ], ['Accept' => 'application/json', 'User-Agent' => 'webtrees External Places/0.1 (https://github.com/hartenthaler/hh_external_places)'], 6.0);
         if ($claimsResponse !== null && $claimsResponse->getStatusCode() === 200) {
             $claimsBody = $claimsResponse->getBody()->getContents();
@@ -135,7 +151,7 @@ final class WikidataClient
         // request. Retry the bounded property set individually when the
         // combined request returned no usable claims.
         if ($claims === []) {
-            foreach (['P31', 'P18', 'P127', 'P466', 'P669', 'P6375', 'P14871', 'P2503', 'P1566'] as $property) {
+            foreach (['P31', 'P18', 'P127', 'P466', 'P669', 'P6375', 'P14871', 'P2503', 'P1566', 'P625'] as $property) {
                 $single = $this->httpClient->request('GET', self::ENDPOINT, [
                     'action' => 'wbgetclaims', 'format' => 'json', 'formatversion' => '2',
                     'entity' => $identifier->qid(), 'property' => $property,
@@ -154,7 +170,20 @@ final class WikidataClient
             }
         }
         $payload['entities'][$identifier->qid()]['claims'] = $claims;
-        return $this->mapper->map($identifier, $payload, $language);
+        $this->diagnostic .= '; compact claims P625 requested=yes; P625 statements=' . (is_array($claims['P625'] ?? null) ? count($claims['P625']) : 0);
+        return $this->finishDiagnostic($this->mapper->map($identifier, $payload, $language), 'compact');
+    }
+
+    private function finishDiagnostic(?WikidataEntity $entity, string $mode): ?WikidataEntity
+    {
+        $this->diagnostic .= '; mode=' . $mode . '; coordinates=';
+        if ($entity?->coordinates === null) {
+            $this->diagnostic .= 'absent';
+        } else {
+            $this->diagnostic .= $entity->coordinates->latitude . ',' . $entity->coordinates->longitude;
+        }
+
+        return $entity;
     }
 
     /**
