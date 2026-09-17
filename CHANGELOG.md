@@ -18,6 +18,11 @@
 - Nominatim address lookups now combine the first GEDCOM name with the first
   local place context (for example `Klosterstraße 3, Ennetach`) and use new
   cache keys so stale, ambiguous street results are not reused.
+- Provider output rendering is now isolated in `ExternalInformationRenderer`,
+  keeping the module lifecycle and Vesta integration separate from HTML/SVG
+  generation (Issue #134).
+- Places without an explicit hierarchy type are no longer misclassified as
+  countries, so local places such as villages remain eligible for Nominatim.
 
 ## 2.2.6.10 - 2026-09-14
 

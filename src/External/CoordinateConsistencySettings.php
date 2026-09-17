@@ -63,6 +63,10 @@ final class CoordinateConsistencySettings
         if (preg_match('/^1 TYPE .*?(Staatenbund|Bund|Union|Internationale Organisation|federation|international organization)/imu', $gedcom) === 1) { return 'federation'; }
         if (preg_match('/^1 TYPE .*?(Planet|Erde|world|planet)/imu', $gedcom) === 1) { return 'planet'; }
         if (preg_match('/^1 TYPE .*?(Landkreis|Bundesland|Staat|Land|county|state|country)/imu', $gedcom) === 1) { return 'country'; }
-        return 'country';
+        // An unknown or missing place type must not be treated as a country.
+        // Otherwise local places such as villages are incorrectly excluded
+        // from Nominatim lookups. Coordinate comparison remains disabled for
+        // this level because no tolerance is configured for it.
+        return 'unknown';
     }
 }

@@ -82,6 +82,10 @@ actions in one place. The compact link in the Vesta Shared Places summary
 remains for compatibility; the optional Vesta tab integration is registered
 for both the webtrees 2.2 and 2.3 shared-place view variants.
 
+The provider output is assembled by the read-only
+`ExternalInformationRenderer`; the module class coordinates provider access and
+passes validated values to this presentation boundary.
+
 ## Supported identifiers
 
 ```gedcom

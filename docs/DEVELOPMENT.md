@@ -32,3 +32,11 @@ equivalent implementation. Prefer reusing or extending a shared function or
 class over duplicating provider-specific logic. Add a new shared abstraction
 when it removes genuine duplication, and keep provider adapters focused on
 mapping their external data to that common model.
+
+## Rendering boundary
+
+`ExternalPlacesModule` is responsible for lifecycle, routing, Vesta hooks and
+provider orchestration. Provider output, consistency messages, tables, charts
+and map markup belong in `src/Presentation/ExternalInformationRenderer.php`.
+Keep this renderer read-only and pass already validated provider data into it;
+do not move network access or GEDCOM writes into the presentation layer.
