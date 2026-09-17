@@ -17,7 +17,7 @@ final class WikidataCacheRepository
 {
     public const DEFAULT_TTL = 604800; // Seven days.
 
-    public function find(WikidataIdentifier $identifier, string $language): ?WikidataEntity
+    public function find(WikidataIdentifier $identifier, string $language, bool $requireCoordinateField = false): ?WikidataEntity
     {
         $row = DB::table(WikidataCacheSchema::TABLE)
             ->where('qid', '=', $identifier->qid())
@@ -36,6 +36,13 @@ final class WikidataCacheRepository
         }
 
         if (!is_array($payload)) {
+            return null;
+        }
+
+        // Entries created before coordinate support do not contain this key.
+        // Let callers require the current payload shape without having to
+        // know how the cache schema was migrated on the host.
+        if ($requireCoordinateField && !array_key_exists('coordinates', $payload)) {
             return null;
         }
 
