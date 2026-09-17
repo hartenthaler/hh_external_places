@@ -27,6 +27,19 @@ GeoNames `alternateNames` values returned by the service are shown as
 language-labelled, deduplicated details. They are read-only contextual data;
 the module never writes them to `_LOC:NAME` automatically.
 
+GOV place names are shown in the same provider-neutral detail area as
+`Alternate name (xx)`, where `xx` is the language code supplied by GOV. If GOV
+supplies a validity period, it is shown next to the name as read-only context
+(`Period`, or `From`/`Until`); GOV `timespan` Julian-day bounds are converted
+to readable ISO dates while retaining the provider's precision. The comparison key is the normalized ISO 639-1
+language code, so GEDCOM `2 LANG GERMAN`, GOV `deu` and GeoNames `de` are
+compared as the same language. A matching name is marked consistent when the
+administrator has enabled confirmations; a differing name remains visible as
+inconsistent. If a language-specific name is missing from `_LOC`, an editor
+can use **Add place name** to write the validated name and its language as a
+new `1 NAME`/`2 LANG` pair. The provider's validity period is not invented as
+GEDCOM data because `_LOC:NAME` has no portable period substructure.
+
 For a GeoNames record, the optional parent hierarchy is requested in the
 current webtrees display language (with English as fallback). It is shown
 directly after the place name, from the broadest parent to the selected place.

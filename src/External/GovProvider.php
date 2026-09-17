@@ -276,19 +276,22 @@ final class GovProvider implements ExternalProvider
         return $url;
     }
 
-    /** @param array<string,mixed> $data @return list<array{label:string,value:string}> */
+    /** @param array<string,mixed> $data @return list<array{label:string,value:string,period?:string,from?:string,until?:string}> */
     private function details(array $data): array
     {
         $details = [];
-        foreach ((array) ($data['name'] ?? []) as $name) {
+        foreach ($this->nameItems($data) as $name) {
             $value = is_array($name) ? ($name['value'] ?? $name['name'] ?? $name['text'] ?? null) : $name;
             if (!is_string($value) || trim($value) === '') { continue; }
             $language = is_array($name) ? ($name['language'] ?? $name['languageCode'] ?? $name['lang'] ?? $name['code'] ?? null) : null;
+            $period = is_array($name) ? $this->namePeriod($name) : [];
+            $detail = ['label' => 'Alternate name (' . strtolower(trim((string) $language)) . ')', 'value' => trim(strip_tags($value))];
             if (is_string($language) && preg_match('/^[a-z]{2,3}(?:[-_][a-z]{2,4})?$/i', trim($language)) === 1) {
-                $details[] = ['label' => 'Alternate name (' . strtolower(trim($language)) . ')', 'value' => trim(strip_tags($value))];
+                $detail['label'] = 'Alternate name (' . strtolower(trim($language)) . ')';
             } else {
-                $details[] = ['label' => 'Name', 'value' => trim(strip_tags($value))];
+                $detail['label'] = 'Name';
             }
+            $details[] = array_merge($detail, $period);
         }
         foreach ((array) ($data['externalReference'] ?? $data['extRef'] ?? []) as $reference) {
             $value = is_array($reference) ? ($reference['value'] ?? null) : $reference;
@@ -299,7 +302,7 @@ final class GovProvider implements ExternalProvider
         }
         $seen = [];
         $details = array_values(array_filter($details, static function (array $detail) use (&$seen): bool {
-            $key = $detail['label'] . "\0" . $detail['value'];
+            $key = $detail['label'] . "\0" . $detail['value'] . "\0" . ($detail['period'] ?? '') . "\0" . ($detail['from'] ?? '') . "\0" . ($detail['until'] ?? '');
             if (isset($seen[$key])) { return false; }
             $seen[$key] = true;
             return true;
@@ -308,9 +311,116 @@ final class GovProvider implements ExternalProvider
             $alternateLeft = str_starts_with($left['label'], 'Alternate name (');
             $alternateRight = str_starts_with($right['label'], 'Alternate name (');
             if ($alternateLeft !== $alternateRight) { return $alternateLeft ? -1 : 1; }
-            return strnatcasecmp($left['label'] . $left['value'], $right['label'] . $right['value']);
+            return strnatcasecmp(
+                $left['label'] . $left['value'] . ($left['period'] ?? '') . ($left['from'] ?? '') . ($left['until'] ?? ''),
+                $right['label'] . $right['value'] . ($right['period'] ?? '') . ($right['from'] ?? '') . ($right['until'] ?? ''),
+            );
         });
         return $details;
+    }
+
+    /**
+     * GOV responses have used both a list of name objects and a single
+     * associative name object.  Normalize both shapes before extracting
+     * language and validity data so that one response cannot silently lose
+     * its language metadata.
+     *
+     * @param array<string,mixed> $data
+     * @return list<string|array<string,mixed>>
+     */
+    private function nameItems(array $data): array
+    {
+        $raw = $data['name'] ?? $data['names'] ?? [];
+        if (is_string($raw) || is_numeric($raw)) {
+            return [(string) $raw];
+        }
+        if (!is_array($raw) || $raw === []) {
+            return [];
+        }
+
+        $hasNameFields = array_intersect(array_keys($raw), [
+            'value', 'name', 'text', 'language', 'languageCode', 'lang', 'code',
+            'period', 'validity', 'timespan', 'from', 'until', 'begin', 'end',
+        ]) !== [];
+        if ($hasNameFields) {
+            return [$raw];
+        }
+
+        return array_values(array_filter($raw, static fn (mixed $item): bool => is_string($item) || is_numeric($item) || is_array($item)));
+    }
+
+    /** @param array<string,mixed> $name @return array{period?:string,from?:string,until?:string} */
+    private function namePeriod(array $name): array
+    {
+        $from = $this->nameDate($name, ['from', 'begin', 'start', 'validFrom', 'dateFrom', 'beginDate', 'timeBegin', 'ab']);
+        $until = $this->nameDate($name, ['until', 'to', 'end', 'validUntil', 'dateUntil', 'dateTo', 'endDate', 'timeEnd', 'bis']);
+        $period = $name['period'] ?? $name['validity'] ?? null;
+        if (is_array($period)) {
+            $from ??= $this->nameDate($period, ['from', 'begin', 'start', 'validFrom', 'dateFrom', 'beginDate', 'timeBegin', 'ab']);
+            $until ??= $this->nameDate($period, ['until', 'to', 'end', 'validUntil', 'dateUntil', 'dateTo', 'endDate', 'timeEnd', 'bis']);
+        } elseif (is_scalar($period) && trim((string) $period) !== '' && $from === null && $until === null) {
+            return ['period' => trim((string) $period)];
+        }
+
+        // Some GOV payloads put one date object below `date` rather than
+        // exposing from/until at the name level.
+        if (is_array($name['date'] ?? null)) {
+            $from ??= $this->nameDate($name['date'], ['from', 'begin', 'start', 'validFrom', 'dateFrom', 'beginDate', 'timeBegin', 'ab']);
+            $until ??= $this->nameDate($name['date'], ['until', 'to', 'end', 'validUntil', 'dateUntil', 'dateTo', 'endDate', 'timeEnd', 'bis']);
+        }
+
+        // The GOV API represents historical validity as a Julian-day
+        // `timespan`. Convert it to an ISO date for a stable, readable
+        // provider detail while retaining the direction (from/until).
+        if (is_array($name['timespan'] ?? null)) {
+            $from ??= $this->govTimespanDate($name['timespan']['begin'] ?? $name['timespan']['from'] ?? $name['timespan']['start'] ?? null);
+            $until ??= $this->govTimespanDate($name['timespan']['end'] ?? $name['timespan']['until'] ?? $name['timespan']['to'] ?? null);
+        }
+
+        $result = [];
+        if ($from !== null) { $result['from'] = $from; }
+        if ($until !== null) { $result['until'] = $until; }
+        return $result;
+    }
+
+    /** @param mixed $value */
+    private function govTimespanDate(mixed $value): ?string
+    {
+        if (is_array($value)) {
+            $precision = is_numeric($value['precision'] ?? null) ? (int) $value['precision'] : 0;
+            $julianDay = $value['jd'] ?? $value['julianDay'] ?? null;
+            if (is_numeric($julianDay) && function_exists('jdtogregorian')) {
+                $gregorian = jdtogregorian((int) $julianDay);
+                if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{1,6})$/', $gregorian, $parts) === 1) {
+                    $year = (int) $parts[3];
+                    $month = (int) $parts[1];
+                    $day = (int) $parts[2];
+                    return match (true) {
+                        $precision >= 2 => sprintf('%04d', $year),
+                        $precision === 1 => sprintf('%04d-%02d', $year, $month),
+                        default => sprintf('%04d-%02d-%02d', $year, $month, $day),
+                    };
+                }
+            }
+            foreach (['date', 'value', 'year'] as $key) {
+                if (isset($value[$key]) && is_scalar($value[$key]) && trim((string) $value[$key]) !== '') {
+                    return trim((string) $value[$key]);
+                }
+            }
+        }
+        return is_scalar($value) && trim((string) $value) !== '' ? trim((string) $value) : null;
+    }
+
+    /** @param array<string,mixed> $data @param list<string> $keys */
+    private function nameDate(array $data, array $keys): ?string
+    {
+        foreach ($keys as $key) {
+            $value = $data[$key] ?? null;
+            if (is_scalar($value) && trim((string) $value) !== '') {
+                return trim((string) $value);
+            }
+        }
+        return null;
     }
 
     /** @param array<string,mixed> $data @return array<string,int|float> */

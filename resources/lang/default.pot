@@ -756,6 +756,9 @@ msgstr ""
 msgid "Alternate name"
 msgstr ""
 
+msgid "Period"
+msgstr ""
+
 msgid "consistent with the shared place name"
 msgstr ""
 

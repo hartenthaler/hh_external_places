@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.2.6.12 - 2026-09-17
+
 - Wikidata and FactGrid entity responses now share one provider-aware,
   language-specific cache, so the information and assignment pages use the
   same current snapshot (Issue #132).
@@ -39,6 +41,9 @@
 - The assignment page now suggests only the filter matching an unambiguous
   shared-place hierarchy; missing or contradictory type information keeps all
   filters available (Issue #91).
+- GOV alternate place names now retain their language codes and validity
+  periods, are compared with shared-place `NAME`/`LANG` pairs, and can be
+  added explicitly by an editor (Issue #88).
 
 ## 2.2.6.10 - 2026-09-14
 
