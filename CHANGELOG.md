@@ -30,6 +30,11 @@
   returns no candidates, and stale fallback cache entries are invalidated.
 - Counties such as Landkreis Sigmaringen are no longer treated as countries
   for Nominatim suppression and can therefore receive their own map block.
+- The central hierarchy now distinguishes locality, municipality, county and
+  state between house/building and country. Provider filters, Nominatim layer
+  selection and coordinate tolerances use the same hierarchy.
+- Added Wikidata Q106658 (`district of Germany`) for county filtering and
+  GeoNames A.ADM3 for municipality filtering.
 
 ## 2.2.6.10 - 2026-09-14
 

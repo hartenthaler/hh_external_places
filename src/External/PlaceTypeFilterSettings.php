@@ -18,7 +18,19 @@ final class PlaceTypeFilterSettings
     public const PREFERENCE = 'HH_EP_HOUSE_TYPES';
 
     /** @var list<string> */
-    public const LEVELS = ['planet', 'federation', 'country', 'house'];
+    public const LEVELS = ['planet', 'federation', 'country', 'state', 'county', 'municipality', 'locality', 'house'];
+
+    /** @var array<string,string> */
+    private const LEVEL_LABELS = [
+        'planet' => 'Planet (Earth)',
+        'federation' => 'Federation / international organisation',
+        'country' => 'Country',
+        'state' => 'State / first-order administrative division',
+        'county' => 'County / district',
+        'municipality' => 'Municipality',
+        'locality' => 'Locality / village / town / city',
+        'house' => 'House / farm / building',
+    ];
 
     /** @var array<string,array<string,list<string>>> */
     private const DEFAULTS = [
@@ -39,6 +51,30 @@ final class PlaceTypeFilterSettings
             'factgrid' => ['Q21925', 'Q221010'],
             'gov' => ['72', '130'],
             'geonames' => ['A.PCLI'],
+        ],
+        'state' => [
+            'wikidata' => ['Q107390'],
+            'factgrid' => [],
+            'gov' => ['7', '16', '34', '46', '130'],
+            'geonames' => ['A.ADM1'],
+        ],
+        'county' => [
+            'wikidata' => ['Q28575', 'Q106658'],
+            'factgrid' => [],
+            'gov' => ['32', '36', '53', '95', '100', '101', '110', '170', '175', '222'],
+            'geonames' => ['A.ADM2'],
+        ],
+        'municipality' => [
+            'wikidata' => ['Q484170'],
+            'factgrid' => [],
+            'gov' => ['18', '48', '85', '122', '140', '148', '150', '156', '162', '163', '169', '172', '180', '218', '258', '268', '269', '271', '275'],
+            'geonames' => ['A.ADM3', 'A.ADM4', 'A.ADM5'],
+        ],
+        'locality' => [
+            'wikidata' => ['Q486972', 'Q532', 'Q3957', 'Q515'],
+            'factgrid' => [],
+            'gov' => ['40', '51', '54', '55', '65', '66', '158', '247', '262'],
+            'geonames' => ['PPL', 'PPLA', 'PPLA2', 'PPLA3', 'PPLA4', 'PPLG', 'PPLL', 'PPLQ', 'PPLX'],
         ],
         'house' => [
             'wikidata' => ['Q23413', 'Q751876', 'Q3947', 'Q16560', 'Q41176', 'Q44613', 'Q365627', 'Q1802963', 'Q131596', 'Q489357'],
@@ -125,6 +161,17 @@ final class PlaceTypeFilterSettings
     public static function defaultsForLevel(string $level): array
     {
         return self::DEFAULTS[$level] ?? [];
+    }
+
+    /** @return array<string,string> */
+    public static function levelLabels(): array
+    {
+        return self::LEVEL_LABELS;
+    }
+
+    public static function levelLabel(string $level): string
+    {
+        return self::LEVEL_LABELS[$level] ?? $level;
     }
 
     public static function reset(string $provider): void

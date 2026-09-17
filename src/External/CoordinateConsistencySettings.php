@@ -13,8 +13,17 @@ final class CoordinateConsistencySettings
     public const PREFERENCE = 'HH_EP_COORD_TOL';
 
     /** Values are stored in metres; null means that the level has no coordinates. */
-    private const DEFAULTS = ['house' => 5.0, 'country' => 200_000.0, 'federation' => 500_000.0, 'planet' => null];
-    public const LEVELS = ['house', 'country', 'federation', 'planet'];
+    private const DEFAULTS = [
+        'house' => 5.0,
+        'locality' => 5_000.0,
+        'municipality' => 20_000.0,
+        'county' => 50_000.0,
+        'state' => 100_000.0,
+        'country' => 200_000.0,
+        'federation' => 500_000.0,
+        'planet' => null,
+    ];
+    public const LEVELS = ['house', 'locality', 'municipality', 'county', 'state', 'country', 'federation', 'planet'];
 
     /** @return array<string,float|null> */
     public static function all(): array
@@ -46,7 +55,7 @@ final class CoordinateConsistencySettings
     public static function save(array $values): void
     {
         $result = self::DEFAULTS;
-        foreach (['house', 'country', 'federation'] as $level) {
+        foreach (['house', 'locality', 'municipality', 'county', 'state', 'country', 'federation'] as $level) {
             $raw = str_replace(',', '.', trim((string) ($values[$level] ?? '')));
             if (!is_numeric($raw)) { continue; }
             $value = (float) $raw * ($level === 'house' ? 1.0 : 1000.0);
@@ -67,11 +76,19 @@ final class CoordinateConsistencySettings
     /** Infer the comparison level from the shared-place type without requiring a provider. */
     public static function hierarchyForGedcom(string $gedcom): string
     {
+        // GOV provides a stable numeric place type even when the generic
+        // GEDCOM TYPE is only "place" (or missing).  Keep these mappings
+        // here so all consumers, including Nominatim, use the same level.
+        if (preg_match('/^2 _GOVTYPE\s+71\s*$/imu', $gedcom) === 1) { return 'federation'; }
+        if (preg_match('/^2 _GOVTYPE\s+(?:7|72|130)\s*$/imu', $gedcom) === 1) { return 'state'; }
         if (preg_match('/^1 TYPE .*?(Haus|Hof|Hofstelle|Bauernhof|Wohnung|Gebäude|Burg|Schloss|house|farm|building|castle|palace)/imu', $gedcom) === 1) { return 'house'; }
-        if (preg_match('/^1 TYPE .*?(Staatenbund|Bund|Union|Internationale Organisation|federation|international organization)/imu', $gedcom) === 1) { return 'federation'; }
+        if (preg_match('/^1 TYPE .*?\b(Staatenbund|Bund|Union|Internationale Organisation|federation|international organization)\b/imu', $gedcom) === 1) { return 'federation'; }
         if (preg_match('/^1 TYPE .*?(Planet|Erde|world|planet)/imu', $gedcom) === 1) { return 'planet'; }
         if (preg_match('/^1 TYPE .*?(Landkreis|county)/imu', $gedcom) === 1) { return 'county'; }
-        if (preg_match('/^1 TYPE .*?(Bundesland|Staat|Land|state|country)/imu', $gedcom) === 1) { return 'country'; }
+        if (preg_match('/^1 TYPE .*?(Bundesland|Bundesstaat|Regierungsbezirk|state|first-order administrative division)/imu', $gedcom) === 1) { return 'state'; }
+        if (preg_match('/^1 TYPE .*?(Gemeinde|Stadtgemeinde|Einheitsgemeinde|municipality|municipal)/imu', $gedcom) === 1) { return 'municipality'; }
+        if (preg_match('/^1 TYPE .*?(Ortsteil|Stadtteil|Gemeindeteil|Dorf|Stadt \(Siedlung\)|locality|village|town|city)/imu', $gedcom) === 1) { return 'locality'; }
+        if (preg_match('/^1 TYPE .*?(Staat|Land|country)/imu', $gedcom) === 1) { return 'country'; }
         // An unknown or missing place type must not be treated as a country
         // for geocoder filtering. Coordinate comparison uses the conservative
         // country/state tolerance through forLevel('unknown').
