@@ -196,7 +196,8 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             }
 
             $assignmentUrl = $location->canEdit() ? self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]) : null;
-            $html = $renderer->externalInformationHtml($externalIdentifiers, $language, '', $location->fullName(), $assignmentUrl, $location->gedcom(), [], $sharedCoordinates);
+            $genwikiShown = [];
+            $html = $renderer->externalInformationHtml($externalIdentifiers, $language, '', $location->fullName(), $assignmentUrl, $location->gedcom(), $genwikiShown, $sharedCoordinates);
             $html .= $geoNamesHtml;
             $html .= $nominatimHtml;
             $html .= '<div class="d-flex gap-2 flex-wrap mt-2">';
@@ -430,10 +431,16 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         }
         $typeFilters = is_array($body['type-filters'] ?? null) ? $body['type-filters'] : [];
         $reset = trim((string) ($body['reset-type-filter'] ?? ''));
+        $resetAll = isset($body['reset-all-type-filters']);
         // Keep the legacy variable available for the success-message branch
         // below; a normal settings save has no reset action.
         $resetProvider = '';
-        if ($reset !== '') {
+        $filterReset = false;
+        if ($resetAll) {
+            PlaceTypeFilterSettings::resetAll();
+            $filterReset = true;
+            FlashMessages::addMessage(I18N::translate('All provider filter types for all hierarchy levels were reset to their defaults.'), 'success');
+        } elseif ($reset !== '') {
             [$resetLevel, $resetProvider] = array_pad(explode(':', $reset, 2), 2, '');
             if ($resetLevel === 'house') { PlaceTypeFilterSettings::reset($resetProvider); }
             else {
@@ -494,7 +501,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                 ? I18N::translate('The exception for family tree %s was removed. The default radius of %s km applies.', $treeTitle, number_format($globalRadius, 1))
                 : I18N::translate('The nearby-search radius for family tree %s is now %s km.', $treeTitle, number_format($parsedExceptionValue, 1));
             FlashMessages::addMessage($message, 'success');
-        } elseif ($resetProvider === '') {
+        } elseif (!$filterReset && $resetProvider === '') {
             $message = $coordinateSettingsChanged
                 ? I18N::translate('Coordinate consistency settings have been updated.')
                 : I18N::translate($radiusChanged ? 'Nearby search settings have been updated.' : 'External Places settings have been updated.');

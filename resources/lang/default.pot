@@ -706,6 +706,12 @@ msgstr ""
 msgid "Reset to default"
 msgstr ""
 
+msgid "Reset all filter types"
+msgstr ""
+
+msgid "All provider filter types for all hierarchy levels were reset to their defaults."
+msgstr ""
+
 msgid "The house filter types for %s were reset to their defaults."
 msgstr ""
 

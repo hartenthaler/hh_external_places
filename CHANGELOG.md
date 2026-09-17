@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- README contents links now use stable explicit anchors despite emoji headings.
+- GeoNames `A.ADM3` records are now offered under the county/district filter;
+  municipality filters use `A.ADM4` and `A.ADM5`.
+- The administration page now provides one action to reset all provider
+  filter lists at every hierarchy level to their bundled defaults.
+
 ## 2.2.6.12 - 2026-09-17
 
 - Wikidata and FactGrid entity responses now share one provider-aware,

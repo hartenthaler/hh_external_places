@@ -73,7 +73,7 @@ $levelLabels = PlaceTypeFilterSettings::levelLabels();
     <?php endforeach ?>
     </tbody></table></div>
     <h2 class="mt-4"><?= I18N::translate('Search filter types') ?></h2>
-    <p><?= I18N::translate('Configure optional provider-specific type filters for each hierarchy level. Users with edit permission can activate these filters when searching.') ?></p>
+    <p><?= I18N::translate('Configure optional provider-specific type filters for each hierarchy level. Users with edit permission can activate these filters when searching.') ?> <button class="btn btn-outline-secondary btn-sm" name="reset-all-type-filters" type="submit" value="1"><?= I18N::translate('Reset all filter types') ?></button></p>
     <div class="accordion" id="type-filter-accordion">
     <?php foreach ($levelLabels as $level => $levelLabel) : ?>
         <div class="accordion-item"><h3 class="accordion-header" id="heading-<?= e($level) ?>"><button class="accordion-button <?= $level === 'house' ? '' : 'collapsed' ?>" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-<?= e($level) ?>" aria-expanded="<?= $level === 'house' ? 'true' : 'false' ?>"><?= I18N::translate($levelLabel) ?></button></h3>
