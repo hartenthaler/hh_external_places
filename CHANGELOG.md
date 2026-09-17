@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Wikidata and FactGrid entity responses now share one provider-aware,
+  language-specific cache, so the information and assignment pages use the
+  same current snapshot (Issue #132).
+- Wikidata and FactGrid property mappings are maintained in one bundled
+  configuration catalogue instead of duplicated inline code (Issue #133).
 - Coordinates from GEDCOM, Wikidata, FactGrid, GOV and GeoNames now use one
   shared WGS84 value object with support for compass directions, German `Ost`
   notation and distance calculation (Issue #83).
@@ -10,6 +15,9 @@
   planetary records do not use coordinates.
 - Editors see coordinate consistency results and can explicitly import a
   validated provider coordinate when the shared place has no coordinates.
+- Nominatim address lookups now combine the first GEDCOM name with the first
+  local place context (for example `Klosterstraße 3, Ennetach`) and use new
+  cache keys so stale, ambiguous street results are not reused.
 
 ## 2.2.6.10 - 2026-09-14
 

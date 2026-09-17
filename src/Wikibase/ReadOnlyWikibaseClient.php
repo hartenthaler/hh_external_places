@@ -8,6 +8,7 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Http\HttpTransport;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\LanguageCode;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\PlaceTypeFilterSettings;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Geo\Coordinates;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Infrastructure\WikibaseCacheRepository;
 use JsonException;
 use Throwable;
 
@@ -27,12 +28,14 @@ final class ReadOnlyWikibaseClient
         'factgrid' => 'https://database.factgrid.de/w/api.php',
     ];
 
-    public function __construct(?HttpTransport $httpClient = null)
+    public function __construct(?HttpTransport $httpClient = null, ?WikibaseCacheRepository $cache = null)
     {
         $this->httpClient = $httpClient ?? HttpTransport::default();
+        $this->cache = $cache ?? new WikibaseCacheRepository();
     }
 
     private readonly HttpTransport $httpClient;
+    private readonly WikibaseCacheRepository $cache;
 
     /** @return array<string,mixed>|null */
     public function entity(string $provider, string $itemId, string $language): ?array
@@ -43,6 +46,11 @@ final class ReadOnlyWikibaseClient
         }
 
         $language = $this->language($language);
+        $cached = $this->cache->find($provider, $itemId, $language);
+        if ($cached !== null) {
+            return $cached;
+        }
+
         try {
             $response = $this->httpClient->request('GET', $endpoint, [
                     'action'        => 'wbgetentities',
@@ -53,6 +61,7 @@ final class ReadOnlyWikibaseClient
                     // Sitelinks are needed for FactGrid's wikidatawiki link,
                     // which is the canonical cross-reference on some items.
                     'props'         => 'labels|descriptions|claims|sitelinks',
+                    'clprop'        => 'value|qualifiers|rank',
                 ], ['Accept' => 'application/json', 'User-Agent' => 'webtrees Wikibase Places/0.2 (https://github.com/hartenthaler/hh_external_places)'], 6.0);
         } catch (Throwable) { return null; }
 
@@ -68,7 +77,12 @@ final class ReadOnlyWikibaseClient
             return null;
         }
 
-        return is_array($payload) ? $payload : null;
+        if (!is_array($payload) || !is_array($payload['entities'] ?? null)) {
+            return null;
+        }
+
+        $this->cache->store($provider, $itemId, $language, $payload);
+        return $payload;
     }
 
     /** @param list<string> $itemIds @return array<string,array<string,mixed>> */

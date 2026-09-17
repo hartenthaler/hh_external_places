@@ -55,7 +55,7 @@ final class NominatimProvider
         foreach ($queries as $query) {
             // Version the key so results cached before polygon_geojson was
             // requested cannot suppress the map on an otherwise valid result.
-            $cacheKey = 'v5|' . $language . '|' . ($preferredLayer ?? '') . '|' . $query;
+                $cacheKey = 'v6|' . $language . '|' . ($preferredLayer ?? '') . '|' . $query;
             $payload = $this->cache->read('nominatim', $cacheKey, self::GEOCODER_CACHE_TTL);
             if ($payload !== null) {
                 $attempts[] = $query . ' (cache hit)';
@@ -90,7 +90,7 @@ final class NominatimProvider
             {
                 // Version the Photon key when its candidate filtering changes,
                 // so stale unrelated results cannot mask a better match.
-                $photonKey = 'v8|' . $language . '|' . ($preferredLayer ?? '') . '|' . $place;
+                $photonKey = 'v9|' . $language . '|' . ($preferredLayer ?? '') . '|' . $place;
                 $payload = $this->cache->read('photon', $photonKey, self::GEOCODER_CACHE_TTL);
                 if ($payload !== null) {
                     $this->diagnostic = ($nominatimDiagnostic !== '' ? $nominatimDiagnostic . '; ' : '') . 'Photon query="' . $place . '"; fallback active (cache hit)';
