@@ -41,7 +41,11 @@ The module classifies a shared place into one of the levels used by issue #83:
 | Level | Typical records | Default tolerance |
 | --- | --- | ---: |
 | House/farm | house, farm, building, castle, palace | 5 m |
-| Country/state | country, state, county, Landkreis | 200 km |
+| Locality | village, town, city, locality | 5 km |
+| Municipality | municipality, municipal association | 20 km |
+| County/district | county, district, Landkreis, Regierungsbezirk | 50 km |
+| State | state, Bundesland, first-order administrative division | 100 km |
+| Country | country, Staat, Land | 200 km |
 | Federation | federation, union, international organisation | 500 km |
 | Planet | Earth, planet, world | no coordinates |
 

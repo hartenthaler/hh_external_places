@@ -280,10 +280,12 @@ final class ExternalInformationRenderer
 
     private function nominatimLayer(string $gedcom): ?string
     {
+        if (preg_match('/^2 _GOVTYPE\s+(?:7|72|130)\s*$/imu', $gedcom) === 1) { return 'state'; }
         if (preg_match('/^1 TYPE .*?(Landkreis|county)/im', $gedcom)) { return 'county'; }
-        if (preg_match('/^1 TYPE .*?(Bundesland|state|Land)/im', $gedcom)) { return 'state'; }
+        if (preg_match('/^1 TYPE .*?(Bundesland|Bundesstaat|state)/im', $gedcom)) { return 'state'; }
+        if (preg_match('/^1 TYPE .*?(Gemeinde|municipality|municipal)/im', $gedcom)) { return 'municipality'; }
+        if (preg_match('/^1 TYPE .*?(Dorf|Ortsteil|Stadtteil|Gemeindeteil|village|locality)/im', $gedcom)) { return 'locality'; }
         if (preg_match('/^1 TYPE .*?(Stadt|city|town)/im', $gedcom)) { return 'city'; }
-        if (preg_match('/^1 TYPE .*?(Dorf|village|Ortsteil)/im', $gedcom)) { return 'locality'; }
         if (preg_match('/^1 TYPE .*?(Haus|Hof|house|building)/im', $gedcom)) { return 'house'; }
         return null;
     }

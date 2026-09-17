@@ -447,12 +447,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                 'gov' => 'GOV',
                 'geonames' => 'GeoNames',
             ][$resetProvider] ?? $resetProvider;
-            $levelLabel = [
-                'planet' => 'Planet (Earth)',
-                'federation' => 'Federation / international organisation',
-                'country' => 'State / country',
-                'house' => 'House / farm',
-            ][$resetLevel] ?? $resetLevel;
+            $levelLabel = PlaceTypeFilterSettings::levelLabel($resetLevel);
             FlashMessages::addMessage(I18N::translate('The filter types for the "%s" level and %s were reset to their defaults.', I18N::translate($levelLabel), $providerLabel), 'success');
         } else {
             PlaceTypeFilterSettings::saveLevels($typeFilters);
