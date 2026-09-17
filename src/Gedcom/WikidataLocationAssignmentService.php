@@ -100,8 +100,17 @@ final class WikidataLocationAssignmentService
     {
         if (!$location->canEdit() || trim($name) === '' || mb_strlen($name) > 240 || preg_match('/[\r\n]/', $name) === 1) { return false; }
         $name = trim($name);
+        $requestedLanguage = LanguageCode::normalize($language);
+        $currentName = null;
+        $currentLanguage = '';
         foreach (preg_split('/\r?\n/', $location->gedcom()) ?: [] as $line) {
-            if (preg_match('/^1 NAME(?: |$)(.*)$/', $line, $match) === 1 && trim($match[1]) === $name) { return false; }
+            if (preg_match('/^1 NAME(?: |$)(.*)$/', $line, $match) === 1) {
+                $currentName = trim($match[1]);
+                $currentLanguage = '';
+            } elseif ($currentName !== null && preg_match('/^2 LANG (.+)$/', $line, $match) === 1) {
+                $currentLanguage = LanguageCode::normalize($match[1]);
+            }
+            if ($currentName === $name && $currentLanguage === $requestedLanguage) { return false; }
         }
         $updated = rtrim($location->gedcom()) . "\n1 NAME " . $name;
         $gedcomLanguage = LanguageCode::gedcom($language);

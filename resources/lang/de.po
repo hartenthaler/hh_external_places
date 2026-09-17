@@ -792,6 +792,9 @@ msgstr "Verweis auf GenWiki"
 msgid "Alternate name"
 msgstr "Alternativname"
 
+msgid "Period"
+msgstr "Zeitraum"
+
 msgid "consistent with the shared place name"
 msgstr "mit dem Ortsnamen konsistent"
 

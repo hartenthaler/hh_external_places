@@ -87,7 +87,22 @@ final class ExternalInformationRenderer
                             continue;
                         }
                     }
-                    $html .= '<br><small>' . e($detailLabel) . ': ' . ($detail['label'] === 'External identifier' ? $this->externalIdentifierHtml($value) : e($value)) . '</small>';
+                    $period = '';
+                    if (is_string($detail['period'] ?? null) && trim($detail['period']) !== '') {
+                        $period = ' — ' . I18N::translate('Period') . ': ' . trim($detail['period']);
+                    } else {
+                        $periodParts = [];
+                        if (is_string($detail['from'] ?? null) && trim($detail['from']) !== '') {
+                            $periodParts[] = MoreI18N::xlate('From') . ': ' . trim($detail['from']);
+                        }
+                        if (is_string($detail['until'] ?? null) && trim($detail['until']) !== '') {
+                            $periodParts[] = MoreI18N::xlate('Until') . ': ' . trim($detail['until']);
+                        }
+                        if ($periodParts !== []) {
+                            $period = ' — ' . implode(', ', $periodParts);
+                        }
+                    }
+                    $html .= '<br><small>' . e($detailLabel) . ': ' . ($detail['label'] === 'External identifier' ? $this->externalIdentifierHtml($value) : e($value)) . e($period) . '</small>';
                     if (str_starts_with($detail['label'], 'Alternate name (')) {
                         $locNames = $this->locationNamesByLanguage($gedcom);
                         $sameLanguage = $locNames[$alternateLanguage] ?? [];

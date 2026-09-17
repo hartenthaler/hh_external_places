@@ -1,7 +1,7 @@
 # **webtrees** module: External Places
 
 ![webtrees major version](https://img.shields.io/badge/webtrees-v2.2.x-green)
-[![Module version](https://img.shields.io/badge/version-2.2.6.10-blue)](version.txt)
+[![Module version](https://img.shields.io/badge/version-2.2.6.12-blue)](version.txt)
 [![Downloads](https://img.shields.io/github/downloads/hartenthaler/hh_external_places/total?label=downloads)](https://github.com/hartenthaler/hh_external_places/releases)
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
@@ -117,6 +117,10 @@ and show Wikidata residents or owners for houses and farms where available.
 ## 🔒 Privacy
 
 When an external entry is loaded, the server requests only the validated identifier and requested display language.
+
+GOV alternate place names are displayed with their language code and, where
+available, their validity period. Editors can compare them with the names in
+the shared place and explicitly add a missing name together with its language.
 Nearby searches send the shared place's coordinates and configured radius to the selected provider.
 Standard technical request metadata is sent by the server. The module never sends names of living people,
 family relationships, private notes, sources or other genealogical data.
