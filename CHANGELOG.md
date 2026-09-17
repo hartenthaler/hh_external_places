@@ -2,11 +2,14 @@
 
 ## Unreleased
 
-- README contents links now use stable explicit anchors despite emoji headings.
-- GeoNames `A.ADM3` records are now offered under the county/district filter;
-  municipality filters use `A.ADM4` and `A.ADM5`.
-- The administration page now provides one action to reset all provider
-  filter lists at every hierarchy level to their bundled defaults.
+## 2.2.6.13 - 2026-09-17
+
+- Fixed a PHP error that could prevent the external-information page from
+  opening for shared places without a Wikidata assignment.
+- The README contents links now work reliably, and GeoNames third-order
+  administrative divisions are offered under the county/district filter.
+- Administrators can reset all provider filter lists and hierarchy levels to
+  their bundled defaults with one action.
 
 ## 2.2.6.12 - 2026-09-17
 
