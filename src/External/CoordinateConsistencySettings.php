@@ -76,22 +76,56 @@ final class CoordinateConsistencySettings
     /** Infer the comparison level from the shared-place type without requiring a provider. */
     public static function hierarchyForGedcom(string $gedcom): string
     {
-        // GOV provides a stable numeric place type even when the generic
-        // GEDCOM TYPE is only "place" (or missing).  Keep these mappings
-        // here so all consumers, including Nominatim, use the same level.
-        if (preg_match('/^2 _GOVTYPE\s+71\s*$/imu', $gedcom) === 1) { return 'federation'; }
-        if (preg_match('/^2 _GOVTYPE\s+(?:7|72|130)\s*$/imu', $gedcom) === 1) { return 'state'; }
-        if (preg_match('/^1 TYPE .*?(Haus|Hof|Hofstelle|Bauernhof|Wohnung|Gebäude|Burg|Schloss|house|farm|building|castle|palace)/imu', $gedcom) === 1) { return 'house'; }
-        if (preg_match('/^1 TYPE .*?\b(Staatenbund|Bund|Union|Internationale Organisation|federation|international organization)\b/imu', $gedcom) === 1) { return 'federation'; }
-        if (preg_match('/^1 TYPE .*?(Planet|Erde|world|planet)/imu', $gedcom) === 1) { return 'planet'; }
-        if (preg_match('/^1 TYPE .*?(Landkreis|county)/imu', $gedcom) === 1) { return 'county'; }
-        if (preg_match('/^1 TYPE .*?(Bundesland|Bundesstaat|Regierungsbezirk|state|first-order administrative division)/imu', $gedcom) === 1) { return 'state'; }
-        if (preg_match('/^1 TYPE .*?(Gemeinde|Stadtgemeinde|Einheitsgemeinde|municipality|municipal)/imu', $gedcom) === 1) { return 'municipality'; }
-        if (preg_match('/^1 TYPE .*?(Ortsteil|Stadtteil|Gemeindeteil|Dorf|Stadt \(Siedlung\)|locality|village|town|city)/imu', $gedcom) === 1) { return 'locality'; }
-        if (preg_match('/^1 TYPE .*?(Staat|Land|country)/imu', $gedcom) === 1) { return 'country'; }
-        // An unknown or missing place type must not be treated as a country
+        $candidates = self::hierarchyCandidates($gedcom);
+
+        // An unknown or ambiguous place type must not be treated as a country
         // for geocoder filtering. Coordinate comparison uses the conservative
         // country/state tolerance through forLevel('unknown').
-        return 'unknown';
+        return count($candidates) === 1 ? $candidates[0] : 'unknown';
+    }
+
+    /**
+     * Return every hierarchy level supported by the shared-place metadata.
+     * Multiple values deliberately remain ambiguous so callers can fall back
+     * safely instead of silently choosing one interpretation.
+     *
+     * @return list<string>
+     */
+    public static function hierarchyCandidates(string $gedcom): array
+    {
+        $candidates = [];
+        $add = static function (string $level) use (&$candidates): void {
+            if (!in_array($level, $candidates, true)) {
+                $candidates[] = $level;
+            }
+        };
+
+        // GOV's numeric vocabulary is more reliable than a generic TYPE line.
+        if (preg_match('/^2 _GOVTYPE\s+71\s*$/imu', $gedcom) === 1) { $add('federation'); }
+        if (preg_match('/^2 _GOVTYPE\s+7\s*$/imu', $gedcom) === 1) { $add('state'); }
+        if (preg_match('/^2 _GOVTYPE\s+(?:72|130)\s*$/imu', $gedcom) === 1) { $add('country'); }
+
+        if (preg_match('/^1 TYPE .*?(Haus|Hof|Hofstelle|Bauernhof|Wohnung|Gebäude|Burg|Schloss|house|farm|building|castle|palace)/imu', $gedcom) === 1) { $add('house'); }
+        if (preg_match('/^1 TYPE .*?\b(Staatenbund|Bund|Union|Internationale Organisation|federation|international organization)\b/imu', $gedcom) === 1) { $add('federation'); }
+        if (preg_match('/^1 TYPE .*?(Planet|Erde|world|planet)/imu', $gedcom) === 1) { $add('planet'); }
+        if (preg_match('/^1 TYPE .*?(Landkreis|county)/imu', $gedcom) === 1) { $add('county'); }
+        if (preg_match('/^1 TYPE .*?(Bundesland|Bundesstaat|Regierungsbezirk|state|first-order administrative division)/imu', $gedcom) === 1) { $add('state'); }
+        if (preg_match('/^1 TYPE .*?(Gemeinde|Stadtgemeinde|Einheitsgemeinde|municipality|municipal)/imu', $gedcom) === 1) { $add('municipality'); }
+        if (preg_match('/^1 TYPE .*?(Ortsteil|Stadtteil|Gemeindeteil|Dorf|Stadt \(Siedlung\)|locality|village|town|city)/imu', $gedcom) === 1) { $add('locality'); }
+        if (preg_match('/^1 TYPE .*?\b(Staat|Land|country)\b/imu', $gedcom) === 1) { $add('country'); }
+
+        return $candidates;
+    }
+
+    /**
+     * Return the filter levels that should be suggested in the assignment UI.
+     * A null result means that all filters must remain available.
+     *
+     * @return list<string>|null
+     */
+    public static function suggestedFilterLevels(string $gedcom): ?array
+    {
+        $candidates = self::hierarchyCandidates($gedcom);
+        return count($candidates) === 1 ? $candidates : null;
     }
 }

@@ -17,6 +17,7 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalProviderS
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\GeoNamesProvider;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\GenWikiProvider;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\PlaceTypeFilterSettings;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\CoordinateConsistencySettings;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\MoreI18N;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikidata\WikidataClient;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Geo\Coordinates;
@@ -61,6 +62,10 @@ final class WikidataLocationAssignmentPage implements RequestHandlerInterface
         $nearbyRequested = ($request->getQueryParams()['nearby'] ?? '') === '1';
         $requestedFilter = (string) ($request->getQueryParams()['filter'] ?? '');
         $filterLevel      = in_array($requestedFilter, PlaceTypeFilterSettings::LEVELS, true) ? $requestedFilter : null;
+        $suggestedFilterLevels = CoordinateConsistencySettings::suggestedFilterLevels($location->gedcom());
+        if ($suggestedFilterLevels !== null && $filterLevel !== null && !in_array($filterLevel, $suggestedFilterLevels, true)) {
+            $filterLevel = null;
+        }
         $houseOnly       = $filterLevel !== null;
         if ($providerKey === 'geonames' && ($submittedSearch !== '' || $nearbyRequested)) {
             $geoNamesStatus = $geoNamesProvider->configurationStatus();
@@ -117,6 +122,7 @@ final class WikidataLocationAssignmentPage implements RequestHandlerInterface
             'nearby_requested' => $nearbyRequested,
             'house_only'      => $houseOnly,
             'filter_level'    => $filterLevel,
+            'suggested_filter_levels' => $suggestedFilterLevels,
             'can_edit'        => $canEdit,
             'nearby_radius_km' => $radiusKm,
             'search'         => $search,
