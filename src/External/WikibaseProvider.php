@@ -12,7 +12,7 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikibase\ReadOnlyWikibaseC
 final class WikibaseProvider implements ExternalProvider
 {
     /** @param array{authority:string, label:string, type:string, image:string, coordinate:string, factgrid:?string, wikidata:?string, gov:?string, geonames:?string, genwiki:?string, wikitree:string, owner:string, occupant:string, begin:string, end:string} $definition */
-    public function __construct(private readonly string $key, private readonly array $definition, private readonly ReadOnlyWikibaseClient $client = new ReadOnlyWikibaseClient(), private readonly ExternalProviderCache $cache = new ExternalProviderCache())
+    public function __construct(private readonly string $key, private readonly array $definition, private readonly ReadOnlyWikibaseClient $client = new ReadOnlyWikibaseClient())
     {
     }
 
@@ -46,14 +46,7 @@ final class WikibaseProvider implements ExternalProvider
 
     public function fetch(ExternalIdentifier $identifier, string $language): ?ExternalInformation
     {
-        // v4 invalidates payloads cached before provider coordinates (P625/P48)
-        // were part of the mapped information.
-        $cacheKey = 'v4|' . $identifier->value . '|' . $language;
-        $payload = $this->cache->read($this->key(), $cacheKey);
-        if ($payload === null) {
-            $payload = $this->client->entity($this->key(), $identifier->value, $language);
-            if ($payload !== null) { $this->cache->write($this->key(), $cacheKey, $payload); }
-        }
+        $payload = $this->client->entity($this->key(), $identifier->value, $language);
         $entity = $payload['entities'][$identifier->value] ?? null;
         if (!is_array($entity) || array_key_exists('missing', $entity)) {
             return null;

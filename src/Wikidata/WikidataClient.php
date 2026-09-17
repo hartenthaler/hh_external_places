@@ -8,7 +8,9 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\WikidataIdentifier;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Http\HttpTransport;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\LanguageCode;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\PlaceTypeFilterSettings;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\WikibasePropertyCatalog;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Geo\Coordinates;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Infrastructure\WikibaseCacheRepository;
 use JsonException;
 use Throwable;
 
@@ -30,11 +32,14 @@ final class WikidataClient
     public function __construct(
         ?HttpTransport $httpClient = null,
         private readonly WikidataEntityMapper $mapper = new WikidataEntityMapper(),
+        ?WikibaseCacheRepository $cache = null,
     ) {
         $this->httpClient = $httpClient ?? HttpTransport::default();
+        $this->cache = $cache ?? new WikibaseCacheRepository();
     }
 
     private readonly HttpTransport $httpClient;
+    private readonly WikibaseCacheRepository $cache;
 
     public function diagnostic(): string
     {
@@ -45,6 +50,13 @@ final class WikidataClient
     {
         $language = $this->language($language);
         $this->diagnostic = 'id=' . $identifier->qid();
+
+        $cached = $this->cache->find('wikidata', $identifier->qid(), $language);
+        if ($cached !== null) {
+            $this->diagnostic .= '; cache=hit';
+            return $this->finishDiagnostic($this->mapper->map($identifier, $cached, $language), 'cache');
+        }
+        $this->diagnostic .= '; cache=miss';
 
         try {
             $response = $this->httpClient->request('GET', self::ENDPOINT, [
@@ -61,7 +73,7 @@ final class WikidataClient
                     'formatversion' => '2',
                     'ids'           => $identifier->qid(),
                     'languages'     => $language . '|en',
-                    'props'         => 'labels|descriptions|claims',
+                    'props'         => 'labels|descriptions|claims|sitelinks',
                     // We only need values, qualifiers and ranks for the
                     // provider data model. Omitting hashes and references
                     // keeps large entities such as Q183 below our bounded
@@ -93,6 +105,9 @@ final class WikidataClient
         $claims = is_array($payload) && is_array($payload['entities'][$identifier->qid()]['claims'] ?? null) ? $payload['entities'][$identifier->qid()]['claims'] : [];
         $this->diagnostic .= '; P625 statements=' . (is_array($claims['P625'] ?? null) ? count($claims['P625']) : 0);
         $entity = is_array($payload) ? $this->mapper->map($identifier, $payload, $language) : null;
+        if (is_array($payload) && $entity !== null) {
+            $this->cache->store('wikidata', $identifier->qid(), $language, $payload);
+        }
         return $this->finishDiagnostic($entity, 'full');
     }
 
@@ -108,7 +123,7 @@ final class WikidataClient
         $entityResponse = $this->httpClient->request('GET', self::ENDPOINT, [
             'action' => 'wbgetentities', 'format' => 'json', 'formatversion' => '2',
             'ids' => $identifier->qid(), 'languages' => $language . '|en',
-            'props' => 'labels|descriptions',
+            'props' => 'labels|descriptions|sitelinks',
         ], ['Accept' => 'application/json', 'User-Agent' => 'webtrees External Places/0.1 (https://github.com/hartenthaler/hh_external_places)'], 6.0);
         if ($entityResponse === null || $entityResponse->getStatusCode() !== 200) {
             $this->diagnostic .= '; labels HTTP ' . ($entityResponse?->getStatusCode() ?? 'no response');
@@ -134,7 +149,7 @@ final class WikidataClient
         $claimsResponse = $this->httpClient->request('GET', self::ENDPOINT, [
             'action' => 'wbgetclaims', 'format' => 'json', 'formatversion' => '2',
             'entity' => $identifier->qid(),
-            'property' => 'P31|P18|P127|P466|P669|P6375|P14871|P2503|P1566|P625',
+            'property' => implode('|', $this->wikidataClaimProperties()),
         ], ['Accept' => 'application/json', 'User-Agent' => 'webtrees External Places/0.1 (https://github.com/hartenthaler/hh_external_places)'], 6.0);
         if ($claimsResponse !== null && $claimsResponse->getStatusCode() === 200) {
             $claimsBody = $claimsResponse->getBody()->getContents();
@@ -151,7 +166,7 @@ final class WikidataClient
         // request. Retry the bounded property set individually when the
         // combined request returned no usable claims.
         if ($claims === []) {
-            foreach (['P31', 'P18', 'P127', 'P466', 'P669', 'P6375', 'P14871', 'P2503', 'P1566', 'P625'] as $property) {
+            foreach ($this->wikidataClaimProperties() as $property) {
                 $single = $this->httpClient->request('GET', self::ENDPOINT, [
                     'action' => 'wbgetclaims', 'format' => 'json', 'formatversion' => '2',
                     'entity' => $identifier->qid(), 'property' => $property,
@@ -171,7 +186,11 @@ final class WikidataClient
         }
         $payload['entities'][$identifier->qid()]['claims'] = $claims;
         $this->diagnostic .= '; compact claims P625 requested=yes; P625 statements=' . (is_array($claims['P625'] ?? null) ? count($claims['P625']) : 0);
-        return $this->finishDiagnostic($this->mapper->map($identifier, $payload, $language), 'compact');
+        $entity = $this->mapper->map($identifier, $payload, $language);
+        if ($entity !== null) {
+            $this->cache->store('wikidata', $identifier->qid(), $language, $payload);
+        }
+        return $this->finishDiagnostic($entity, 'compact');
     }
 
     private function finishDiagnostic(?WikidataEntity $entity, string $mode): ?WikidataEntity
@@ -500,6 +519,20 @@ final class WikidataClient
         // Wikidata labels use ISO 639-1 keys such as "de". The shared
         // normalizer also accepts webtrees regional tags such as "de-DE".
         return LanguageCode::normalize($language) ?: 'en';
+    }
+
+    /** @return list<string> */
+    private function wikidataClaimProperties(): array
+    {
+        $definition = WikibasePropertyCatalog::all()['wikidata'] ?? [];
+        $properties = [];
+        foreach ($definition as $property) {
+            if (is_string($property) && preg_match('/^P[1-9][0-9]*$/', $property) === 1) {
+                $properties[] = $property;
+            }
+        }
+
+        return array_values(array_unique($properties));
     }
 
     /** @param mixed $statements */

@@ -44,8 +44,11 @@ service's [Nominatim usage policy](https://operations.osmfoundation.org/policies
 is binding: at most one request per second, an identifying User-Agent, visible
 OpenStreetMap attribution, and no autocomplete or systematic downloads.
 
-The query retains the place and useful locality context, but removes ISO country
-codes and the synthetic `Earth` level. Where available, the GEDCOM place type
+For address records, the query starts with the first GEDCOM `NAME` and adds
+the first local component from the complete place hierarchy (for example
+`Klosterstraße 3, Ennetach`). This keeps common street names tied to their
+locality without sending the full hierarchy to the geocoder. The query then
+removes ISO country codes and the synthetic `Earth` level. Where available, the GEDCOM place type
 is used as a preference for house/building, locality, city, county or state.
 For country, federation, continent and Earth records no Nominatim or Photon
 lookup is performed; the empty-query diagnostic remains available for testing.
@@ -104,6 +107,15 @@ for a Wikidata item ID, `P1073` for a GOV ID and `P418` for a GeoNames ID.
 FactGrid's `wikidatawiki` sitelink is also accepted as a Wikidata reference.
 These properties are configured per provider; equal property numbers must not
 be assumed across Wikibase installations.
+
+Wikidata and FactGrid entity responses use one shared, provider-aware database
+cache (`WikibaseCacheRepository`). The cache key consists of the provider,
+Q-ID and normalized display language, and all consumers store the same raw
+`wbgetentities` payload. This prevents the information page and assignment
+page from showing different snapshots of the same item. The cache is
+versioned; when the payload shape or requested property set changes, the
+module invalidates incompatible entries during boot. The file cache remains
+reserved for the other providers and is not used for Wikibase entities.
 
 GOV is read through its public REST endpoint `/api/getObject?itemId={id}`;
 `/api/data/{id}` is retained as a compatibility fallback. The module only uses

@@ -23,8 +23,7 @@ use Fisharebest\Webtrees\Module\ModuleConfigInterface;
 use Fisharebest\Webtrees\Module\ModuleConfigTrait;
 use Fisharebest\Webtrees\Services\TreeService;
 use Fisharebest\Webtrees\Validator;
-use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Infrastructure\WikidataCacheSchema;
-use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Infrastructure\WikidataCacheRepository;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Infrastructure\WikibaseCacheSchema;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Gedcom\ExternalIdService;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Gedcom\GovTypeValidator;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalInformation;
@@ -61,7 +60,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
 
     private const MODULE_NAME = 'hh_external_places';
     private const GITHUB_USER = 'hartenthaler';
-    private const CACHE_SCHEMA_VERSION_PREFERENCE = 'wikidata_cache_schema_version';
+    private const CACHE_SCHEMA_VERSION_PREFERENCE = 'wikibase_cache_schema_version';
     private const ASSIGNMENT_ROUTE_NAME = 'hh-external-places.assignment-page';
     private const ASSIGNMENT_ROUTE_PATH = '/tree/{tree}/external-place/{xref}/assignment';
     private const EXTERNAL_INFORMATION_ROUTE_PATH = '/tree/{tree}/external-place/{xref}/information';
@@ -71,7 +70,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
     public function boot(): void
     {
         $currentVersion = (int) $this->getPreference(self::CACHE_SCHEMA_VERSION_PREFERENCE, '0');
-        $targetVersion  = (new WikidataCacheSchema())->ensureSchema($currentVersion);
+        $targetVersion  = (new WikibaseCacheSchema())->ensureSchema($currentVersion);
 
         if ($targetVersion !== $currentVersion) {
             $this->setPreference(self::CACHE_SCHEMA_VERSION_PREFERENCE, (string) $targetVersion);
@@ -210,15 +209,8 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         }
 
         $language = explode('-', str_replace('_', '-', I18N::languageTag()))[0] ?: 'en';
-        $cache    = new WikidataCacheRepository();
         $wikidataClient = new WikidataClient();
-        $entity   = $cache->find($identifier, $language, true);
-        if ($entity === null) {
-            $entity = $wikidataClient->fetch($identifier, $language);
-            if ($entity !== null) {
-                $cache->store($entity, $language);
-            }
-        }
+        $entity   = $wikidataClient->fetch($identifier, $language);
 
         $label = $entity?->label ?? $identifier->qid();
         $html  = '<section class="mt-4">' . $this->providerHeading('wikidata', I18N::translate('Wikidata'));
@@ -463,23 +455,35 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
     }
 
     /**
-     * Use the first NAME in the shared-place GEDCOM as the geocoder query.
-     * Vesta's primaryPlace() may select another NAME after language/date
-     * sorting, but alternate names should not replace the record's first name
-     * for an address lookup.
+     * Use the first NAME and the first place-context component for the
+     * geocoder query. Vesta's primaryPlace() may select another NAME after
+     * language/date sorting, but alternate names should not replace the
+     * record's first name for an address lookup. Adding the local place keeps
+     * common street names from resolving to an unrelated city.
      */
     private function nominatimPlaceName(string $gedcom, string $fallback): string
     {
+        $firstName = '';
         foreach (preg_split('/\r?\n/', $gedcom) ?: [] as $line) {
             if (preg_match('/^1 NAME(?:\s+)(.+)$/', $line, $match) === 1) {
                 $name = trim($match[1]);
                 if ($name !== '') {
-                    return $name;
+                    $firstName = $name;
+                    break;
                 }
             }
         }
 
-        return $fallback;
+        $fallback = trim(html_entity_decode(strip_tags($fallback), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+        $components = array_values(array_filter(array_map('trim', explode(',', $fallback)), static fn (string $component): bool => $component !== ''));
+        if ($firstName === '') {
+            return $fallback;
+        }
+        if ($components !== [] && strcasecmp($components[0], $firstName) === 0) {
+            array_shift($components);
+        }
+
+        return $components === [] ? $firstName : $firstName . ', ' . $components[0];
     }
 
     private function nominatimHtml(string $placeName, string $language, string $gedcom = ''): string
