@@ -9,19 +9,19 @@ External Places is a [webtrees](https://www.webtrees.net) module for enriching [
 
 ## 📚 Contents
 
-* [Purpose](#-purpose)
-* [Main features](#-main-features)
-* [Screenshots](#-screenshots)
-* [Domus (Wikidata)](#-domus-wikidata)
-* [Privacy](#-privacy)
-* [Requirements](#-requirements)
-* [Installation](#-installation)
+* [Purpose](#purpose)
+* [Main features](#main-features)
+* [Screenshots](#screenshots)
+* [Domus (Wikidata)](#domus-wikidata)
+* [Privacy](#privacy)
+* [Requirements](#requirements)
+* [Installation](#installation)
 * [Usage](#usage)
-* [Documentation](#-documentation)
-* [Translation](#-translation)
-* [Credits](#-credits)
-* [License](#-license)
-
+* [Documentation](#documentation)
+* [Translation](#translation)
+* [Credits](#credits)
+* [License](#license)
+<a id="purpose"></a>
 ## 🎯 Purpose
 
 A shared place can represent a building, farm, church, cemetery, street, square, district, village or another real-world place.
@@ -36,6 +36,7 @@ Wikidata, FactGrid, GOV and GeoNames use fixed provider adapters.
 Their public cross-references can be checked for consistency; missing identifiers are added only after an editor explicitly submits them.
 See [External providers and identifier consistency](docs/EXTERNAL_PROVIDERS.md).
 
+<a id="domus-wikidata"></a>
 ## 🏠 Domus (Wikidata)
 
 [Domus](https://domus.genealogy.net) is an open application for researching the history of houses and buildings. It complements webtrees: webtrees remains the place for private genealogical data, while Domus can provide specialised public research and map views.
@@ -43,6 +44,7 @@ See [External providers and identifier consistency](docs/EXTERNAL_PROVIDERS.md).
 Without a Wikidata link, it opens the Domus map start page.
 Domus is a separate public research application; the module only provides links to it.
 
+<a id="main-features"></a>
 ## ⚙️ Main features
 
 The current release provides:
@@ -60,6 +62,7 @@ The current release provides:
 * configuring enabled providers and one global nearby-search radius with optional tree exceptions; and
 * opening linked Wikidata places in Domus.
 
+<a id="screenshots"></a>
 ## 🖼️ Screenshots
 
 The screenshots below show the main workflows. The shared-place summary keeps
@@ -114,6 +117,7 @@ and show Wikidata residents or owners for houses and farms where available.
 
 ![A shared place opened in Domus](docs/images/domus.png)
 
+<a id="privacy"></a>
 ## 🔒 Privacy
 
 When an external entry is loaded, the server requests only the validated identifier and requested display language.
@@ -133,12 +137,14 @@ tolerances and coordinate-import rules are documented in
 Responses are cached locally. If a provider is temporarily unavailable, the normal Vesta Shared Place page remains available.
 When the optional Legal Notice module is active, it includes the selected external providers in the generated privacy policy together with the purpose of the request and the transferred technical data.
 
+<a id="requirements"></a>
 ## 📌 Requirements
 
 * webtrees 2.2.x
 * Vesta Shared Places
 * PHP with HTTPS access to the selected provider APIs for live enrichment; cached data remains usable while offline
 
+<a id="installation"></a>
 ## 📥 Installation
 
 Install and use [Custom Module Manager](https://github.com/Jeferson49/CustomModuleManager)
@@ -154,6 +160,7 @@ for a convenient installation of webtrees custom modules:
 3. Ensure that the directory is named `hh_external_places`.
 4. In the webtrees control panel, enable **External Places**.
 
+<a id="usage"></a>
 ## Usage
 
 External provider data is available from the shared-place page through the
@@ -198,6 +205,7 @@ chronologically sorted table with a compact line chart, using the user's
 webtrees number formatting. Additional GOV external identifiers are shown with
 their configured meaning and, where a public URL template is known, as links.
 
+<a id="documentation"></a>
 ## 📖 Documentation
 * [Concept: Wikidata and Domus integration](docs/WIKIDATA_DOMUS_CONCEPT.md)
 * [External providers and identifier consistency](docs/EXTERNAL_PROVIDERS.md)
@@ -211,6 +219,7 @@ their configured meaning and, where a public URL template is known, as links.
 * [Version 2 roadmap](docs/ROADMAP.md)
 * [Changelog](CHANGELOG.md)
 
+<a id="translation"></a>
 ## 🌐 Translation
 
 The module uses the standard webtrees gettext system (`.po`/`.mo`) for its
@@ -221,6 +230,7 @@ bundled source `resources/config/gov-types.owl`. See [the GOV type catalogue
 documentation](docs/GOV_TYPE_CATALOG.md) for the source and fallback rules.
 German is currently available. Contributions are welcome as pull requests.
 
+<a id="credits"></a>
 ## 🙏 Credits
 
 * [webtrees](https://www.webtrees.net)
@@ -230,6 +240,7 @@ German is currently available. Contributions are welcome as pull requests.
 * [FactGrid](https://database.factgrid.de) and [GOV](https://gov.genealogy.net)
 * GeoNames, GOV, Nominatim, ...
 
+<a id="license"></a>
 ## ⚖️ License
 
 This module is licensed under [GPL-3.0-or-later](LICENSE).

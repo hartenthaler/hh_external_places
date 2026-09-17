@@ -62,13 +62,13 @@ final class PlaceTypeFilterSettings
             'wikidata' => ['Q28575', 'Q106658'],
             'factgrid' => [],
             'gov' => ['32', '36', '53', '95', '100', '101', '110', '170', '175', '222'],
-            'geonames' => ['A.ADM2'],
+            'geonames' => ['A.ADM2', 'A.ADM3'],
         ],
         'municipality' => [
             'wikidata' => ['Q484170'],
             'factgrid' => [],
             'gov' => ['18', '48', '85', '122', '140', '148', '150', '156', '162', '163', '169', '172', '180', '218', '258', '268', '269', '271', '275'],
-            'geonames' => ['A.ADM3', 'A.ADM4', 'A.ADM5'],
+            'geonames' => ['A.ADM4', 'A.ADM5'],
         ],
         'locality' => [
             'wikidata' => ['Q486972', 'Q532', 'Q3957', 'Q515'],
@@ -182,6 +182,12 @@ final class PlaceTypeFilterSettings
         $levels = self::levels();
         $levels['house'][$provider] = self::DEFAULTS['house'][$provider];
         self::saveLevels($levels);
+    }
+
+    /** Reset every provider and hierarchy level to the bundled defaults. */
+    public static function resetAll(): void
+    {
+        self::saveLevels(self::DEFAULTS);
     }
 
     /** @param array<string,list<string>> $filters */

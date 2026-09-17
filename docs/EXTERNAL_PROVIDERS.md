@@ -234,8 +234,11 @@ in provider output, type validation, and the administration interface.
 The initial Wikidata house list includes Q23413, Q751876, Q3947, Q16560, Q41176,
 Q44613, Q365627, Q1802963 and Q131596; administrators can extend or reduce it.
 
-GeoNames building and inhabited-place filters use the `S` (spot/building/farm)
-feature class. The initial codes and their English descriptions are maintained
+GeoNames administrative filters follow the hierarchy used by the module:
+`A.ADM1` is a state, `A.ADM2` and `A.ADM3` are county/district levels, and
+`A.ADM4`/`A.ADM5` are municipality levels. GeoNames building and
+inhabited-place filters use the `S` (spot/building/farm) feature class. The
+initial codes and their English descriptions are maintained
 in `resources/config/geonames-feature-codes.json`, based on GeoNames'
 `featureCodes_en.txt`; the descriptions are passed through gettext so they can
 be translated without duplicating provider identifiers. Nearby-search controls
