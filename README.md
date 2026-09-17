@@ -171,13 +171,15 @@ For a shared place with GEDCOM `MAP`, `LATI` and `LONG` coordinates, editors can
 
 Search results use a compact table. They show the provider label and identifier, the description and—where applicable—distance. Opening a result uses the provider's public page; **Assign** remains an explicit editor action.
 
-Administrators can maintain provider-specific type lists for four hierarchy
-levels: house/farm, country, federation/international organisation, and planet.
-The lists are presented in an accordion, and each provider has a **Reset to
-default** action. Editors can activate one level filter separately for each
-provider; the normal unfiltered search remains available. Nearby-search
-buttons are disabled until the shared place has valid coordinates; a tooltip
-explains what is missing.
+Administrators can maintain provider-specific type lists for eight hierarchy
+levels: house/building, locality, municipality, county, state, country,
+federation/international organisation, and planet. The lists are presented in
+an accordion, and each provider has a **Reset to default** action. On the
+assignment page, editors are offered only the filter matching an unambiguous
+shared-place classification. If the place type is missing, unknown or
+contradictory, all filter buttons remain available; the unfiltered search is
+always possible. Nearby-search buttons are disabled until the shared place has
+valid coordinates; a tooltip explains what is missing.
 
 GOV type labels come from the complete public vocabulary snapshot in
 [`resources/config/gov-types.owl`](resources/config/gov-types.owl), not only

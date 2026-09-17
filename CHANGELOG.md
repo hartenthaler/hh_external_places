@@ -32,9 +32,13 @@
   for Nominatim suppression and can therefore receive their own map block.
 - The central hierarchy now distinguishes locality, municipality, county and
   state between house/building and country. Provider filters, Nominatim layer
-  selection and coordinate tolerances use the same hierarchy.
+  selection and coordinate tolerances use the same hierarchy (Issue #131,
+  merged in PR #139).
 - Added Wikidata Q106658 (`district of Germany`) for county filtering and
   GeoNames A.ADM3 for municipality filtering.
+- The assignment page now suggests only the filter matching an unambiguous
+  shared-place hierarchy; missing or contradictory type information keeps all
+  filters available (Issue #91).
 
 ## 2.2.6.10 - 2026-09-14
 

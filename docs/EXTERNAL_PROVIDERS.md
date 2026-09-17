@@ -205,7 +205,12 @@ are 8 (castle), 17 (building), 21 (manor), 24 (farm), 193 (alpine pasture),
 (palace), 102 (forester's house), and 87 (mill). Labels are module strings
 and are resolved independently of the provider IDs. Each provider has a
 reset-to-default action. The editor activates one filter level per provider,
-so an unfiltered search is always still available.
+so an unfiltered search is always still available. The assignment page suggests
+only the filter matching an unambiguous shared-place classification. The central
+classifier uses the GEDCOM `TYPE` and, where present, the numeric `2 _GOVTYPE`
+value (`7` for a German federal state, `71` for a federation, and `72`/`130`
+for a country). If the type is missing, unknown or contradictory, all filter
+buttons remain available as a safe fallback.
 
 The complete GOV vocabulary is maintained separately from these defaults. It
 is bundled as `resources/config/gov-types.owl` and resolved by the central
