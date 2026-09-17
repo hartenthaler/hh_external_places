@@ -18,6 +18,18 @@
 - Nominatim address lookups now combine the first GEDCOM name with the first
   local place context (for example `Klosterstraße 3, Ennetach`) and use new
   cache keys so stale, ambiguous street results are not reused.
+- Provider output rendering is now isolated in `ExternalInformationRenderer`,
+  keeping the module lifecycle and Vesta integration separate from HTML/SVG
+  generation (Issue #134).
+- Places without an explicit hierarchy type are no longer misclassified as
+  countries, so local places such as villages remain eligible for Nominatim.
+- Coordinate comparisons for such unknown place types now use the conservative
+  country/state tolerance instead of hiding provider distances and consistency
+  results.
+- Photon fallback retries once without a restrictive type layer when that layer
+  returns no candidates, and stale fallback cache entries are invalidated.
+- Counties such as Landkreis Sigmaringen are no longer treated as countries
+  for Nominatim suppression and can therefore receive their own map block.
 
 ## 2.2.6.10 - 2026-09-14
 

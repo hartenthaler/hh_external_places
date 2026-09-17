@@ -90,7 +90,7 @@ final class NominatimProvider
             {
                 // Version the Photon key when its candidate filtering changes,
                 // so stale unrelated results cannot mask a better match.
-                $photonKey = 'v9|' . $language . '|' . ($preferredLayer ?? '') . '|' . $place;
+                $photonKey = 'v10|' . $language . '|' . ($preferredLayer ?? '') . '|' . $place;
                 $payload = $this->cache->read('photon', $photonKey, self::GEOCODER_CACHE_TTL);
                 if ($payload !== null) {
                     $this->diagnostic = ($nominatimDiagnostic !== '' ? $nominatimDiagnostic . '; ' : '') . 'Photon query="' . $place . '"; fallback active (cache hit)';
@@ -98,6 +98,16 @@ final class NominatimProvider
                 if ($payload === null && $this->cache->allowRequest('photon')) {
                     $this->diagnostic = ($nominatimDiagnostic !== '' ? $nominatimDiagnostic . '; ' : '') . 'Photon query="' . $place . '"; fallback active (request)';
                 $payload = $this->requestPhoton($place, $language, $preferredLayer);
+                    if ($payload === null && $preferredLayer !== null) {
+                        // Photon layer names are useful hints but are not
+                        // supported consistently by every deployment.  A
+                        // type-restricted empty response must therefore get
+                        // one bounded retry without the layer; candidate
+                        // ranking still prefers the requested type below.
+                        $layerDiagnostic = $this->diagnostic;
+                        $payload = $this->requestPhoton($place, $language, null);
+                        $this->diagnostic = $layerDiagnostic . '; retry without Photon layer; ' . $this->diagnostic;
+                    }
                     if ($payload !== null) {
                         $photonDiagnostic = $this->diagnostic;
                         $this->cache->write('photon', $photonKey, $payload);
