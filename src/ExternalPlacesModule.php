@@ -190,7 +190,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             $language = explode('-', str_replace('_', '-', I18N::languageTag()))[0] ?: 'en';
             $renderer = new ExternalInformationRenderer(self::showConsistentReferences());
             $geoNamesHtml = $renderer->geoNamesHtml($location->fullName(), $language);
-            $nominatimHtml = $renderer->nominatimHtml($renderer->nominatimPlaceName($location->gedcom(), $place->getGedcomName() !== '' ? $place->getGedcomName() : $location->fullName()), $language, $location->gedcom());
+            $nominatimHtml = $renderer->nominatimHtml($renderer->nominatimPlaceName($location->gedcom(), $this->nominatimPlaceContext($place, $location->fullName())), $language, $location->gedcom());
             if ($externalIdentifiers === [] && !$location->canEdit() && $geoNamesHtml === '' && $nominatimHtml === '') {
                 return null;
             }
@@ -279,7 +279,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         $assignmentUrl = $location->canEdit() ? self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]) : null;
         $html .= $renderer->externalInformationHtml($externalIdentifiers, $language, 'wikidata', $location->fullName(), $assignmentUrl, $location->gedcom(), $genwikiShown, $sharedCoordinates);
         $html .= $renderer->geoNamesHtml($location->fullName(), $language);
-        $html .= $renderer->nominatimHtml($renderer->nominatimPlaceName($location->gedcom(), $place->getGedcomName() !== '' ? $place->getGedcomName() : $location->fullName()), $language, $location->gedcom());
+        $html .= $renderer->nominatimHtml($renderer->nominatimPlaceName($location->gedcom(), $this->nominatimPlaceContext($place, $location->fullName())), $language, $location->gedcom());
         $html .= '<div class="d-flex gap-2 flex-wrap mt-2">';
         if ($location->canEdit()) {
             $html .= '<a class="btn btn-primary btn-sm" href="' . e(self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()])) . '">' . e(I18N::translate('Assign external identifier')) . '</a>';
@@ -293,11 +293,21 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
     }
 
     /**
-     * Render all non-Wikidata provider data and explicitly report cross-links.
-     * External data remains read-only; adding a missing ID is a separate action.
+     * Return the immediate parent place as context for geocoder searches.
      *
-     * @param list<\Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\ExternalIdentifier> $identifiers
+     * The first NAME in the shared-place GEDCOM is selected by
+     * nominatimPlaceName(); this method supplies only the next place level so
+     * alternate NAME values cannot replace the address or local place.
      */
+    private function nominatimPlaceContext(PlaceStructure $place, string $fallback): string
+    {
+        $parent = $place->parent();
+        if ($parent !== null && trim($parent->getGedcomName()) !== '') {
+            return $parent->getGedcomName();
+        }
+
+        return $fallback;
+    }
 
     /** Render one canonical GenWiki page and optionally offer its ID for EXID. */
 
