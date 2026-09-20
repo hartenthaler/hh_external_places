@@ -36,6 +36,15 @@ Wikidata, FactGrid, GOV and GeoNames use fixed provider adapters.
 Their public cross-references can be checked for consistency; missing identifiers are added only after an editor explicitly submits them.
 See [External providers and identifier consistency](docs/EXTERNAL_PROVIDERS.md).
 
+Nominatim/OpenStreetMap has a different role. It is an optional, contextual
+geocoder: the module uses the shared-place name to show a matching OSM object,
+its address hierarchy and, where available, its geometry on a map. Nominatim
+does not provide an assignable external identifier in this module and is not
+used for bulk or automatic searches. Its block is shown first on the external
+information page so that the local OSM context is visible before the
+identifier-based provider sections. Requests are cached and subject to the
+[Nominatim usage policy](https://operations.osmfoundation.org/policies/nominatim/).
+
 <a id="domus-wikidata"></a>
 ## 🏠 Domus (Wikidata)
 

@@ -197,9 +197,11 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
 
             $assignmentUrl = $location->canEdit() ? self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]) : null;
             $genwikiShown = [];
-            $html = $renderer->externalInformationHtml($externalIdentifiers, $language, '', $location->fullName(), $assignmentUrl, $location->gedcom(), $genwikiShown, $sharedCoordinates);
+            // Nominatim is contextual map/address information, not an
+            // assignable identifier provider. Keep this special block first.
+            $html = $nominatimHtml;
+            $html .= $renderer->externalInformationHtml($externalIdentifiers, $language, '', $location->fullName(), $assignmentUrl, $location->gedcom(), $genwikiShown, $sharedCoordinates);
             $html .= $geoNamesHtml;
-            $html .= $nominatimHtml;
             $html .= '<div class="d-flex gap-2 flex-wrap mt-2">';
             if ($location->canEdit()) {
                 $html .= '<a class="btn btn-primary btn-sm" href="' . e(self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()])) . '">' . e(I18N::translate('Assign external identifier')) . '</a>';
@@ -277,9 +279,12 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         }
         $html .= $renderer->sourceHtml('Wikidata', 'https://www.wikidata.org/') . '</section>';
         $assignmentUrl = $location->canEdit() ? self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]) : null;
+        // Nominatim is contextual map/address information, not an
+        // assignable identifier provider. Keep this special block first.
+        $nominatimHtml = $renderer->nominatimHtml($renderer->nominatimPlaceName($location->gedcom(), $this->nominatimPlaceContext($place, $location->fullName())), $language, $location->gedcom());
+        $html = $nominatimHtml . $html;
         $html .= $renderer->externalInformationHtml($externalIdentifiers, $language, 'wikidata', $location->fullName(), $assignmentUrl, $location->gedcom(), $genwikiShown, $sharedCoordinates);
         $html .= $renderer->geoNamesHtml($location->fullName(), $language);
-        $html .= $renderer->nominatimHtml($renderer->nominatimPlaceName($location->gedcom(), $this->nominatimPlaceContext($place, $location->fullName())), $language, $location->gedcom());
         $html .= '<div class="d-flex gap-2 flex-wrap mt-2">';
         if ($location->canEdit()) {
             $html .= '<a class="btn btn-primary btn-sm" href="' . e(self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()])) . '">' . e(I18N::translate('Assign external identifier')) . '</a>';
