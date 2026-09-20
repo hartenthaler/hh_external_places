@@ -35,7 +35,10 @@ final class ExternalProviderRegistry
 
     public function byAuthority(string $authority): ?ExternalProvider
     {
-        foreach ($this->all() as $provider) { if ($provider->authorityUri() === trim($authority)) { return $provider; } }
+        foreach ($this->all() as $provider) {
+            if ($provider->authorityUri() === trim($authority)) { return $provider; }
+            if ($provider instanceof GeoNamesProvider && GeoNamesProvider::matchesAuthority($authority)) { return $provider; }
+        }
         return null;
     }
 
@@ -54,6 +57,17 @@ final class ExternalProviderRegistry
         $govTag = [];
         foreach ($this->typedIdentifiers($gedcom) as $identifier) {
             if ($identifier->provider === 'gov') { $govExid[] = $identifier; } else { $identifiers[] = $identifier; }
+        }
+
+        $geonames = $this->byKey('geonames');
+        if ($geonames instanceof GeoNamesProvider) {
+            $known = array_map(static fn (ExternalIdentifier $identifier): string => $identifier->provider . ':' . $identifier->value, $identifiers);
+            foreach ($geonames->sourceIdentifiers($gedcom) as $identifier) {
+                if (!in_array($identifier->provider . ':' . $identifier->value, $known, true)) {
+                    $identifiers[] = $identifier;
+                    $known[] = $identifier->provider . ':' . $identifier->value;
+                }
+            }
         }
 
         $lines = preg_split('/\R/u', $gedcom) ?: [];

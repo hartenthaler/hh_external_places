@@ -46,14 +46,59 @@ final class GeoNamesProvider implements ExternalProvider
 
     public function authorityUri(): string { return self::AUTHORITY_URI; }
 
+    public static function matchesAuthority(string $authority): bool
+    {
+        return preg_match('~^https?://(?:www\.)?geonames\.org/?$~i', trim($authority)) === 1;
+    }
+
     public function identifier(string $value): ?ExternalIdentifier
     {
         $value = trim($value);
-        if (str_starts_with($value, self::AUTHORITY_URI)) {
-            $value = trim((string) preg_replace('~^https://www\.geonames\.org/~', '', $value), " /\t\r\n");
+        if (preg_match('~^https?://(?:www\.)?geonames\.org/([1-9][0-9]{0,11})/?(?:[?#].*)?$~i', $value, $match) === 1) {
+            $value = $match[1];
         }
         if (preg_match('/^[1-9][0-9]{0,11}$/', $value) !== 1) { return null; }
         return new ExternalIdentifier($this->key(), $value, self::AUTHORITY_URI, self::AUTHORITY_URI . $value . '/');
+    }
+
+    /** @return list<ExternalIdentifier> */
+    public function sourceIdentifiers(string $gedcom): array
+    {
+        $identifiers = [];
+        $inSource = false;
+        $inData = false;
+
+        foreach (preg_split('/\R/u', $gedcom) ?: [] as $line) {
+            if (preg_match('/^1 SOUR(?:\s|$)/', $line) === 1) {
+                $inSource = true;
+                $inData = false;
+                continue;
+            }
+            if (preg_match('/^1 /', $line) === 1) {
+                $inSource = false;
+                $inData = false;
+                continue;
+            }
+            if (!$inSource) {
+                continue;
+            }
+            if (preg_match('/^2 DATA(?:\s|$)/', $line) === 1) {
+                $inData = true;
+                continue;
+            }
+            if (preg_match('/^2 /', $line) === 1) {
+                $inData = false;
+                continue;
+            }
+            if ($inData && preg_match('/^3 TEXT\s+(.+)$/', $line, $match) === 1) {
+                $identifier = $this->identifier($match[1]);
+                if ($identifier !== null) {
+                    $identifiers[$identifier->value] = $identifier;
+                }
+            }
+        }
+
+        return array_values($identifiers);
     }
 
     public function fetch(ExternalIdentifier $identifier, string $language): ?ExternalInformation
