@@ -37,6 +37,11 @@ msgstr ""
 msgid "External information for place: %s"
 msgstr ""
 
+#: resources/views/assignment.phtml
+#, php-format
+msgid "Assign external identifier for place: %s"
+msgstr ""
+
 msgid "GeoNames information"
 msgstr ""
 
