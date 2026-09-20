@@ -40,6 +40,19 @@ GeoNames `alternateNames` values returned by the service are shown as
 language-labelled, deduplicated details. They are read-only contextual data;
 the module never writes them to `_LOC:NAME` automatically.
 
+For compatibility with older webtrees data, GeoNames IDs may also be stored
+in a source citation instead of an `_EXID` block:
+
+```gedcom
+1 SOUR @S6@
+2 DATA
+3 TEXT http://www.geonames.org/2824254
+```
+
+The module recognizes both `http` and `https` GeoNames URLs in this
+provider-specific source format, normalizes the ID, and displays the same
+canonical GeoNames link as for a typed `_EXID`.
+
 GOV place names are shown in the same provider-neutral detail area as
 `Alternate name (xx)`, where `xx` is the language code supplied by GOV. If GOV
 supplies a validity period, it is shown next to the name as read-only context
