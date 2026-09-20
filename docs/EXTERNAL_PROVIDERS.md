@@ -21,6 +21,13 @@ needed by its own providers. The legacy `_GOV` tag continues to be handled by
 the GOV adapter because it is a provider-specific webtrees tag rather than a
 generic EXID block.
 
+When External Places writes a new typed provider identifier, it asks the
+optional `hh_exid` service for the administrator's preferred tag (`EXID` or
+`_EXID`). The returned value is accepted only when it is one of these two
+valid tags. If the service is unavailable, disabled or returns anything else,
+External Places safely falls back to `_EXID`. Provider-specific tags such as
+`_GOV` are not changed by this setting.
+
 Language values used for place-name comparison are normalized centrally. The
 comparison key is lower-case ISO 639-1 (`de`, `en`, ...). GEDCOM language names
 such as `GERMAN` and ISO 639-2 terminological or bibliographic codes such as
