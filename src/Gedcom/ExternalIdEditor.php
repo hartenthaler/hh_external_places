@@ -46,6 +46,23 @@ final class ExternalIdEditor
             }
         }
 
-        return rtrim($gedcom) . "\n1 _EXID " . $identifier->value . "\n2 TYPE " . $identifier->authorityUri . "\n";
+        return rtrim($gedcom) . "\n1 " . $this->newIdentifierTag() . " " . $identifier->value . "\n2 TYPE " . $identifier->authorityUri . "\n";
+    }
+
+    private function newIdentifierTag(): string
+    {
+        $servicesClass = 'Hartenthaler\\Webtrees\\Module\\ExidModule\\ExidServices';
+        if (class_exists($servicesClass) && method_exists($servicesClass, 'preferredTag')) {
+            try {
+                $tag = $servicesClass::preferredTag();
+                if (in_array($tag, ['EXID', '_EXID'], true)) {
+                    return $tag;
+                }
+            } catch (\Throwable) {
+                // Keep the legacy fallback when the optional module is unavailable.
+            }
+        }
+
+        return '_EXID';
     }
 }
