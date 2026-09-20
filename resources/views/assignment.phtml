@@ -39,7 +39,9 @@ $levelLabels = PlaceTypeFilterSettings::levelLabels();
 $filterLevels = $suggested_filter_levels ?? array_keys($levelLabels);
 ?>
 
-<h1><?= I18N::translate('Assign external identifier') ?></h1>
+<?php $placeName = e(strip_tags($location->fullName())); ?>
+<?php $placeUrl = e($location->url()); ?>
+<h1><?= I18N::translate('Assign external identifier for place: %s', '<a href="' . $placeUrl . '">' . $placeName . '</a>') ?></h1>
 <?php if ($enabled_providers === []) : ?>
     <div class="alert alert-warning">
         <?= I18N::translate('At least one external information provider must be enabled in the module settings.') ?>
