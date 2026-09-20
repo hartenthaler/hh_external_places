@@ -929,3 +929,12 @@ msgstr "aufgegebener bewohnter Ort"
 
 msgid "section of populated place"
 msgstr "Teil eines bewohnten Ortes"
+
+msgid "The module retrieves public place information from GenWiki when the provider is enabled or a GenWiki identifier is assigned."
+msgstr "Das Modul ruft öffentliche Ortsinformationen aus GenWiki ab, wenn der Anbieter aktiviert ist oder eine GenWiki-Kennung zugeordnet wurde."
+
+msgid "GenWiki page identifiers, search text entered by an editor and the requested display language."
+msgstr "GenWiki-Seitenkennungen, vom Bearbeiter eingegebener Suchtext und die angeforderte Anzeigesprache."
+
+msgid "Responses from enabled external providers are cached locally to reduce external requests."
+msgstr "Antworten aktivierter externer Anbieter werden lokal zwischengespeichert, um externe Anfragen zu reduzieren."

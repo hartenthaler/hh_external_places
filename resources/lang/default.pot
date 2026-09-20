@@ -893,3 +893,12 @@ msgstr ""
 
 msgid "section of populated place"
 msgstr ""
+
+msgid "The module retrieves public place information from GenWiki when the provider is enabled or a GenWiki identifier is assigned."
+msgstr ""
+
+msgid "GenWiki page identifiers, search text entered by an editor and the requested display language."
+msgstr ""
+
+msgid "Responses from enabled external providers are cached locally to reduce external requests."
+msgstr ""

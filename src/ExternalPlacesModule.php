@@ -542,8 +542,8 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
      */
     public function privacyNotices(): array
     {
-        return [
-            'third_party_services' => [[
+        $serviceDefinitions = [
+            'wikidata' => [
                 'service_id'  => 'wikimedia-foundation',
                 'name'        => 'Wikimedia Foundation (Wikidata)',
                 'url'         => 'https://www.wikidata.org/',
@@ -556,7 +556,8 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                     I18N::translate('Coordinates and the configured radius for an editor-requested nearby search.'),
                     I18N::translate('The server IP address and technical request metadata.'),
                 ],
-            ], [
+            ],
+            'factgrid' => [
                 'service_id'  => 'factgrid',
                 'name'        => 'FactGrid',
                 'url'         => 'https://database.factgrid.de/',
@@ -564,7 +565,8 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                 'privacy_url' => 'https://database.factgrid.de/wiki/FactGrid:Privacy_policy',
                 'description' => I18N::translate('The module retrieves public place information from FactGrid when a shared place has a typed FactGrid identifier.'),
                 'data'        => [I18N::translate('FactGrid item identifiers and the requested display language.')],
-            ], [
+            ],
+            'gov' => [
                 'service_id'  => 'gov',
                 'name'        => 'GOV',
                 'url'         => 'https://gov.genealogy.net/',
@@ -572,7 +574,8 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                 'privacy_url' => 'https://www.genealogy.net/impressum/',
                 'description' => I18N::translate('The module retrieves public place information from GOV when a shared place has a typed GOV identifier.'),
                 'data'        => [I18N::translate('GOV identifiers and the requested display language.')],
-            ], [
+            ],
+            'geonames' => [
                 'service_id'  => 'geonames',
                 'name'        => 'GeoNames',
                 'url'         => 'https://www.geonames.org/',
@@ -580,7 +583,17 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                 'privacy_url' => 'https://www.geonames.org/terms-of-service.html',
                 'description' => I18N::translate('The module retrieves public contextual place information from GeoNames when the provider is enabled and a GeoNames username is configured.'),
                 'data'        => [I18N::translate('The shared-place name, requested display language and the server IP address.')],
-            ], [
+            ],
+            'genwiki' => [
+                'service_id'  => 'genwiki',
+                'name'        => 'GenWiki',
+                'url'         => 'https://wiki.genealogy.net/',
+                'country'     => 'Germany',
+                'privacy_url' => 'https://wiki.genealogy.net/Datenschutz',
+                'description' => I18N::translate('The module retrieves public place information from GenWiki when the provider is enabled or a GenWiki identifier is assigned.'),
+                'data'        => [I18N::translate('GenWiki page identifiers, search text entered by an editor and the requested display language.')],
+            ],
+            'nominatim' => [
                 'service_id'  => 'nominatim',
                 'name'        => 'Nominatim / OpenStreetMap',
                 'url'         => 'https://nominatim.openstreetmap.org/',
@@ -588,9 +601,27 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                 'privacy_url' => 'https://operations.osmfoundation.org/policies/nominatim/',
                 'description' => I18N::translate('The module retrieves public contextual place information from Nominatim when the provider is enabled.'),
                 'data'        => [I18N::translate('The shared-place name, requested display language and the server IP address.')],
-            ]],
+            ],
+        ];
+
+        $enabled = array_fill_keys(ExternalProviderSettings::enabled(), true);
+        $services = [];
+        foreach ($serviceDefinitions as $key => $service) {
+            if (!isset($enabled[$key])) {
+                continue;
+            }
+
+            if ($key === 'geonames' && !(new GeoNamesProvider())->configurationStatus()['username']) {
+                continue;
+            }
+
+            $services[] = $service;
+        }
+
+        return [
+            'third_party_services' => $services,
             'security_measures' => [
-                I18N::translate('Wikidata responses are cached locally to reduce external requests.'),
+                I18N::translate('Responses from enabled external providers are cached locally to reduce external requests.'),
             ],
         ];
     }
