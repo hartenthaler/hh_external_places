@@ -8,6 +8,19 @@ The module uses one provider-neutral read model for public place information.
 Each adapter has a fixed endpoint, identifier validator and reviewed property
 mapping. GEDCOM values are never used as arbitrary URLs.
 
+## Optional EXID integration
+
+When the independent `hh_exid` module is loaded, External Places uses its
+provider-neutral EXID parser and linker at runtime. This keeps parsing and
+link generation in one shared implementation and preserves the authority URI
+stored in each `EXID`/`_EXID` block. `hh_exid` is deliberately optional:
+External Places does not declare a hard module dependency and remains usable
+when `hh_exid` is not installed, disabled or cannot be loaded. In that case a
+small compatibility parser in External Places handles the typed identifiers
+needed by its own providers. The legacy `_GOV` tag continues to be handled by
+the GOV adapter because it is a provider-specific webtrees tag rather than a
+generic EXID block.
+
 Language values used for place-name comparison are normalized centrally. The
 comparison key is lower-case ISO 639-1 (`de`, `en`, ...). GEDCOM language names
 such as `GERMAN` and ISO 639-2 terminological or bibliographic codes such as
