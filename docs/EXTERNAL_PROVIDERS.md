@@ -243,9 +243,18 @@ uses numeric type IDs from its official type vocabulary, and GeoNames uses
 feature codes. The Wikidata defaults include Q634 (planet),
 Q484652/Q1335818/Q170156 (federation or international organisation),
 Q6256/Q1048835/Q4835091 (country), Q107390 (state), Q28575/Q106658 (county),
-Q484170 (municipality), and Q486972/Q532/Q3957/Q515 (locality). The
-corresponding FactGrid defaults remain available where stable mappings are
-known. The existing house defaults remain unchanged. The GOV defaults
+Q484170 (municipality), and Q486972/Q532/Q3957/Q515 (locality). FactGrid uses
+its own Q-number space; Wikidata QIDs must not be copied into FactGrid
+filters. The current conservative FactGrid defaults are Q1059807
+(International organization) and Q947202 (Federation) for federation; Q21925
+(Country) and Q94416 (Sovereign state) for country; Q421800 (German Federal
+state) and Q1194441 (federated state) for state; Q217670 (County), Q779961
+(District) and Q633350 (Landkreis) for county; Q1480423 (Municipality) for
+municipality; and Q8 (Locality), Q890181 (City) and Q780677 (Village) for
+locality. These values were checked against FactGrid's public labels and P2
+usage. FactGrid has no single universal administrative hierarchy, so the
+lists deliberately remain conservative and administrators can adjust them.
+The existing house defaults remain unchanged. The GOV defaults
 are 8 (castle), 17 (building), 21 (manor), 24 (farm), 193 (alpine pasture),
 229 (group of houses), 231 (farms), 236 (houses), 261 (farm hamlet), 111
 (palace), 102 (forester's house), and 87 (mill). Labels are module strings
