@@ -70,7 +70,8 @@ final class WikidataLocationAssignmentAction implements RequestHandlerInterface
             FlashMessages::addMessage($removed ? I18N::translate('The external identifier has been removed.') : I18N::translate('The external identifier was not found.'), $removed ? 'success' : 'danger');
         } elseif ($operation === 'add-gov-type') {
             $typeId = Validator::parsedBody($request)->string('gov_type', '');
-            $added = $service->addGovType($location, $typeId);
+            $date = Validator::parsedBody($request)->string('gov_date', '');
+            $added = $service->addGovType($location, $typeId, $date !== '' ? $date : null);
             FlashMessages::addMessage($added ? I18N::translate('The GOV place type has been added.') : I18N::translate('The GOV place type was not added.'), $added ? 'success' : 'danger');
         } elseif ($operation === 'add-location-name') {
             $name = Validator::parsedBody($request)->string('name', '');

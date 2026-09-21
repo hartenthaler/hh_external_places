@@ -124,6 +124,10 @@ final class GovProvider implements ExternalProvider
         if ($label !== null) { $label = trim(strip_tags($label)); }
         $description = $this->firstString($data, ['description', 'type', 'objectType']);
         $typeId = $this->firstScalarString($data, ['typeId', 'govType', 'objectTypeId', 'type']);
+        $typeIds = array_values(array_filter($this->typeIds($data), static fn (string $value): bool => preg_match('/^\d+$/', $value) === 1));
+        if ($typeId !== null && preg_match('/^\d+$/', $typeId) !== 1) {
+            $typeId = null;
+        }
         // GOV often returns the numeric vocabulary identifier as the type
         // description (for example "24"). Present the readable label from
         // the GOV vocabulary in the requested language instead.
@@ -131,7 +135,10 @@ final class GovProvider implements ExternalProvider
             $typeId = $description;
             $description = PlaceTypeFilterSettings::govLabel($description, $language);
         }
-        return new ExternalInformation('gov', $identifier->value, $identifier->url, $label, $description, null, [], $this->references($data, $identifier->value), $this->details($data), [], [], [], $this->population($data), $typeId, [], $this->coordinates($data));
+        if ($typeId !== null && !in_array($typeId, $typeIds, true)) {
+            array_unshift($typeIds, $typeId);
+        }
+        return new ExternalInformation('gov', $identifier->value, $identifier->url, $label, $description, null, [], $this->references($data, $identifier->value), $this->details($data), [], [], [], $this->population($data), $typeId, [], $this->coordinates($data), array_values(array_unique($typeIds)));
     }
 
     /** @param array<string,mixed> $data */

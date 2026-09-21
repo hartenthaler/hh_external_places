@@ -127,15 +127,19 @@ final class ExternalInformationRenderer
                     $html .= '<br><img src="' . e($information->imageUrl) . '" alt="" loading="lazy" style="max-width:500px;max-height:500px;width:auto;height:auto">';
                 }
                 if ($information !== null) {
-                    if ($provider->key() === 'gov' && $information->typeId !== null) {
-                        $typeStatus = GovTypeValidator::compare($gedcom, $information->typeId);
+                    if ($provider->key() === 'gov' && ($information->typeIds !== [] || $information->typeId !== null)) {
+                        $providerTypeIds = $information->typeIds !== [] ? $information->typeIds : [$information->typeId];
+                        $typeStatus = GovTypeValidator::compare($gedcom, $providerTypeIds);
                         if ($typeStatus['state'] === 'consistent' && $this->showConsistentReferences()) {
                             $html .= '<br><small>' . e(I18N::translate('GOV place type is consistent with the shared place.')) . '</small>';
                         } elseif ($typeStatus['state'] === 'inconsistent') {
                             $html .= '<br><span class="text-danger"><strong>' . e(I18N::translate('GOV place type is inconsistent with the shared place.')) . '</strong></span>';
                         } elseif ($assignmentUrl !== null) {
                             $html .= '<br><span class="text-warning">' . e(I18N::translate('GOV place type is missing from the shared place.')) . '</span>';
-                            $html .= ' <form method="post" action="' . e($assignmentUrl) . '" class="d-inline">' . csrf_field() . '<input type="hidden" name="operation" value="add-gov-type"><input type="hidden" name="gov_type" value="' . e($information->typeId) . '"><button class="btn btn-sm btn-outline-primary" type="submit">' . e(I18N::translate('Add GOV place type')) . '</button></form>';
+                            $typeToAdd = $providerTypeIds[0] ?? null;
+                            if ($typeToAdd !== null) {
+                                $html .= ' <form method="post" action="' . e($assignmentUrl) . '" class="d-inline">' . csrf_field() . '<input type="hidden" name="operation" value="add-gov-type"><input type="hidden" name="gov_type" value="' . e($typeToAdd) . '"><button class="btn btn-sm btn-outline-primary" type="submit">' . e(I18N::translate('Add GOV place type')) . '</button></form>';
+                            }
                         }
                     }
                     $html .= $this->crossReferenceHtml($information, $identifiers, $assignmentUrl);
