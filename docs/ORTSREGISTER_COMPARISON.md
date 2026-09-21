@@ -22,7 +22,14 @@ The modules are complementary and can run together:
 | Provider identifier assignment and cross-reference consistency | External Places |
 | Core GEDCOM and Vesta Shared Places records | webtrees core / Vesta |
 
-There is no direct dependency between the modules. Both may display GOV data for the same place; this is not a data conflict because External Places keeps its provider data read-only and does not claim ownership of the archive page. Administrators should avoid enabling two competing write workflows for the same _LOC field. A future optional link between the two place pages could be added without merging their databases or provider clients.
+There is no hard dependency between the modules. Both may display GOV data for the same place; this is not a data conflict because External Places keeps its provider data read-only and does not claim ownership of the archive page. Administrators should avoid enabling two competing write workflows for the same _LOC field.
+
+When Ortsregister is enabled, External Places detects the active module at
+runtime and adds an **Im Ortsregister anzeigen** link for the current `_LOC`
+record. The link uses the Ortsregister detail route
+`/tree/{tree}/orte/{place_id}`, where `place_id` is the webtrees place ID for
+the current shared place. If Ortsregister is disabled or unavailable, no link
+is shown and External Places continues to work normally.
 
 ## Result
 

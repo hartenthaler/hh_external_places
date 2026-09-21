@@ -21,6 +21,7 @@ use Fisharebest\Webtrees\Module\ModuleCustomInterface;
 use Fisharebest\Webtrees\Module\ModuleCustomTrait;
 use Fisharebest\Webtrees\Module\ModuleConfigInterface;
 use Fisharebest\Webtrees\Module\ModuleConfigTrait;
+use Fisharebest\Webtrees\Services\ModuleService;
 use Fisharebest\Webtrees\Services\TreeService;
 use Fisharebest\Webtrees\Validator;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Infrastructure\WikibaseCacheSchema;
@@ -65,6 +66,8 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
     private const ASSIGNMENT_ROUTE_NAME = 'hh-external-places.assignment-page';
     private const ASSIGNMENT_ROUTE_PATH = '/tree/{tree}/external-place/{xref}/assignment';
     private const EXTERNAL_INFORMATION_ROUTE_PATH = '/tree/{tree}/external-place/{xref}/information';
+    private const ORTSREGISTER_MODULE_NAME = '_ortsregister_';
+    private const ORTSREGISTER_DETAIL_ROUTE = 'ortsregister.orte.detail';
     // Keep the site preference below webtrees' setting_name column limit.
     private const SHOW_CONSISTENT_REFERENCES_PREFERENCE = 'HH_EP_SHOW_CONSISTENT';
 
@@ -138,6 +141,47 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         return route($routeName, $parameters);
     }
 
+    /**
+     * Build the optional Ortsregister landing-page URL for a shared place.
+     *
+     * The integration is deliberately runtime-only: External Places remains
+     * installable without Ortsregister. The latter uses the webtrees place
+     * primary key as its {place_id} route parameter.
+     */
+    public static function ortsregisterUrl(PlaceStructure $place): ?string
+    {
+        $location = $place->getLocation();
+        if ($location === null) {
+            return null;
+        }
+
+        try {
+            $moduleService = Registry::container()->get(ModuleService::class);
+            // Custom modules are normally named with leading/trailing
+            // underscores by webtrees. Keep the plain name as a compatibility
+            // fallback for older installations that registered it explicitly.
+            $ortsregister = $moduleService->findByName(self::ORTSREGISTER_MODULE_NAME, true)
+                ?? $moduleService->findByName('ortsregister', true);
+            if ($ortsregister === null || (method_exists($ortsregister, 'isEnabled') && !$ortsregister->isEnabled())) {
+                return null;
+            }
+
+            $primaryPlace = $location->primaryPlace();
+            if (!is_object($primaryPlace) || !method_exists($primaryPlace, 'id')) {
+                return null;
+            }
+
+            return route(self::ORTSREGISTER_DETAIL_ROUTE, [
+                'tree'     => $location->tree()->name(),
+                'place_id' => $primaryPlace->id(),
+            ]);
+        } catch (\Throwable) {
+            // A disabled/incompatible Ortsregister version must not break the
+            // provider information page.
+            return null;
+        }
+    }
+
     /** Keep the Vesta summary compact; the full output lives on its own page. */
     public function plac2html(PlaceStructure $place): ?GenericViewElement
     {
@@ -151,7 +195,15 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         }
 
         $url = self::externalInformationUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]);
-        return GenericViewElement::create('<a class="btn btn-outline-secondary btn-sm" href="' . e($url) . '">' . e(I18N::translate('External information')) . '</a>');
+        $html = '<div class="d-flex gap-2 flex-wrap">';
+        $html .= '<a class="btn btn-outline-secondary btn-sm" href="' . e($url) . '">' . e(I18N::translate('External information')) . '</a>';
+        $ortsregisterUrl = self::ortsregisterUrl($place);
+        if ($ortsregisterUrl !== null) {
+            $html .= '<a class="btn btn-outline-secondary btn-sm" href="' . e($ortsregisterUrl) . '">' . e(I18N::translate('Show in Ortsregister')) . '</a>';
+        }
+        $html .= '</div>';
+
+        return GenericViewElement::create($html);
     }
 
     /** Render all external provider information for the dedicated page. */
@@ -208,6 +260,10 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             }
             if ($domusUrl !== '') {
                 $html .= '<a class="btn btn-primary btn-sm" href="' . e($domusUrl) . '" rel="noopener noreferrer" target="_blank">' . e(I18N::translate('Show in Domus')) . '</a>';
+            }
+            $ortsregisterUrl = self::ortsregisterUrl($place);
+            if ($ortsregisterUrl !== null) {
+                $html .= '<a class="btn btn-primary btn-sm" href="' . e($ortsregisterUrl) . '">' . e(I18N::translate('Show in Ortsregister')) . '</a>';
             }
             $html .= '</div>';
             return GenericViewElement::create($html);
@@ -291,6 +347,10 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         }
         if ($domusUrl !== '') {
             $html .= '<a class="btn btn-primary btn-sm" href="' . e($domusUrl) . '" rel="noopener noreferrer" target="_blank">' . e(I18N::translate('Show in Domus')) . '</a>';
+        }
+        $ortsregisterUrl = self::ortsregisterUrl($place);
+        if ($ortsregisterUrl !== null) {
+            $html .= '<a class="btn btn-primary btn-sm" href="' . e($ortsregisterUrl) . '">' . e(I18N::translate('Show in Ortsregister')) . '</a>';
         }
         $html .= '</div>';
 

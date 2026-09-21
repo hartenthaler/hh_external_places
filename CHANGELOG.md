@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- When the optional `webtrees-ortsregister` module is active, shared-place
+  pages now offer a direct link to the matching Ortsregister landing page
+  (Issue #164).
 - Provider assignments now use the optional `hh_exid` preference for new
   typed identifiers (`EXID` or `_EXID`) and safely fall back to `_EXID` when
   that module is unavailable. Provider-specific tags such as `_GOV` remain
