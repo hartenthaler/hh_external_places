@@ -77,10 +77,10 @@ final class WikidataLocationAssignmentService
         return true;
     }
 
-    public function addGovType(Location $location, string $typeId): bool
+    public function addGovType(Location $location, string $typeId, ?string $date = null): bool
     {
         if (!$location->canEdit() || preg_match('/^\d+$/', $typeId) !== 1) { return false; }
-        $updated = $this->govTypeEditor->add($location->gedcom(), $typeId, PlaceTypeFilterSettings::govLabel($typeId));
+        $updated = $this->govTypeEditor->add($location->gedcom(), $typeId, PlaceTypeFilterSettings::govLabel($typeId), $date);
         if ($updated === $location->gedcom()) { return false; }
         $location->updateRecord($this->withUpdatedChange($updated), false);
         return true;

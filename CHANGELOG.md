@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- GOV type comparisons now retain the readable TYPE label, GOV identifier and
+  validity interval for each TYPE block. Historical types such as “until 1972”
+  and “from 1972” are treated as adjacent, while overlapping different types
+  are reported as inconsistent. Adding a GOV type now extends the matching
+  period or creates a separate TYPE block for a different period (Issues #98,
+  #150).
 - When the optional `webtrees-ortsregister` module is active, shared-place
   pages now offer a direct link to the matching Ortsregister landing page
   (Issue #164).
