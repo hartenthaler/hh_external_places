@@ -28,6 +28,18 @@ final class ReadOnlyWikibaseClient
         'factgrid' => 'https://database.factgrid.de/w/api.php',
     ];
 
+    /** @var array<string,list<string>> */
+    private const FACTGRID_SEARCH_HINTS = [
+        'planet' => ['Planet'],
+        'federation' => ['International organization', 'Federation'],
+        'country' => ['Country', 'Sovereign state'],
+        'state' => ['Bundesland', 'Federal state'],
+        'county' => ['Landkreis', 'County'],
+        'municipality' => ['Municipality', 'Gemeinde'],
+        'locality' => ['Locality', 'City'],
+        'house' => ['Building', 'Farm'],
+    ];
+
     public function __construct(?HttpTransport $httpClient = null, ?WikibaseCacheRepository $cache = null)
     {
         $this->httpClient = $httpClient ?? HttpTransport::default();
@@ -178,18 +190,24 @@ final class ReadOnlyWikibaseClient
         $endpoint = self::ENDPOINTS[$provider] ?? null;
         $term = trim($term);
         if ($endpoint === null || mb_strlen($term) < 2 || mb_strlen($term) > 120) { return []; }
-        try {
-            $response = $this->httpClient->request('GET', $endpoint, ['action' => 'wbsearchentities', 'format' => 'json', 'language' => $this->language($language), 'uselang' => $this->language($language), 'search' => $term, 'limit' => 10, 'type' => 'item'], ['Accept' => 'application/json', 'User-Agent' => 'webtrees Wikibase Places/0.2'], 6.0);
-            if ($response === null) { return []; }
-            $body = $response->getBody()->getContents();
-            if ($response->getStatusCode() !== 200 || strlen($body) > self::MAX_RESPONSE_BYTES) { return []; }
-            $payload = json_decode($body, true, 20, JSON_THROW_ON_ERROR);
-        } catch (Throwable) { return []; }
         $results = [];
-        foreach (array_slice($payload['search'] ?? [], 0, 10) as $item) {
-            $qid = $item['id'] ?? null;
-            if (!is_string($qid) || preg_match('/^Q[1-9][0-9]*$/', $qid) !== 1) { continue; }
-            $results[] = ['qid' => $qid, 'label' => is_string($item['label'] ?? null) ? $item['label'] : $qid, 'description' => is_string($item['description'] ?? null) ? $item['description'] : null];
+        $seen = [];
+        foreach ($this->searchTerms($provider, $term, $houseOnly, $filterLevel) as $searchTerm) {
+            try {
+                $response = $this->httpClient->request('GET', $endpoint, ['action' => 'wbsearchentities', 'format' => 'json', 'language' => $this->language($language), 'uselang' => $this->language($language), 'search' => $searchTerm, 'limit' => 10, 'type' => 'item'], ['Accept' => 'application/json', 'User-Agent' => 'webtrees Wikibase Places/0.2'], 6.0);
+                if ($response === null) { continue; }
+                $body = $response->getBody()->getContents();
+                if ($response->getStatusCode() !== 200 || strlen($body) > self::MAX_RESPONSE_BYTES) { continue; }
+                $payload = json_decode($body, true, 20, JSON_THROW_ON_ERROR);
+            } catch (Throwable) { continue; }
+
+            foreach (array_slice($payload['search'] ?? [], 0, 10) as $item) {
+                $qid = $item['id'] ?? null;
+                if (!is_string($qid) || preg_match('/^Q[1-9][0-9]*$/', $qid) !== 1 || isset($seen[$qid])) { continue; }
+                $seen[$qid] = true;
+                $results[] = ['qid' => $qid, 'label' => is_string($item['label'] ?? null) ? $item['label'] : $qid, 'description' => is_string($item['description'] ?? null) ? $item['description'] : null];
+                if (count($results) >= 20) { break 2; }
+            }
         }
         if (!$houseOnly || $results === []) {
             return $results;
@@ -199,6 +217,21 @@ final class ReadOnlyWikibaseClient
         return array_values(array_filter($results, function (array $result) use ($entities, $provider, $filterLevel): bool {
             return PlaceTypeFilterSettings::matchesWikibaseClaims($provider, (array) ($entities[$result['qid']]['claims'] ?? []), $filterLevel);
         }));
+    }
+
+    /** @return list<string> */
+    private function searchTerms(string $provider, string $term, bool $houseOnly, string $filterLevel): array
+    {
+        if ($provider !== 'factgrid' || (!$houseOnly && $filterLevel === 'house')) {
+            return [$term];
+        }
+
+        $terms = [$term];
+        foreach (self::FACTGRID_SEARCH_HINTS[$filterLevel] ?? [] as $hint) {
+            $terms[] = $hint . ' ' . $term;
+        }
+
+        return array_values(array_unique($terms));
     }
 
     /** @return list<array{qid:string,label:string,description:?string,distanceKm:float}> */
