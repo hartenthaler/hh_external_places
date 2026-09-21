@@ -2,19 +2,18 @@
 
 ## Unreleased
 
-- GOV type comparisons now retain the readable TYPE label, GOV identifier and
-  validity interval for each TYPE block. Historical types such as “until 1972”
-  and “from 1972” are treated as adjacent, while overlapping different types
-  are reported as inconsistent. Adding a GOV type now extends the matching
-  period or creates a separate TYPE block for a different period (Issues #98,
-  #150).
-- When the optional `webtrees-ortsregister` module is active, shared-place
-  pages now offer a direct link to the matching Ortsregister landing page
-  (Issue #164).
-- Provider assignments now use the optional `hh_exid` preference for new
-  typed identifiers (`EXID` or `_EXID`) and safely fall back to `_EXID` when
-  that module is unavailable. Provider-specific tags such as `_GOV` remain
-  unchanged (Issue #162, PR #163).
+## 2.2.6.14 - 2026-09-22
+
+- Historical GOV place types now retain their readable label, GOV identifier
+  and validity interval. Adjacent changes such as “until 1972” and “from
+  1972” are accepted, while overlapping different types are reported.
+- Adding a GOV type now extends the matching period or creates a separate type
+  entry for a different period (Issues #98, #150).
+- Provider assignments use the optional EXID module preference for new typed
+  identifiers and safely fall back to `_EXID` when it is unavailable (Issue
+  #162, PR #163).
+- Shared-place pages offer a direct link to the matching Ortsregister landing
+  page when that module is active (Issue #164).
 
 ## 2.2.6.13 - 2026-09-17
 
