@@ -66,6 +66,11 @@ final class WikidataLocationAssignmentPage implements RequestHandlerInterface
         if ($suggestedFilterLevels !== null && $filterLevel !== null && !in_array($filterLevel, $suggestedFilterLevels, true)) {
             $filterLevel = null;
         }
+        // Use the place classification as search context even before an
+        // editor activates a visible filter button.  FactGrid's search index
+        // may otherwise omit labels such as "Bundesland Baden-Württemberg"
+        // for the shorter query "Baden-Württemberg".
+        $factgridFilterLevel = $filterLevel ?? ($suggestedFilterLevels[0] ?? 'house');
         $houseOnly       = $filterLevel !== null;
         if ($providerKey === 'geonames' && ($submittedSearch !== '' || $nearbyRequested)) {
             $geoNamesStatus = $geoNamesProvider->configurationStatus();
@@ -85,7 +90,7 @@ final class WikidataLocationAssignmentPage implements RequestHandlerInterface
 
         $factgridNearbyCandidates = [];
         if ($providerEnabled && $providerKey === 'factgrid' && $nearbyRequested && $coordinates !== null) {
-            $factgridNearbyCandidates = $wikibaseClient->nearby('factgrid', $coordinates['latitude'], $coordinates['longitude'], $radiusKm, $language, $houseOnly, $filterLevel ?? 'house');
+            $factgridNearbyCandidates = $wikibaseClient->nearby('factgrid', $coordinates['latitude'], $coordinates['longitude'], $radiusKm, $language, $houseOnly, $factgridFilterLevel);
         }
 
         $current = (new ExternalIdService())->wikidataIdentifiers($location->gedcom())->identifier();
@@ -106,7 +111,7 @@ final class WikidataLocationAssignmentPage implements RequestHandlerInterface
             'enabled_providers' => $enabledProviders,
             'candidates'     => $wikidataCandidates,
             'external_candidates' => $providerEnabled && $providerKey === 'gov' && $submittedSearch !== '' && $govProvider !== null && method_exists($govProvider, 'search') ? array_values(array_filter($govProvider->search($submittedSearch, $language), static fn (array $candidate): bool => !$houseOnly || PlaceTypeFilterSettings::matches('gov', $candidate, $filterLevel ?? 'house'))) : [],
-            'factgrid_candidates' => $providerEnabled && $providerKey === 'factgrid' && $submittedSearch !== '' ? $wikibaseClient->search('factgrid', $submittedSearch, $language, $houseOnly, $filterLevel ?? 'house') : [],
+            'factgrid_candidates' => $providerEnabled && $providerKey === 'factgrid' && $submittedSearch !== '' ? $wikibaseClient->search('factgrid', $submittedSearch, $language, $houseOnly, $factgridFilterLevel) : [],
             'geonames_candidates' => $geonamesCandidates,
             'genwiki_candidates' => $genwikiCandidates,
             'factgrid_nearby_candidates' => $factgridNearbyCandidates,
