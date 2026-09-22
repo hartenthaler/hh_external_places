@@ -14,7 +14,14 @@
     "owner": "P127",
     "occupant": "P466",
     "begin": "P580",
-    "end": "P582"
+    "end": "P582",
+    "address": null,
+    "street": "P669",
+    "house_number": null,
+    "postal_code": null,
+    "locality": null,
+    "district": null,
+    "postal_address": "P6375"
   },
   "factgrid": {
     "authority": "https://database.factgrid.de/entity/",
@@ -31,6 +38,13 @@
     "owner": "P126",
     "occupant": "P239",
     "begin": "P49",
-    "end": "P50"
+    "end": "P50",
+    "address": "P208",
+    "street": "P522",
+    "house_number": "P152",
+    "postal_code": null,
+    "locality": "P47",
+    "district": "P1121",
+    "postal_address": "P153"
   }
 }

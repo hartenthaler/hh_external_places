@@ -22,7 +22,7 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Geo\Coordinates;
  */
 final class WikidataLocationAssignmentService
 {
-    public function __construct(private readonly WikidataExternalIdEditor $editor = new WikidataExternalIdEditor(), private readonly ExternalIdEditor $externalEditor = new ExternalIdEditor(), private readonly GovTypeEditor $govTypeEditor = new GovTypeEditor(), private readonly CoordinateEditor $coordinateEditor = new CoordinateEditor())
+    public function __construct(private readonly WikidataExternalIdEditor $editor = new WikidataExternalIdEditor(), private readonly ExternalIdEditor $externalEditor = new ExternalIdEditor(), private readonly GovTypeEditor $govTypeEditor = new GovTypeEditor(), private readonly CoordinateEditor $coordinateEditor = new CoordinateEditor(), private readonly AddressEditor $addressEditor = new AddressEditor())
     {
     }
 
@@ -90,6 +90,16 @@ final class WikidataLocationAssignmentService
     {
         if (!$location->canEdit() || preg_match('/(?:^|\n)1 MAP\b|(?:^|\n)[1-9] LATI\s|(?:^|\n)[1-9] LONG\s/', $location->gedcom()) === 1) { return false; }
         $updated = $this->coordinateEditor->add($location->gedcom(), $coordinates);
+        if ($updated === $location->gedcom()) { return false; }
+        $location->updateRecord($this->withUpdatedChange($updated), false);
+        return true;
+    }
+
+    /** Add one explicitly accepted external address below the shared place. */
+    public function addAddress(Location $location, array $address): bool
+    {
+        if (!$location->canEdit()) { return false; }
+        $updated = $this->addressEditor->add($location->gedcom(), $address);
         if ($updated === $location->gedcom()) { return false; }
         $location->updateRecord($this->withUpdatedChange($updated), false);
         return true;
