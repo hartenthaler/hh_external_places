@@ -1,18 +1,18 @@
 # **webtrees** module: External Places
 
-![webtrees major version](https://img.shields.io/badge/webtrees-v2.2.x-green)
-[![Module version](https://img.shields.io/badge/version-2.2.6.13-blue)](version.txt)
+![webtrees major version](https://img.shields.io/badge/webtrees-v2.2%20%7C%20v2.3-green)
+[![Module version](https://img.shields.io/badge/version-2.2.6.14-blue)](version.txt)
 [![Downloads](https://img.shields.io/github/downloads/hartenthaler/hh_external_places/total?label=downloads)](https://github.com/hartenthaler/hh_external_places/releases)
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-External Places is a [webtrees](https://www.webtrees.net) module for enriching [Vesta Shared Places](https://github.com/vesta-webtrees-2-custom-modules/vesta_shared_places) (`_LOC`) with public information from Wikidata, FactGrid, GOV, GeoNames and optionally Nominatim/OpenStreetMap. The module focuses on houses, farms and other inhabited buildings, while remaining usable for every kind of shared place. Administrators can enable or disable providers and configure a global nearby-search radius with optional exceptions for individual family trees. Editors can assign and compare external place identifiers, search each provider and inspect cached details. After review, selected external identifiers or information can explicitly be transferred into the shared-place record.
+External Places is a [webtrees](https://www.webtrees.net) module for enriching [Vesta Shared Places](https://github.com/vesta-webtrees-2-custom-modules/vesta_shared_places) (`_LOC`) with public information from external providers. It helps editors link shared places, compare public information and review details before explicitly transferring selected values into the shared-place record.
 
 ## 📚 Contents
 
 * [Purpose](#purpose)
+* [Domus](#domus)
 * [Main features](#main-features)
 * [Screenshots](#screenshots)
-* [Domus (Wikidata)](#domus-wikidata)
 * [Privacy](#privacy)
 * [Requirements](#requirements)
 * [Installation](#installation)
@@ -28,47 +28,52 @@ A shared place can represent a building, farm, church, cemetery, street, square,
 The module stores validated external identifiers alongside the shared-place record and displays provider-specific public information such as
 names, descriptions, types, images, addresses, relationships, external references and population data where available.
 
-The module does not synchronise with Wikidata, FactGrid or GOV and does not send genealogical person data to these services.
-Assigning, replacing or removing an identifier, or transferring a reviewed value into the shared-place record,
-is always an explicit action by a user who may edit the shared place.
+### Providers
 
-Wikidata, FactGrid, GOV and GeoNames use fixed provider adapters.
-Their public cross-references can be checked for consistency; missing identifiers are added only after an editor explicitly submits them.
-See [External providers and identifier consistency](docs/EXTERNAL_PROVIDERS.md).
+The module currently supports these optional providers:
 
-Nominatim/OpenStreetMap has a different role. It is an optional, contextual
-geocoder: the module uses the shared-place name to show a matching OSM object,
-its address hierarchy and, where available, its geometry on a map. Nominatim
-does not provide an assignable external identifier in this module and is not
-used for bulk or automatic searches. Its block is shown first on the external
-information page so that the local OSM context is visible before the
-identifier-based provider sections. Requests are cached and subject to the
+* [Wikidata](https://www.wikidata.org)
+* [FactGrid](https://database.factgrid.de)
+* [GOV](https://gov.genealogy.net)
+* [GeoNames](https://www.geonames.org)
+* [GenWiki](https://wiki.genealogy.net)
+* [Nominatim/OpenStreetMap](https://nominatim.openstreetmap.org) for contextual map information
+
+See [External providers and identifier consistency](docs/EXTERNAL_PROVIDERS.md) for provider-specific details.
+
+Nominatim/OpenStreetMap provides contextual map information: the module uses
+the shared-place name to show a matching OSM object, its address hierarchy and,
+where available, its geometry on a map. Its block is shown first on the
+external-information page. Requests are cached and subject to the
 [Nominatim usage policy](https://operations.osmfoundation.org/policies/nominatim/).
 
-<a id="domus-wikidata"></a>
-## 🏠 Domus (Wikidata)
+<a id="domus"></a>
+## 🏠 Domus
 
 [Domus](https://domus.genealogy.net) is an open application for researching the history of houses and buildings. It complements webtrees: webtrees remains the place for private genealogical data, while Domus can provide specialised public research and map views.
 **Show in Domus** opens the linked Wikidata item in Domus in a new browser tab.
 Without a Wikidata link, it opens the Domus map start page.
-Domus is a separate public research application; the module only provides links to it.
+The Domus view can expose links to GOV and GenWiki, overlay historical maps,
+and show Wikidata residents or owners for houses and farms where available.
+
+![A shared place opened in Domus](docs/images/domus.png)
 
 <a id="main-features"></a>
 ## ⚙️ Main features
 
 The current release provides:
 
-* recognising typed Wikidata and FactGrid QIDs, GOV, GenWiki and GeoNames IDs;
-* loading and caching public information from Wikidata, FactGrid, GOV, GenWiki, GeoNames and Nominatim;
+* recognising typed external identifiers;
+* loading and caching public information from enabled providers;
 * provider-specific searches (including GenWiki article search) and nearby searches where the provider supports them;
-* assigning, replacing and removing identifiers explicitly, without automatic GEDCOM changes;
+* assigning, replacing and removing identifiers explicitly;
 * checking cross-references between providers and showing whether they are consistent;
 * filtering provider searches by hierarchy level: house/farm, country, federation/international organisation, or planet;
 * showing historical addresses, owners and occupants from Wikidata or FactGrid;
 * showing a localized GeoNames parent hierarchy and translated type labels;
 * searching public people and organisations associated with external places;
 * linking displayed external people to their provider records and, when available, to WikiTree (`P2949`);
-* configuring enabled providers and one global nearby-search radius with optional tree exceptions; and
+* configuring enabled providers and search options; and
 * opening linked Wikidata places in Domus.
 
 <a id="screenshots"></a>
@@ -113,35 +118,19 @@ owners, the module displays these additional details as well.
 
 ### Searching and assigning an external ID
 
-Editors can search each provider by name or by geographic radius.
+Editors can search each provider by name or, where supported, by geographic radius.
 Result lists can be filtered for the relevant hierarchy level when a provider returns many matches.
 
 ![External-ID assignment and provider searches](docs/images/zuordnung.png)
-
-### Domus integration
-
-Linked Wikidata places can be opened in [Domus](https://domus.genealogy.net).
-The Domus view can expose links to GOV and GenWiki, overlay historical maps,
-and show Wikidata residents or owners for houses and farms where available.
-
-![A shared place opened in Domus](docs/images/domus.png)
 
 <a id="privacy"></a>
 ## 🔒 Privacy
 
 When an external entry is loaded, the server requests only the validated identifier and requested display language.
 
-GOV alternate place names are displayed with their language code and, where
-available, their validity period. Editors can compare them with the names in
-the shared place and explicitly add a missing name together with its language.
-Nearby searches send the shared place's coordinates and configured radius to the selected provider.
-Standard technical request metadata is sent by the server. The module never sends names of living people,
-family relationships, private notes, sources or other genealogical data.
-
-Provider coordinates are normalised to WGS84 and compared with the shared
-place using a provider-neutral great-circle distance. The hierarchy levels,
-tolerances and coordinate-import rules are documented in
-[Coordinates and consistency](docs/COORDINATES.md).
+Nearby searches send the shared place's coordinates and configured radius to
+the selected provider. Standard technical request metadata is sent by the
+server. The module does not transmit private genealogical notes or sources.
 
 Responses are cached locally. If a provider is temporarily unavailable, the normal Vesta Shared Place page remains available.
 When the optional Legal Notice module is active, it includes the selected external providers in the generated privacy policy together with the purpose of the request and the transferred technical data.
@@ -149,7 +138,7 @@ When the optional Legal Notice module is active, it includes the selected extern
 <a id="requirements"></a>
 ## 📌 Requirements
 
-* webtrees 2.2.x
+* webtrees 2.2.x or 2.3.x (the module is webtrees 2.3 ready)
 * Vesta Shared Places
 * PHP with HTTPS access to the selected provider APIs for live enrichment; cached data remains usable while offline
 
@@ -187,26 +176,11 @@ An editor can use **Assign external identifier** on the shared-place page. The p
 
 If an existing item has been merged or redirected by Wikidata, the assignment page shows the replacement QID and lets the editor apply it explicitly.
 
-For a shared place with GEDCOM `MAP`, `LATI` and `LONG` coordinates, editors can also use **Search nearby**. The module shows at most 20 candidates inside the configured radius. It ranks suggestions by matching name and distance, but never creates a link automatically. Administrators can set one radius for all family trees and add exceptions only where a tree needs a different value; the selected value is used consistently for nearby searches in Wikidata, FactGrid and GOV.
+For a shared place with GEDCOM `MAP`, `LATI` and `LONG` coordinates, editors can also use **Search nearby**. The module shows at most 20 candidates inside the configured radius and ranks suggestions by matching name and distance. The search radius is configured in the module settings.
 
-Search results use a compact table. They show the provider label and identifier, the description and—where applicable—distance. Opening a result uses the provider's public page; **Assign** remains an explicit editor action.
+Search results use a compact table. They show the provider label and identifier, the description and—where applicable—distance. Opening a result uses the provider's public page.
 
-Administrators can maintain provider-specific type lists for eight hierarchy
-levels: house/building, locality, municipality, county, state, country,
-federation/international organisation, and planet. The lists are presented in
-an accordion, and each provider has a **Reset to default** action. On the
-assignment page, editors are offered only the filter matching an unambiguous
-shared-place classification. If the place type is missing, unknown or
-contradictory, all filter buttons remain available; the unfiltered search is
-always possible. Nearby-search buttons are disabled until the shared place has
-valid coordinates; a tooltip explains what is missing.
-
-GOV type labels come from the complete public vocabulary snapshot in
-[`resources/config/gov-types.owl`](resources/config/gov-types.owl), not only
-from the initial filter defaults. See [the GOV type catalogue
-documentation](docs/GOV_TYPE_CATALOG.md) for provenance and updates.
-
-When Wikidata provides address statements, the shared-place page shows a read-only address table with house number, street, postal code, place and optional validity dates. It is intentionally omitted for items without address data, such as most settlements or administrative areas.
+When Wikidata provides address statements, the shared-place page shows a read-only address table with house number, street, postal code, place and optional validity dates.
 
 Where Wikidata or FactGrid contains them, the same panel also shows public owners and occupants. These are external facts: no webtrees person is linked, changed or created. The table gives the public name and provider link, known birth/death dates, the period of the relationship and available WikiTree links.
 GOV may provide several historical population figures. They are displayed as a
@@ -219,6 +193,7 @@ their configured meaning and, where a public URL template is known, as links.
 * [Concept: Wikidata and Domus integration](docs/WIKIDATA_DOMUS_CONCEPT.md)
 * [External providers and identifier consistency](docs/EXTERNAL_PROVIDERS.md)
 * [Coordinates and consistency](docs/COORDINATES.md)
+* [FamilySearch Places access test](docs/FAMILYSEARCH_PLACES.md)
 * [GOV type catalogue](docs/GOV_TYPE_CATALOG.md)
 * [Module and repository naming proposal](docs/RENAME_PROPOSAL.md)
 * [Roadmap](docs/ROADMAP.md)
