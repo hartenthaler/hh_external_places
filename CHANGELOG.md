@@ -2,10 +2,10 @@
 
 ## Unreleased
 
-- Address rows imported from Wikidata or FactGrid are now compared with
-  existing `_LOC:_ADDR` data. Matching rows are marked consistent, are not
-  offered for duplicate import and can be hidden with the consistency setting
-  (Issue #33).
+- Editors can now transfer structured address rows from Wikidata and FactGrid
+  into `_LOC:_ADDR`. Each imported row keeps provider provenance; existing
+  matching rows are detected to prevent duplicate imports and can be marked or
+  hidden as consistent (Issue #33).
 
 ## 2.2.6.14 - 2026-09-22
 
