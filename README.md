@@ -1,7 +1,7 @@
 # **webtrees** module: External Places
 
 ![webtrees major version](https://img.shields.io/badge/webtrees-v2.2%20%7C%20v2.3-green)
-[![Module version](https://img.shields.io/badge/version-2.2.6.14-blue)](version.txt)
+[![Module version](https://img.shields.io/badge/version-2.2.6.15-blue)](version.txt)
 [![Downloads](https://img.shields.io/github/downloads/hartenthaler/hh_external_places/total?label=downloads)](https://github.com/hartenthaler/hh_external_places/releases)
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
