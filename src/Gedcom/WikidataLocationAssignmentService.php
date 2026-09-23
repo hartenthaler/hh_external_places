@@ -108,6 +108,39 @@ final class WikidataLocationAssignmentService
         return true;
     }
 
+    /** Add one explicitly accepted population observation below the shared place. */
+    public function addPopulation(Location $location, string $period, int|float $value, string $provider, string $externalId, string $sourceUrl): bool
+    {
+        if (!$location->canEdit()) {
+            return false;
+        }
+        $updated = (new PopulationEditor())->add($location->gedcom(), $period, $value, $provider, $externalId, $sourceUrl);
+        if ($updated === $location->gedcom()) {
+            return false;
+        }
+        $location->updateRecord($this->withUpdatedChange($updated), false);
+
+        return true;
+    }
+
+    /** Add one explicitly accepted provider image as an external media object. */
+    public function addImage(Location $location, string $url, string $provider, string $externalId, ?string $title = null): bool
+    {
+        if (!$location->canEdit()) {
+            return false;
+        }
+
+        $editor = new MediaEditor();
+        $mediaXref = $editor->add($location, $url, $provider, $externalId, $title);
+        if ($mediaXref === null) {
+            return false;
+        }
+        $updated = rtrim($location->gedcom()) . "\n1 OBJE @" . $mediaXref . "@\n";
+        $location->updateRecord($this->withUpdatedChange($updated), false);
+
+        return true;
+    }
+
     /**
      * Create one external person and link it to the shared place.
      *

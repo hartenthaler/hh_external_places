@@ -192,9 +192,10 @@ consistent external information.
 The currently offered GEDCOM transfers are summarized in
 [Provider data offered for transfer](docs/IMPORTABLE_PROVIDER_DATA.md). They
 include explicitly selected external identifiers, coordinates, place names,
-GOV types, Wikidata/FactGrid address rows and newly created individuals from
-provider relationships. Descriptions, images and population data remain
-display-only.
+GOV types, Wikidata/FactGrid/Nominatim address rows, population observations,
+provider images and newly created individuals from provider relationships.
+Images remain external links in newly created media objects; the module does
+not download or silently copy image files.
 
 Where Wikidata or FactGrid contains them, the same panel also shows public
 owners and occupants. An editor can explicitly select **Add person** to create
@@ -204,8 +205,12 @@ merged automatically. The table gives the public name and provider link, known
 birth/death dates, the period of the relationship and available WikiTree links.
 GOV may provide several historical population figures. They are displayed as a
 chronologically sorted table with a compact line chart, using the user's
-webtrees number formatting. Additional GOV external identifiers are shown with
-their configured meaning and, where a public URL template is known, as links.
+webtrees number formatting. Editors can explicitly add an observation as a
+GEDCOM-L demographic data (`_DMGD` with `TYPE POPULATION` and an optional
+`DATE`), with provenance retained in a valid record-level note. The same table
+marks matching observations as consistent and avoids duplicates.
+Additional GOV external identifiers are shown with their configured meaning
+and, where a public URL template is known, as links.
 
 <a id="documentation"></a>
 ## 📖 Documentation
@@ -218,6 +223,7 @@ their configured meaning and, where a public URL template is known, as links.
 * [Roadmap](docs/ROADMAP.md)
 * [Development notes](docs/DEVELOPMENT.md)
 * [Historical address model](docs/HISTORICAL_ADDRESSES.md)
+* [Field-level reconciliation and import actions](docs/FIELD_RECONCILIATION.md)
 * [Provider data offered for transfer](docs/IMPORTABLE_PROVIDER_DATA.md)
 * [Owner and occupant metadata](docs/OWNER_AND_OCCUPANT_METADATA.md)
 * [Version 2 roadmap](docs/ROADMAP.md)

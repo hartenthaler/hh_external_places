@@ -6,6 +6,7 @@ namespace Hartenthaler\Webtrees\Module\ExternalPlacesModule\Presentation;
 
 use Fisharebest\Webtrees\Date;
 use Fisharebest\Webtrees\I18N;
+use Fisharebest\Webtrees\Location;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalInformation;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalAddress;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalProviderRegistry;
@@ -17,6 +18,8 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\NominatimProvider
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\CoordinateConsistencySettings;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Gedcom\AddressEditor;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Gedcom\GovTypeValidator;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Gedcom\MediaEditor;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Gedcom\PopulationEditor;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Geo\Coordinates;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\MoreI18N;
 
@@ -31,7 +34,7 @@ final class ExternalInformationRenderer
         return $this->showConsistentReferences;
     }
 
-    public function externalInformationHtml(array $identifiers, string $language, string $skip = '', string $placeName = '', ?string $assignmentUrl = null, string $gedcom = '', array &$genwikiShown = [], ?Coordinates $sharedCoordinates = null, array $associatedPersonKeys = []): string
+    public function externalInformationHtml(array $identifiers, string $language, string $skip = '', string $placeName = '', ?string $assignmentUrl = null, string $gedcom = '', array &$genwikiShown = [], ?Coordinates $sharedCoordinates = null, array $associatedPersonKeys = [], ?Location $location = null): string
     {
         if ($identifiers === []) {
             return '';
@@ -123,13 +126,28 @@ final class ExternalInformationRenderer
                     $html .= $this->addressesHtml($information, $assignmentUrl, $gedcom);
                 }
                 if (($information?->population ?? []) !== []) {
-                    $html .= $this->populationHtml($information->population ?? []);
+                    $html .= $this->populationHtml($information, $assignmentUrl, $gedcom);
                 }
                 if ($information?->coordinates !== null) {
                     $html .= $this->coordinateConsistencyHtml($information->coordinates, $sharedCoordinates, $provider->label(), $gedcom, $assignmentUrl);
                 }
                 if ($information?->imageUrl !== null) {
-                    $html .= '<br><img src="' . e($information->imageUrl) . '" alt="" loading="lazy" style="max-width:500px;max-height:500px;width:auto;height:auto">';
+                    $imageConsistent = $location !== null && (new MediaEditor())->contains($location, $information->imageUrl);
+                    if (!$imageConsistent || $this->showConsistentReferences()) {
+                        $html .= '<br><img src="' . e($information->imageUrl) . '" alt="" loading="lazy" style="max-width:500px;max-height:500px;width:auto;height:auto">';
+                        if ($imageConsistent) {
+                            $html .= ' <span class="text-success">' . e(I18N::translate('consistent')) . '</span>';
+                        }
+                    }
+                    if (!$imageConsistent && $assignmentUrl !== null) {
+                        $html .= ' <form method="post" action="' . e($assignmentUrl) . '" class="d-inline">' . csrf_field()
+                            . '<input type="hidden" name="operation" value="add-image">'
+                            . '<input type="hidden" name="image_url" value="' . e($information->imageUrl) . '">'
+                            . '<input type="hidden" name="image_provider" value="' . e($information->provider) . '">'
+                            . '<input type="hidden" name="image_external_id" value="' . e($information->value) . '">'
+                            . '<input type="hidden" name="image_title" value="' . e($information->label ?? $information->value) . '">'
+                            . '<button class="btn btn-sm btn-outline-primary" type="submit">' . e(I18N::translate('Add image')) . '</button></form>';
+                    }
                 }
                 if ($information !== null) {
                     if ($provider->key() === 'gov' && ($information->typeIds !== [] || $information->typeId !== null)) {
@@ -469,17 +487,44 @@ final class ExternalInformationRenderer
         return $names;
     }
 
-    private function populationHtml(array $population): string
+    private function populationHtml(ExternalInformation $information, ?string $assignmentUrl, string $gedcom): string
     {
+        $population = $information->population;
         if ($population === []) { return ''; }
+        $populationEditor = new PopulationEditor();
+        $visiblePopulation = [];
+        foreach ($population as $period => $value) {
+            if ($populationEditor->contains($gedcom, (string) $period, $value) && !$this->showConsistentReferences()) {
+                continue;
+            }
+            $visiblePopulation[$period] = $value;
+        }
+        if ($visiblePopulation === []) {
+            return '';
+        }
+        $population = $visiblePopulation;
         uksort($population, static function (string $left, string $right): int {
             $leftKey = self::populationSortKey($left);
             $rightKey = self::populationSortKey($right);
             return $leftKey <=> $rightKey ?: strnatcasecmp($left, $right);
         });
-        $html = '<div class="d-flex flex-wrap gap-3 align-items-start mt-2"><div><strong>' . e(I18N::translate('Population')) . '</strong><table class="table table-sm mb-0"><thead><tr><th>' . e(MoreI18N::xlate('Year')) . '</th><th>' . e(I18N::translate('Population')) . '</th></tr></thead><tbody>';
+        $html = '<div class="d-flex flex-wrap gap-3 align-items-start mt-2"><div><strong>' . e(I18N::translate('Population')) . '</strong><table class="table table-sm mb-0"><thead><tr><th>' . e(MoreI18N::xlate('Year')) . '</th><th>' . e(I18N::translate('Population')) . '</th><th></th></tr></thead><tbody>';
         foreach ($population as $year => $value) {
-            $html .= '<tr><td>' . e((string) $year) . '</td><td>' . e(I18N::number($value)) . '</td></tr>';
+            $action = '';
+            $consistent = $populationEditor->contains($gedcom, (string) $year, $value);
+            if ($consistent) {
+                $action = '<span class="text-success">' . e(I18N::translate('consistent')) . '</span>';
+            } elseif ($assignmentUrl !== null) {
+                $action = '<form method="post" action="' . e($assignmentUrl) . '" class="d-inline">' . csrf_field()
+                    . '<input type="hidden" name="operation" value="add-population">'
+                    . '<input type="hidden" name="population_period" value="' . e((string) $year) . '">'
+                    . '<input type="hidden" name="population_value" value="' . e((string) $value) . '">'
+                    . '<input type="hidden" name="population_provider" value="' . e($information->provider) . '">'
+                    . '<input type="hidden" name="population_external_id" value="' . e($information->value) . '">'
+                    . '<input type="hidden" name="population_source_url" value="' . e($information->url) . '">'
+                    . '<button class="btn btn-sm btn-outline-primary" type="submit">' . e(I18N::translate('Add population')) . '</button></form>';
+            }
+            $html .= '<tr><td>' . e((string) $year) . '</td><td>' . e(I18N::number($value)) . '</td><td>' . $action . '</td></tr>';
         }
         $html .= '</tbody></table></div>' . $this->populationChartHtml($population) . '</div>';
         return $html;

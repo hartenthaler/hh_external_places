@@ -93,6 +93,29 @@ final class WikidataLocationAssignmentAction implements RequestHandlerInterface
             }
             $added = $service->addAddress($location, $address);
             FlashMessages::addMessage($added ? I18N::translate('The address has been added to the shared place.') : I18N::translate('The address was not added because it already exists or is empty.'), $added ? 'success' : 'danger');
+        } elseif ($operation === 'add-population') {
+            $period = Validator::parsedBody($request)->string('population_period', '');
+            $value = Validator::parsedBody($request)->string('population_value', '');
+            $provider = Validator::parsedBody($request)->string('population_provider', '');
+            $externalId = Validator::parsedBody($request)->string('population_external_id', '');
+            $sourceUrl = Validator::parsedBody($request)->string('population_source_url', '');
+            if ($provider === '' || $externalId === '' || !is_numeric($value) || (float) $value < 0) {
+                throw new HttpBadRequestException(I18N::translate('The population observation is invalid.'));
+            }
+            $numericValue = (float) $value;
+            $numericValue = $numericValue == (int) $numericValue ? (int) $numericValue : $numericValue;
+            $added = $service->addPopulation($location, $period, $numericValue, $provider, $externalId, $sourceUrl);
+            FlashMessages::addMessage($added ? I18N::translate('The population observation has been added to the shared place.') : I18N::translate('The population observation was not added because it already exists or is invalid.'), $added ? 'success' : 'danger');
+        } elseif ($operation === 'add-image') {
+            $url = Validator::parsedBody($request)->string('image_url', '');
+            $provider = Validator::parsedBody($request)->string('image_provider', '');
+            $externalId = Validator::parsedBody($request)->string('image_external_id', '');
+            $title = Validator::parsedBody($request)->string('image_title', '');
+            if ($provider === '' || $externalId === '' || !preg_match('~^https?://[^\s<>"\']+$~i', trim($url))) {
+                throw new HttpBadRequestException(I18N::translate('The external image is invalid.'));
+            }
+            $added = $service->addImage($location, $url, $provider, $externalId, $title !== '' ? $title : null);
+            FlashMessages::addMessage($added ? I18N::translate('The image has been linked to the shared place.') : I18N::translate('The image was not linked because it already exists or is invalid.'), $added ? 'success' : 'danger');
         } elseif ($operation === 'add-person') {
             $providerKey = Validator::parsedBody($request)->string('person_provider', '');
             $provider = (new ExternalProviderRegistry())->byKey($providerKey);
