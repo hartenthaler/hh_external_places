@@ -347,10 +347,11 @@ final class WikibaseProvider implements ExternalProvider
         foreach ($entities as $id => $entity) {
             $claims = is_array($entity['claims'] ?? null) ? $entity['claims'] : [];
             $links = [];
-            foreach (['wikidata' => $this->definition['wikidata'], 'gov' => $this->definition['gov'], 'wikitree' => $this->definition['wikitree']] as $provider => $property) {
+            foreach (['factgrid' => $this->definition['factgrid'], 'wikidata' => $this->definition['wikidata'], 'gov' => $this->definition['gov'], 'wikitree' => $this->definition['wikitree']] as $provider => $property) {
                 if ($property === null) { continue; }
                 foreach ($this->claimStrings($claims[$property] ?? [], $provider) as $value) {
                     $baseUrl = match ($provider) {
+                        'factgrid' => 'https://database.factgrid.de/entity/',
                         'wikidata' => 'https://www.wikidata.org/entity/',
                         'gov' => 'https://gov.genealogy.net/item/show/',
                         default => 'https://www.wikitree.com/wiki/',
@@ -359,9 +360,21 @@ final class WikibaseProvider implements ExternalProvider
                 }
             }
             $label = $this->languageValue($entity['labels'] ?? [], $language);
-            $people[$id] = new ExternalPerson($this->key, $id, $this->entityUrl($id), $label, $this->claimDate($claims['P569'] ?? []), $this->claimDate($claims['P570'] ?? []), $links);
+            $people[$id] = new ExternalPerson($this->key, $id, $this->entityUrl($id), $label, $this->claimDate($claims['P569'] ?? []), $this->claimDate($claims['P570'] ?? []), $links, $this->sexFromClaims($claims));
         }
         return $people;
+    }
+
+    /** @param array<string,mixed> $claims */
+    private function sexFromClaims(array $claims): ?string
+    {
+        $sexId = $this->claimEntityId($claims['P21'] ?? []);
+        return match ($sexId) {
+            'Q6581097' => 'M',
+            'Q6581072' => 'F',
+            'Q1097630', 'Q2449503' => 'X',
+            default => null,
+        };
     }
 
     /** @param mixed $statements */

@@ -4,8 +4,9 @@ This document describes the provider-specific owner and occupant enrichment of
 the provider-neutral **External Places** module.
 
 External Places can show selected public relationships for a shared place.
-The module reads them from Wikidata only and never creates, changes, or links
-webtrees individual records.
+The module reads them from Wikidata and FactGrid. Editors may explicitly add a
+new webtrees individual from a relationship; the module never automatically
+matches or merges an existing individual.
 
 ## Included statements
 
@@ -32,9 +33,13 @@ for validated, fixed provider mappings.
 
 The data comes from the public Wikidata directory and may be shown to visitors
 who can view the shared place. It is clearly marked as sourced from Wikidata.
-The module deliberately does not try to match an external Wikidata person to a
-person in the family tree, does not import personal data into GEDCOM, and does
-not send local person data to Wikidata.
+The module deliberately does not try to match an external person to an
+existing person in the family tree and does not send local person data to an
+external provider. The explicit **Add person** action creates a new `INDI`
+record with a canonical GEDCOM name (`NAME`, `GIVN`, `SURN`), stores the
+available Wikidata/FactGrid and WikiTree external IDs, records `SEX` (`U` for
+an unknown value), adds a `PROP` or `RESI` event and links the new person from
+the shared place with `_LOC:_ASSO`.
 
 The module requests at most 20 related items for one place display. If that
 additional request fails, the verified identifiers remain available as

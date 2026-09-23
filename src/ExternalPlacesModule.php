@@ -22,6 +22,7 @@ use Fisharebest\Webtrees\Elements\AddressState;
 use Fisharebest\Webtrees\Elements\CustomElement;
 use Fisharebest\Webtrees\Elements\DateValue;
 use Fisharebest\Webtrees\Elements\NoteStructure;
+use Fisharebest\Webtrees\Elements\XrefAssociate;
 use Fisharebest\Webtrees\FlashMessages;
 use Fisharebest\Webtrees\Registry;
 use Fisharebest\Webtrees\Site;
@@ -38,6 +39,7 @@ use Fisharebest\Webtrees\Validator;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Infrastructure\WikibaseCacheSchema;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Gedcom\ExternalIdService;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Gedcom\GovTypeValidator;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Gedcom\PersonAssociationEditor;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalInformation;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalProviderRegistry;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalProviderSettings;
@@ -132,6 +134,9 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
     {
         $factory = Registry::elementFactory();
         $factory->registerTags([
+            '_LOC:_ASSO'          => new XrefAssociate(I18N::translate('Person associated to location')),
+            '_LOC:_ASSO:RELA'     => new CustomElement(I18N::translate('Relationship')),
+            '_LOC:_ASSO:NOTE'     => new NoteStructure(I18N::translate('Note')),
             '_LOC:_ADDR'          => new AddressLine(I18N::translate('Address')),
             '_LOC:_ADDR:_HNO'     => new CustomElement(I18N::translate('House number')),
             '_LOC:_ADDR:ADR1'     => new AddressLine1(I18N::translate('Address line 1')),
@@ -145,7 +150,8 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             '_LOC:_ADDR:NOTE'     => new NoteStructure(I18N::translate('Note')),
         ]);
         $factory->registerSubTags([
-            '_LOC'       => [['_ADDR', '0:M']],
+            '_LOC'       => [['_ASSO', '0:M'], ['_ADDR', '0:M']],
+            '_LOC:_ASSO' => [['RELA', '0:1'], ['NOTE', '0:M']],
             '_LOC:_ADDR' => [['_HNO', '0:1'], ['ADR1', '0:1'], ['ADR2', '0:1'], ['ADR3', '0:1'], ['CITY', '0:1'], ['STAE', '0:1'], ['POST', '0:1'], ['CTRY', '0:1'], ['DATE', '0:1'], ['NOTE', '0:M']],
         ]);
     }
@@ -266,6 +272,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
 
         $identifier = $lookup->identifier();
         $sharedCoordinates = Coordinates::fromGedcom($location->gedcom());
+        $associatedPersonKeys = (new PersonAssociationEditor())->associatedExternalKeys($location);
         $coordinates = $sharedCoordinates?->toArray();
         // Domus deep-links are meaningful only for a known Wikidata item.
         // Do not show a generic Domus start-page button for places without a
@@ -287,7 +294,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             // Nominatim is contextual map/address information, not an
             // assignable identifier provider. Keep this special block first.
             $html = $nominatimHtml;
-            $html .= $renderer->externalInformationHtml($externalIdentifiers, $language, '', $location->fullName(), $assignmentUrl, $location->gedcom(), $genwikiShown, $sharedCoordinates);
+            $html .= $renderer->externalInformationHtml($externalIdentifiers, $language, '', $location->fullName(), $assignmentUrl, $location->gedcom(), $genwikiShown, $sharedCoordinates, $associatedPersonKeys);
             $html .= $geoNamesHtml;
             $html .= '<div class="d-flex gap-2 flex-wrap mt-2">';
             if ($location->canEdit()) {
@@ -340,8 +347,8 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                 ),
                 $language,
             );
-            $html .= $renderer->personRelationsHtml(MoreI18N::xlate('Owner'), $entity->owners, $people);
-            $html .= $renderer->personRelationsHtml(I18N::translate('Occupants'), $entity->occupants, $people);
+            $html .= $renderer->personRelationsHtml(MoreI18N::xlate('Owner'), $entity->owners, $people, $assignmentUrl, $associatedPersonKeys, 'wikidata', 'Owner');
+            $html .= $renderer->personRelationsHtml(I18N::translate('Occupants'), $entity->occupants, $people, $assignmentUrl, $associatedPersonKeys, 'wikidata', 'Occupant');
         }
         if ($entity?->commonsFileName !== null) {
             $fileUrl = 'https://commons.wikimedia.org/wiki/Special:FilePath/' . rawurlencode($entity->commonsFileName);
@@ -360,7 +367,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         // assignable identifier provider. Keep this special block first.
         $nominatimHtml = $renderer->nominatimHtml($renderer->nominatimPlaceName($location->gedcom(), $this->nominatimPlaceContext($place, $location->fullName())), $language, $location->gedcom());
         $html = $nominatimHtml . $html;
-        $html .= $renderer->externalInformationHtml($externalIdentifiers, $language, 'wikidata', $location->fullName(), $assignmentUrl, $location->gedcom(), $genwikiShown, $sharedCoordinates);
+        $html .= $renderer->externalInformationHtml($externalIdentifiers, $language, 'wikidata', $location->fullName(), $assignmentUrl, $location->gedcom(), $genwikiShown, $sharedCoordinates, $associatedPersonKeys);
         $html .= $renderer->geoNamesHtml($location->fullName(), $language);
         $html .= '<div class="d-flex gap-2 flex-wrap mt-2">';
         if ($location->canEdit()) {
