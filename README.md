@@ -180,14 +180,14 @@ For a shared place with GEDCOM `MAP`, `LATI` and `LONG` coordinates, editors can
 
 Search results use a compact table. They show the provider label and identifier, the description and—where applicable—distance. Opening a result uses the provider's public page.
 
-When Wikidata or FactGrid provides address data, the shared-place page shows an
-address table with house number, street, postal code, place, administrative
-area and optional validity dates. Editors can transfer individual rows into the registered
-`_LOC:_ADDR` structure; identical existing rows are not duplicated and the
-provider reference is retained for provenance. Existing `_LOC:_ADDR` rows are
-checked before the transfer button is shown. Matching rows are marked as
-consistent and can be hidden with the setting for consistent external
-information.
+When Wikidata or FactGrid provides address data, editors can transfer
+individual structured address rows into the registered `_LOC:_ADDR` structure.
+The shared-place page shows house number, street, postal code, place,
+administrative area and optional validity dates. Each imported row keeps the
+provider reference as provenance; existing matching rows are not duplicated.
+Before offering a transfer, existing `_LOC:_ADDR` rows are checked. Matching
+rows are marked as consistent and can be hidden with the setting for
+consistent external information.
 
 The currently offered GEDCOM transfers are summarized in
 [Provider data offered for transfer](docs/IMPORTABLE_PROVIDER_DATA.md). They
