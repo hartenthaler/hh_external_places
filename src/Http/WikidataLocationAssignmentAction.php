@@ -85,6 +85,13 @@ final class WikidataLocationAssignmentAction implements RequestHandlerInterface
             if ($coordinates === null) { throw new HttpBadRequestException(I18N::translate('Invalid coordinates.')); }
             $added = $service->addCoordinates($location, $coordinates);
             FlashMessages::addMessage($added ? I18N::translate('The coordinates have been added to the shared place.') : I18N::translate('The coordinates were not added because coordinates already exist.'), $added ? 'success' : 'danger');
+        } elseif ($operation === 'add-address') {
+            $address = [];
+            foreach (['house_number', 'street', 'postal_code', 'city', 'from', 'until', 'provider', 'external_id', 'source_url'] as $field) {
+                $address[$field] = Validator::parsedBody($request)->string('address_' . $field, '');
+            }
+            $added = $service->addAddress($location, $address);
+            FlashMessages::addMessage($added ? I18N::translate('The address has been added to the shared place.') : I18N::translate('The address was not added because it already exists or is empty.'), $added ? 'success' : 'danger');
         } else {
             throw new HttpBadRequestException(I18N::translate('Invalid Wikidata assignment operation.'));
         }

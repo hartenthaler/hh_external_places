@@ -36,7 +36,7 @@ final class WikibasePropertyCatalog
             return self::$definitions;
         }
 
-        $required = ['authority', 'label', 'type', 'image', 'coordinate', 'factgrid', 'wikidata', 'gov', 'geonames', 'genwiki', 'wikitree', 'owner', 'occupant', 'begin', 'end'];
+        $required = ['authority', 'label', 'type', 'image', 'coordinate', 'factgrid', 'wikidata', 'gov', 'geonames', 'genwiki', 'wikitree', 'owner', 'occupant', 'begin', 'end', 'address', 'street', 'house_number', 'postal_code', 'locality', 'district', 'postal_address'];
         foreach ($decoded as $provider => $definition) {
             if (!is_string($provider) || !is_array($definition)) {
                 continue;

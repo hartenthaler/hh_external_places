@@ -111,8 +111,8 @@ record.
 
 ### Addresses and related people
 
-When Wikidata provides addresses or people connected with a place, such as
-owners, the module displays these additional details as well.
+When Wikidata or FactGrid provides addresses or people connected with a place,
+such as owners, the module displays these additional details as well.
 
 ![Historical addresses and related individuals](docs/images/address_individuals.png)
 
@@ -180,7 +180,17 @@ For a shared place with GEDCOM `MAP`, `LATI` and `LONG` coordinates, editors can
 
 Search results use a compact table. They show the provider label and identifier, the description and—where applicable—distance. Opening a result uses the provider's public page.
 
-When Wikidata provides address statements, the shared-place page shows a read-only address table with house number, street, postal code, place and optional validity dates.
+When Wikidata or FactGrid provides address data, the shared-place page shows an
+address table with house number, street, postal code, place, administrative
+area and optional validity dates. Editors can transfer individual rows into the registered
+`_LOC:_ADDR` structure; identical existing rows are not duplicated and the
+provider reference is retained for provenance.
+
+The currently offered GEDCOM transfers are summarized in
+[Provider data offered for transfer](docs/IMPORTABLE_PROVIDER_DATA.md). They
+include explicitly selected external identifiers, coordinates, place names,
+GOV types and individual Wikidata/FactGrid address rows. Descriptions, images,
+population data and owners or occupants remain display-only.
 
 Where Wikidata or FactGrid contains them, the same panel also shows public owners and occupants. These are external facts: no webtrees person is linked, changed or created. The table gives the public name and provider link, known birth/death dates, the period of the relationship and available WikiTree links.
 GOV may provide several historical population figures. They are displayed as a
@@ -199,6 +209,7 @@ their configured meaning and, where a public URL template is known, as links.
 * [Roadmap](docs/ROADMAP.md)
 * [Development notes](docs/DEVELOPMENT.md)
 * [Historical address model](docs/HISTORICAL_ADDRESSES.md)
+* [Provider data offered for transfer](docs/IMPORTABLE_PROVIDER_DATA.md)
 * [Owner and occupant metadata](docs/OWNER_AND_OCCUPANT_METADATA.md)
 * [Version 2 roadmap](docs/ROADMAP.md)
 * [Changelog](CHANGELOG.md)

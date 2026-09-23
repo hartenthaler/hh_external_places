@@ -11,6 +11,17 @@ require_once __DIR__ . '/External/PlaceTypeFilterSettings.php';
 use Fisharebest\Localization\Translation;
 use Fisharebest\Webtrees\I18N;
 use Fisharebest\Webtrees\Date;
+use Fisharebest\Webtrees\Elements\AddressCity;
+use Fisharebest\Webtrees\Elements\AddressCountry;
+use Fisharebest\Webtrees\Elements\AddressLine;
+use Fisharebest\Webtrees\Elements\AddressLine1;
+use Fisharebest\Webtrees\Elements\AddressLine2;
+use Fisharebest\Webtrees\Elements\AddressLine3;
+use Fisharebest\Webtrees\Elements\AddressPostalCode;
+use Fisharebest\Webtrees\Elements\AddressState;
+use Fisharebest\Webtrees\Elements\CustomElement;
+use Fisharebest\Webtrees\Elements\DateValue;
+use Fisharebest\Webtrees\Elements\NoteStructure;
 use Fisharebest\Webtrees\FlashMessages;
 use Fisharebest\Webtrees\Registry;
 use Fisharebest\Webtrees\Site;
@@ -73,6 +84,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
 
     public function boot(): void
     {
+        $this->registerAddressTags();
         $currentVersion = (int) $this->getPreference(self::CACHE_SCHEMA_VERSION_PREFERENCE, '0');
         $targetVersion  = (new WikibaseCacheSchema())->ensureSchema($currentVersion);
 
@@ -113,6 +125,29 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                 ExternalInformationPage::class,
             );
         }
+    }
+
+    /** Register the module-owned structured address below a shared place. */
+    private function registerAddressTags(): void
+    {
+        $factory = Registry::elementFactory();
+        $factory->registerTags([
+            '_LOC:_ADDR'          => new AddressLine(I18N::translate('Address')),
+            '_LOC:_ADDR:_HNO'     => new CustomElement(I18N::translate('House number')),
+            '_LOC:_ADDR:ADR1'     => new AddressLine1(I18N::translate('Address line 1')),
+            '_LOC:_ADDR:ADR2'     => new AddressLine2(I18N::translate('Address line 2')),
+            '_LOC:_ADDR:ADR3'     => new AddressLine3(I18N::translate('Address line 3')),
+            '_LOC:_ADDR:CITY'     => new AddressCity(I18N::translate('City')),
+            '_LOC:_ADDR:STAE'     => new AddressState(I18N::translate('State')),
+            '_LOC:_ADDR:POST'     => new AddressPostalCode(I18N::translate('Postal code')),
+            '_LOC:_ADDR:CTRY'     => new AddressCountry(I18N::translate('Country')),
+            '_LOC:_ADDR:DATE'     => new DateValue(I18N::translate('Date')),
+            '_LOC:_ADDR:NOTE'     => new NoteStructure(I18N::translate('Note')),
+        ]);
+        $factory->registerSubTags([
+            '_LOC'       => [['_ADDR', '0:M']],
+            '_LOC:_ADDR' => [['_HNO', '0:1'], ['ADR1', '0:1'], ['ADR2', '0:1'], ['ADR3', '0:1'], ['CITY', '0:1'], ['STAE', '0:1'], ['POST', '0:1'], ['CTRY', '0:1'], ['DATE', '0:1'], ['NOTE', '0:M']],
+        ]);
     }
 
     /**
@@ -273,8 +308,14 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         $renderer = new ExternalInformationRenderer(self::showConsistentReferences());
         $wikidataClient = new WikidataClient();
         $entity   = $wikidataClient->fetch($identifier, $language);
+        $wikidataProvider = (new ExternalProviderRegistry())->byAuthority('https://www.wikidata.org/entity/');
+        $wikidataInformation = $wikidataProvider?->fetch(
+            new \Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\ExternalIdentifier('wikidata', $identifier->qid(), 'https://www.wikidata.org/entity/', $identifier->entityUrl()),
+            $language,
+        );
 
         $label = $entity?->label ?? $identifier->qid();
+        $assignmentUrl = $location->canEdit() ? self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]) : null;
         $html  = '<section class="mt-4">' . $renderer->providerHeading('wikidata', I18N::translate('Wikidata'));
         $html .= '<a href="' . e($identifier->entityUrl()) . '" rel="noopener noreferrer" target="_blank">' . e($label) . '</a> (' . e($identifier->qid()) . ')';
         if ($entity?->description !== null) {
@@ -288,22 +329,8 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         if ($entity?->coordinates !== null) {
             $html .= $renderer->coordinateConsistencyHtml($entity->coordinates, $sharedCoordinates, 'Wikidata', $location->gedcom(), $location->canEdit() ? self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]) : null);
         }
-        if ($entity !== null && $entity->historicAddresses !== []) {
-            $addressQids = [];
-            foreach ($entity->historicAddresses as $address) {
-                foreach ([$address->streetQid, $address->localityQid] as $qid) {
-                    if ($qid !== null) { $addressQids[] = $qid; }
-                }
-            }
-            $addressLabels = (new WikidataClient())->labels($addressQids, $language);
-            $html .= '<h5 class="mt-3">' . e(MoreI18N::xlate('Addresses')) . '</h5><div class="table-responsive"><table class="table table-sm"><thead><tr>'
-                . '<th>' . e(I18N::translate('House number')) . '</th><th>' . e(I18N::translate('Street')) . '</th><th>' . e(MoreI18N::xlate('Postal code')) . '</th><th>' . e(MoreI18N::xlate('Place')) . '</th><th>' . e(MoreI18N::xlate('From')) . '</th><th>' . e(I18N::translate('Until')) . '</th></tr></thead><tbody>';
-            foreach ($entity->historicAddresses as $address) {
-                $street = $address->streetText ?? ($address->streetQid === null ? '' : ($addressLabels[$address->streetQid] ?? $address->streetQid));
-                $placeName = $address->localityQid === null ? '' : ($addressLabels[$address->localityQid] ?? $address->localityQid);
-                $html .= '<tr><td>' . e($address->houseNumber ?? '') . '</td><td>' . e($street) . '</td><td>' . e($address->postalCode ?? '') . '</td><td>' . e($placeName) . '</td><td>' . e($address->from ?? '') . '</td><td>' . e($address->until ?? '') . '</td></tr>';
-            }
-            $html .= '</tbody></table></div>';
+        if ($wikidataInformation !== null && $wikidataInformation->addresses !== []) {
+            $html .= $renderer->addressesHtml($wikidataInformation, $assignmentUrl);
         }
         if ($entity !== null && ($entity->owners !== [] || $entity->occupants !== [])) {
             $people = (new WikidataClient())->people(
@@ -323,15 +350,9 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         if ($entity === null) {
             $html .= ' — <small>' . e(I18N::translate('Wikidata details are currently unavailable.')) . '</small>';
         }
-        $wikidataProvider = (new ExternalProviderRegistry())->byAuthority('https://www.wikidata.org/entity/');
         $genwikiShown = [];
-        $wikidataReference = $wikidataProvider?->fetch(
-            new \Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\ExternalIdentifier('wikidata', $identifier->qid(), 'https://www.wikidata.org/entity/', $identifier->entityUrl()),
-            $language,
-        );
-        if ($wikidataReference !== null) {
-                    $assignmentUrl = $location->canEdit() ? self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]) : null;
-                    $html .= $renderer->crossReferenceHtml($wikidataReference, $externalIdentifiers, $assignmentUrl);
+        if ($wikidataInformation !== null) {
+            $html .= $renderer->crossReferenceHtml($wikidataInformation, $externalIdentifiers, $assignmentUrl);
         }
         $html .= $renderer->sourceHtml('Wikidata', 'https://www.wikidata.org/') . '</section>';
         $assignmentUrl = $location->canEdit() ? self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]) : null;

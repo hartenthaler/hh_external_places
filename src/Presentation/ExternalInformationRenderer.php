@@ -7,6 +7,7 @@ namespace Hartenthaler\Webtrees\Module\ExternalPlacesModule\Presentation;
 use Fisharebest\Webtrees\Date;
 use Fisharebest\Webtrees\I18N;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalInformation;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalAddress;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalProviderRegistry;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalProviderSettings;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\GeoNamesProvider;
@@ -117,6 +118,9 @@ final class ExternalInformationRenderer
                         }
                     }
                 }
+                if ($information !== null && $information->addresses !== []) {
+                    $html .= $this->addressesHtml($information, $assignmentUrl);
+                }
                 if (($information?->population ?? []) !== []) {
                     $html .= $this->populationHtml($information->population ?? []);
                 }
@@ -152,6 +156,35 @@ final class ExternalInformationRenderer
             }
         }
         return $html;
+    }
+
+    public function addressesHtml(ExternalInformation $information, ?string $assignmentUrl): string
+    {
+        $html = '<h5 class="mt-3">' . e(MoreI18N::xlate('Addresses')) . '</h5><div class="table-responsive"><table class="table table-sm"><thead><tr>'
+            . '<th>' . e(I18N::translate('House number')) . '</th><th>' . e(MoreI18N::xlate('Street')) . '</th><th>' . e(MoreI18N::xlate('Postal code')) . '</th><th>' . e(MoreI18N::xlate('Place')) . '</th><th>' . e(MoreI18N::xlate('Administrative area')) . '</th><th>' . e(MoreI18N::xlate('From')) . '</th><th>' . e(MoreI18N::xlate('Until')) . '</th><th></th></tr></thead><tbody>';
+        foreach ($information->addresses as $address) {
+            if (!$address instanceof ExternalAddress) {
+                continue;
+            }
+            $street = $address->street ?? $address->freeText ?? '';
+            $row = '<tr><td>' . e($address->houseNumber ?? '') . '</td><td>' . e($street) . '</td><td>' . e($address->postalCode ?? '') . '</td><td>' . e($address->city ?? '') . '</td><td>' . e($address->administrativeArea ?? '') . '</td><td>' . e($address->from ?? '') . '</td><td>' . e($address->until ?? '') . '</td><td>';
+            if ($assignmentUrl !== null) {
+                $row .= '<form method="post" action="' . e($assignmentUrl) . '" class="d-inline">' . csrf_field()
+                    . '<input type="hidden" name="operation" value="add-address">'
+                    . '<input type="hidden" name="address_house_number" value="' . e($address->houseNumber ?? '') . '">'
+                    . '<input type="hidden" name="address_street" value="' . e($street) . '">'
+                    . '<input type="hidden" name="address_postal_code" value="' . e($address->postalCode ?? '') . '">'
+                    . '<input type="hidden" name="address_city" value="' . e($address->city ?? '') . '">'
+                    . '<input type="hidden" name="address_from" value="' . e($address->from ?? '') . '">'
+                    . '<input type="hidden" name="address_until" value="' . e($address->until ?? '') . '">'
+                    . '<input type="hidden" name="address_provider" value="' . e($information->provider) . '">'
+                    . '<input type="hidden" name="address_external_id" value="' . e($information->value) . '">'
+                    . '<input type="hidden" name="address_source_url" value="' . e($information->url) . '">'
+                    . '<button class="btn btn-sm btn-outline-primary" type="submit">' . e(I18N::translate('Add address')) . '</button></form>';
+            }
+            $html .= $row . '</td></tr>';
+        }
+        return $html . '</tbody></table></div>';
     }
 
     private function genwikiReferenceHtml(string $url, array $identifiers, ?string $assignmentUrl, array &$shown): string
