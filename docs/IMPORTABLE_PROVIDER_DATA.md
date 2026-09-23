@@ -13,12 +13,13 @@ value is imported.
 | Coordinates | `MAP` with `LATI` and `LONG` | **Add coordinates** after comparison with the existing point |
 | Place name and language | `1 NAME` and optional `2 LANG` | **Add place name** for a missing or reviewed language variant |
 | GOV place type and validity period | Matching `1 TYPE` block with `_GOVTYPE` | **Add GOV place type** when the type is missing or needs review |
-| Address | `_LOC:_ADDR` with `_HNO`, `ADR1`, `POST`, `CITY`, optional `DATE` and provenance `NOTE` | **Add address** for one selected Wikidata or FactGrid row |
+| Address | `_LOC:_ADDR` with `_HNO`, `ADR1`, `POST`, `CITY`, optional `DATE` and provenance `NOTE` | **Add address** for one selected Wikidata, FactGrid or Nominatim row |
 | Owner or occupant | New `INDI` with `NAME`/`GIVN`/`SURN`, `SEX` (`M`, `F`, `X` or unknown `U`), provider/WikiTree `EXID` values, a `PROP` (owner) or `RESI` (occupant) event, and `_LOC:_ASSO` plus provenance `NOTE` | **Add person** for one selected Wikidata or FactGrid relationship |
 
 Address data is normalized from the provider-specific models into one common
 table. Wikidata uses `P669`/`P6375`; FactGrid uses `P208`, `P522`, `P152`,
-`P47`, `P1121` and `P153`. See [Historical and structured addresses](HISTORICAL_ADDRESSES.md)
+`P47`, `P1121` and `P153`; Nominatim uses the address returned for the
+selected OpenStreetMap object. See [Historical and structured addresses](HISTORICAL_ADDRESSES.md)
 for the mapping and fallback rules.
 
 ## Display-only data

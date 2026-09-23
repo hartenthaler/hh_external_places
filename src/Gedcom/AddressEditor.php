@@ -21,7 +21,7 @@ final class AddressEditor
             $values[$key] = $value;
         }
 
-        if ($values['provider'] !== '' && !in_array($values['provider'], ['wikidata', 'factgrid'], true)) {
+        if ($values['provider'] !== '' && !in_array($values['provider'], ['wikidata', 'factgrid', 'nominatim'], true)) {
             return $gedcom;
         }
         if ($values['external_id'] !== '' && preg_match('/^Q[1-9][0-9]*$/', $values['external_id']) !== 1) {
@@ -52,8 +52,9 @@ final class AddressEditor
         if ($values['city'] !== '') { $block[] = '2 CITY ' . $values['city']; }
         $date = $this->dateValue($values['from'], $values['until']);
         if ($date !== '') { $block[] = '2 DATE ' . $date; }
-        if ($values['provider'] !== '' && $values['external_id'] !== '') {
-            $source = 'Imported from ' . $values['provider'] . ' ' . $values['external_id'];
+        if ($values['provider'] !== '' && ($values['external_id'] !== '' || $values['source_url'] !== '')) {
+            $source = 'Imported from ' . $values['provider'];
+            if ($values['external_id'] !== '') { $source .= ' ' . $values['external_id']; }
             if ($values['source_url'] !== '') { $source .= ': ' . $values['source_url']; }
             $block[] = '2 NOTE ' . $source;
         }

@@ -283,13 +283,13 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         if ($identifier === null || !$wikidataEnabled) {
             $language = explode('-', str_replace('_', '-', I18N::languageTag()))[0] ?: 'en';
             $renderer = new ExternalInformationRenderer(self::showConsistentReferences());
+            $assignmentUrl = $location->canEdit() ? self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]) : null;
             $geoNamesHtml = $renderer->geoNamesHtml($location->fullName(), $language);
-            $nominatimHtml = $renderer->nominatimHtml($renderer->nominatimPlaceName($location->gedcom(), $this->nominatimPlaceContext($place, $location->fullName())), $language, $location->gedcom());
+            $nominatimHtml = $renderer->nominatimHtml($renderer->nominatimPlaceName($location->gedcom(), $this->nominatimPlaceContext($place, $location->fullName())), $language, $location->gedcom(), $assignmentUrl);
             if ($externalIdentifiers === [] && !$location->canEdit() && $geoNamesHtml === '' && $nominatimHtml === '') {
                 return null;
             }
 
-            $assignmentUrl = $location->canEdit() ? self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]) : null;
             $genwikiShown = [];
             // Nominatim is contextual map/address information, not an
             // assignable identifier provider. Keep this special block first.
@@ -365,7 +365,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         $assignmentUrl = $location->canEdit() ? self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]) : null;
         // Nominatim is contextual map/address information, not an
         // assignable identifier provider. Keep this special block first.
-        $nominatimHtml = $renderer->nominatimHtml($renderer->nominatimPlaceName($location->gedcom(), $this->nominatimPlaceContext($place, $location->fullName())), $language, $location->gedcom());
+        $nominatimHtml = $renderer->nominatimHtml($renderer->nominatimPlaceName($location->gedcom(), $this->nominatimPlaceContext($place, $location->fullName())), $language, $location->gedcom(), $assignmentUrl);
         $html = $nominatimHtml . $html;
         $html .= $renderer->externalInformationHtml($externalIdentifiers, $language, 'wikidata', $location->fullName(), $assignmentUrl, $location->gedcom(), $genwikiShown, $sharedCoordinates, $associatedPersonKeys);
         $html .= $renderer->geoNamesHtml($location->fullName(), $language);
