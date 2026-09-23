@@ -35,8 +35,8 @@ final class AddressEditor
             return $gedcom;
         }
 
-        foreach ($this->addresses($gedcom) as $existing) {
-            if ($this->sameAddress($existing, $values)) {
+        foreach ($this->read($gedcom) as $existing) {
+            if ($this->matches($existing, $values)) {
                 return $gedcom;
             }
         }
@@ -71,8 +71,9 @@ final class AddressEditor
         return implode("\n", $lines) . "\n";
     }
 
+    /** Read the structured addresses already stored below a shared place. */
     /** @return list<array<string,string>> */
-    private function addresses(string $gedcom): array
+    public function read(string $gedcom): array
     {
         $lines = preg_split('/\R/u', $gedcom) ?: [];
         $result = [];
@@ -98,7 +99,7 @@ final class AddressEditor
     }
 
     /** @param array<string,string> $existing @param array<string,string> $candidate */
-    private function sameAddress(array $existing, array $candidate): bool
+    public function matches(array $existing, array $candidate): bool
     {
         foreach (['house_number', 'street', 'postal_code', 'city', 'from', 'until'] as $key) {
             if (mb_strtolower(trim($existing[$key] ?? '')) !== mb_strtolower(trim($candidate[$key] ?? ''))) { return false; }
