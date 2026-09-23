@@ -81,6 +81,16 @@ the source provider, external identifier and URL are retained in the imported
 provenance note. `P6375` and `P153` remain available as free text when no
 structured street object is available.
 
+## Consistency with the shared place
+
+Before displaying an import action, the module reads the existing level-1
+`_LOC:_ADDR` blocks and compares house number, street, postal code, place and
+the optional start/end values. A matching provider row is marked **consistent**
+and is never offered for a second import. If the administrator hides consistent
+external information, matching address rows and their table are hidden as well.
+Rows that differ in at least one of these fields remain visible and can be
+accepted individually.
+
 ## Language and provenance
 
 Street and place items are resolved using the webtrees display language with

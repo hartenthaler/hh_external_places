@@ -184,7 +184,10 @@ When Wikidata or FactGrid provides address data, the shared-place page shows an
 address table with house number, street, postal code, place, administrative
 area and optional validity dates. Editors can transfer individual rows into the registered
 `_LOC:_ADDR` structure; identical existing rows are not duplicated and the
-provider reference is retained for provenance.
+provider reference is retained for provenance. Existing `_LOC:_ADDR` rows are
+checked before the transfer button is shown. Matching rows are marked as
+consistent and can be hidden with the setting for consistent external
+information.
 
 The currently offered GEDCOM transfers are summarized in
 [Provider data offered for transfer](docs/IMPORTABLE_PROVIDER_DATA.md). They
