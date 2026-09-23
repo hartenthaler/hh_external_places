@@ -330,7 +330,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             $html .= $renderer->coordinateConsistencyHtml($entity->coordinates, $sharedCoordinates, 'Wikidata', $location->gedcom(), $location->canEdit() ? self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]) : null);
         }
         if ($wikidataInformation !== null && $wikidataInformation->addresses !== []) {
-            $html .= $renderer->addressesHtml($wikidataInformation, $assignmentUrl);
+            $html .= $renderer->addressesHtml($wikidataInformation, $assignmentUrl, $location->gedcom());
         }
         if ($entity !== null && ($entity->owners !== [] || $entity->occupants !== [])) {
             $people = (new WikidataClient())->people(
