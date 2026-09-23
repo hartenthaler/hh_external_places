@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Address rows imported from Wikidata or FactGrid are now compared with
+  existing `_LOC:_ADDR` data. Matching rows are marked consistent, are not
+  offered for duplicate import and can be hidden with the consistency setting
+  (Issue #33).
+
 ## 2.2.6.14 - 2026-09-22
 
 - Historical GOV place types now retain their readable label, GOV identifier
