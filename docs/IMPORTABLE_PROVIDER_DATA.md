@@ -14,6 +14,8 @@ value is imported.
 | Place name and language | `1 NAME` and optional `2 LANG` | **Add place name** for a missing or reviewed language variant |
 | GOV place type and validity period | Matching `1 TYPE` block with `_GOVTYPE` | **Add GOV place type** when the type is missing or needs review |
 | Address | `_LOC:_ADDR` with `_HNO`, `ADR1`, `POST`, `CITY`, optional `DATE` and provenance `NOTE` | **Add address** for one selected Wikidata, FactGrid or Nominatim row |
+| Population observation | GEDCOM-L `_DMGD` with the numeric value, `TYPE POPULATION`, an optional `DATE` and a valid record-level provenance `NOTE` | **Add population** for one selected provider observation; duplicate value/date pairs are not added twice |
+| Provider image | A linked `OBJE` record with an external `FILE` URL and provenance `NOTE` | **Add image**; the image is linked, not downloaded or silently copied |
 | Owner or occupant | New `INDI` with `NAME`/`GIVN`/`SURN`, `SEX` (`M`, `F`, `X` or unknown `U`), provider/WikiTree `EXID` values, a `PROP` (owner) or `RESI` (occupant) event, and `_LOC:_ASSO` plus provenance `NOTE` | **Add person** for one selected Wikidata or FactGrid relationship |
 
 Address data is normalized from the provider-specific models into one common
@@ -27,9 +29,8 @@ for the mapping and fallback rules.
 The following information is currently shown for review but is not written to
 GEDCOM by this module:
 
-* population histories and charts;
-* descriptions, images, hierarchies and external cross-references;
-* owners and occupants from Wikidata or FactGrid, unless an editor explicitly
+* descriptions, hierarchies and external cross-references;
+* owners and occupants from Wikidata or FactGrid until an editor explicitly
   selects **Add person**.
 
 The **Add person** action creates a new `INDI` record. It does not search for,
@@ -40,9 +41,10 @@ usable value), a `PROP` or `RESI` event with the shared-place name and
 relationship period, and the shared place receives a registered `_LOC:_ASSO`
 link with the relationship and provenance note.
 
-No provider currently supplies an implemented place-event import. The open
-follow-up issue [#174](https://github.com/hartenthaler/hh_external_places/issues/174)
-tracks a future workflow for provider events and `_LOC:_EVEN`.
+No provider currently supplies an implemented historical place-event import.
+The open follow-up issue [#174](https://github.com/hartenthaler/hh_external_places/issues/174)
+tracks a future workflow for provider events beyond demographic `_DMGD`
+observations.
 
 All write actions are restricted by the normal webtrees edit permissions and
 protected by the module's CSRF-handled assignment action.

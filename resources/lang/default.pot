@@ -962,5 +962,29 @@ msgstr ""
 msgid "You are not authorized to add a person to this shared place."
 msgstr ""
 
+msgid "Add image"
+msgstr ""
+
+msgid "Add population"
+msgstr ""
+
+msgid "The population observation is invalid."
+msgstr ""
+
+msgid "The population observation has been added to the shared place."
+msgstr ""
+
+msgid "The population observation was not added because it already exists or is invalid."
+msgstr ""
+
+msgid "The external image is invalid."
+msgstr ""
+
+msgid "The image has been linked to the shared place."
+msgstr ""
+
+msgid "The image was not linked because it already exists or is invalid."
+msgstr ""
+
 msgid "The individual was created, but it could not be linked to the shared place."
 msgstr ""

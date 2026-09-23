@@ -294,7 +294,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             // Nominatim is contextual map/address information, not an
             // assignable identifier provider. Keep this special block first.
             $html = $nominatimHtml;
-            $html .= $renderer->externalInformationHtml($externalIdentifiers, $language, '', $location->fullName(), $assignmentUrl, $location->gedcom(), $genwikiShown, $sharedCoordinates, $associatedPersonKeys);
+            $html .= $renderer->externalInformationHtml($externalIdentifiers, $language, '', $location->fullName(), $assignmentUrl, $location->gedcom(), $genwikiShown, $sharedCoordinates, $associatedPersonKeys, $location);
             $html .= $geoNamesHtml;
             $html .= '<div class="d-flex gap-2 flex-wrap mt-2">';
             if ($location->canEdit()) {
@@ -367,7 +367,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         // assignable identifier provider. Keep this special block first.
         $nominatimHtml = $renderer->nominatimHtml($renderer->nominatimPlaceName($location->gedcom(), $this->nominatimPlaceContext($place, $location->fullName())), $language, $location->gedcom(), $assignmentUrl);
         $html = $nominatimHtml . $html;
-        $html .= $renderer->externalInformationHtml($externalIdentifiers, $language, 'wikidata', $location->fullName(), $assignmentUrl, $location->gedcom(), $genwikiShown, $sharedCoordinates, $associatedPersonKeys);
+        $html .= $renderer->externalInformationHtml($externalIdentifiers, $language, 'wikidata', $location->fullName(), $assignmentUrl, $location->gedcom(), $genwikiShown, $sharedCoordinates, $associatedPersonKeys, $location);
         $html .= $renderer->geoNamesHtml($location->fullName(), $language);
         $html .= '<div class="d-flex gap-2 flex-wrap mt-2">';
         if ($location->canEdit()) {
