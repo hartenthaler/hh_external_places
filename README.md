@@ -111,7 +111,7 @@ record.
 
 ### Addresses and related people
 
-When Wikidata or FactGrid provides addresses or people connected with a place,
+When a provider provides addresses or people connected with a place,
 such as owners, the module displays these additional details as well.
 
 ![Historical addresses and related individuals](docs/images/address_individuals.png)
@@ -180,7 +180,7 @@ For a shared place with GEDCOM `MAP`, `LATI` and `LONG` coordinates, editors can
 
 Search results use a compact table. They show the provider label and identifier, the description and—where applicable—distance. Opening a result uses the provider's public page.
 
-When Wikidata or FactGrid provides address data, editors can transfer
+When Wikidata, FactGrid or Nominatim provides address data, editors can transfer
 individual structured address rows into the registered `_LOC:_ADDR` structure.
 The shared-place page shows house number, street, postal code, place,
 administrative area and optional validity dates. Each imported row keeps the

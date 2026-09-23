@@ -1,8 +1,8 @@
-# Historical and structured addresses from Wikidata and FactGrid
+# Historical and structured addresses from external providers
 
 This is a provider-neutral enrichment within the **External Places** module.
-Wikidata and FactGrid expose different properties, but both are mapped to the
-same display model and the same `_LOC:_ADDR` import workflow.
+Wikidata, FactGrid and Nominatim expose different address data, but all are
+mapped to the same display model and the same `_LOC:_ADDR` import workflow.
 
 External Places displays historical addresses and, for an editor, offers an
 explicit transfer into a registered `_LOC:_ADDR` structure. The transfer is
@@ -28,8 +28,8 @@ The current custom structure uses these child tags:
 
 ## When the table is shown
 
-The **Addresses** table is shown only if Wikidata or FactGrid contains an
-address statement or an address object:
+The **Addresses** table is shown only if a provider contains an address
+statement or address data:
 
 ### Wikidata
 
@@ -49,6 +49,16 @@ The qualifiers `P670` (house number), `P281` (postal code) and `P131`
    also extracts that value for the structured table column.
 
 Consequently, a grave, settlement, administrative area or other item without an address statement has no empty or speculative address section.
+
+### Nominatim
+
+Nominatim contributes the address returned with the selected OpenStreetMap
+object. House number, street, postal code and the most specific locality are
+mapped to the same columns as the other providers. Higher administrative
+levels are displayed together in the **Administrative area** column. This is
+contextual current address information rather than a historical address
+statement; it has no provider identifier, so its provenance is retained by
+the Nominatim source URL in the imported note.
 
 ## Columns and qualifiers
 

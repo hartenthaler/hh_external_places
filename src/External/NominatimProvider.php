@@ -23,7 +23,7 @@ final class NominatimProvider
 
     public function diagnostic(): string { return $this->diagnostic; }
 
-    /** @return array{label:string,url:string,description:?string,details:list<array{label:string,value:string}>}|null */
+    /** @return array{label:string,url:string,description:?string,details:list<array{label:string,value:string}>,addresses:list<ExternalAddress>,geometry:?array}|null */
     public function lookup(string $place, string $language, ?string $preferredLayer = null): ?array
     {
         // Vesta may provide a formatted place name (for example with a
@@ -515,6 +515,26 @@ final class NominatimProvider
             : 'https://www.openstreetmap.org/search?query=' . rawurlencode($place);
 
         $address = is_array($payload['address'] ?? null) ? $payload['address'] : [];
+        $city = $this->firstAddressValue($address, ['village', 'town', 'city']);
+        $administrativeValues = [];
+        foreach (['town', 'city', 'municipality', 'county', 'state'] as $administrativeKey) {
+            $value = $this->addressValue($address, $administrativeKey);
+            if ($value !== null && $value !== $city) {
+                $administrativeValues[] = $value;
+            }
+        }
+        $administrativeArea = implode(', ', array_values(array_unique($administrativeValues)));
+        $externalAddress = new ExternalAddress(
+            houseNumber: $this->addressValue($address, 'house_number'),
+            street: $this->addressValue($address, 'road'),
+            postalCode: $this->addressValue($address, 'postcode'),
+            city: $city,
+            administrativeArea: $administrativeArea !== '' ? $administrativeArea : null,
+        );
+        $hasAddressComponents = $externalAddress->houseNumber !== null
+            || $externalAddress->street !== null
+            || $externalAddress->postalCode !== null
+            || $externalAddress->city !== null;
         $details = [];
         foreach ([
             'house_number' => 'House number',
@@ -539,7 +559,34 @@ final class NominatimProvider
         $geometry = is_array($payload['geojson'] ?? null) && is_string($payload['geojson']['type'] ?? null) && is_array($payload['geojson']['coordinates'] ?? null)
             ? ['type' => $payload['geojson']['type'], 'coordinates' => $payload['geojson']['coordinates']]
             : null;
-        return ['label' => $label, 'url' => $url, 'description' => is_string($payload['category'] ?? null) ? trim($payload['category']) : null, 'details' => $details, 'geometry' => $geometry];
+        return [
+            'label' => $label,
+            'url' => $url,
+            'description' => is_string($payload['category'] ?? null) ? trim($payload['category']) : null,
+            'details' => $details,
+            'addresses' => $hasAddressComponents ? [$externalAddress] : [],
+            'geometry' => $geometry,
+        ];
+    }
+
+    /** @param array<string,mixed> $address */
+    private function addressValue(array $address, string $key): ?string
+    {
+        $value = $address[$key] ?? null;
+        return is_scalar($value) && trim((string) $value) !== '' ? trim((string) $value) : null;
+    }
+
+    /** @param array<string,mixed> $address @param list<string> $keys */
+    private function firstAddressValue(array $address, array $keys): ?string
+    {
+        foreach ($keys as $key) {
+            $value = $this->addressValue($address, $key);
+            if ($value !== null) {
+                return $value;
+            }
+        }
+
+        return null;
     }
 
     private function language(string $language): string

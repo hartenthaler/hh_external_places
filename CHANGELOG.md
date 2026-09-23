@@ -3,6 +3,9 @@
 ## Unreleased
 
 - Further user-facing improvements are planned.
+- Nominatim address results are now shown in the shared address table and can
+  be transferred to `_LOC:_ADDR` with the same consistency checks as other
+  provider addresses.
 
 ## 2.2.6.15 - 2026-09-23
 

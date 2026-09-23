@@ -292,7 +292,7 @@ final class ExternalInformationRenderer
         return $components === [] ? $firstName : $firstName . ', ' . $components[0];
     }
 
-    public function nominatimHtml(string $placeName, string $language, string $gedcom = ''): string
+    public function nominatimHtml(string $placeName, string $language, string $gedcom = '', ?string $assignmentUrl = null): string
     {
         if (!ExternalProviderSettings::isEnabled('nominatim')) {
             return '';
@@ -313,6 +313,20 @@ final class ExternalInformationRenderer
         $html = '<section class="mt-4">' . $this->providerHeading('nominatim', 'Nominatim') . '<a href="' . e($information['url']) . '" rel="noopener noreferrer" target="_blank">' . e($information['label']) . '</a>';
         if ($information['description'] !== null && $information['description'] !== '') {
             $html .= ' — ' . e($information['description']);
+        }
+        if (($information['addresses'] ?? []) !== []) {
+            $nominatimInformation = new ExternalInformation(
+                provider: 'nominatim',
+                value: '',
+                url: (string) $information['url'],
+                label: (string) $information['label'],
+                description: $information['description'],
+                imageUrl: null,
+                types: [],
+                references: [],
+                addresses: $information['addresses'],
+            );
+            $html .= $this->addressesHtml($nominatimInformation, $assignmentUrl, $gedcom);
         }
         if ($provider->diagnostic() !== '') {
             $html .= '<div class="alert alert-info small mt-2"><strong>Nominatim diagnostic:</strong> ' . e($provider->diagnostic()) . '</div>';
