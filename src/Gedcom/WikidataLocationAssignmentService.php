@@ -6,8 +6,11 @@ namespace Hartenthaler\Webtrees\Module\ExternalPlacesModule\Gedcom;
 
 use Fisharebest\Webtrees\Auth;
 use Fisharebest\Webtrees\Location;
+use Fisharebest\Webtrees\Registry;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\WikidataIdentifier;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\ExternalIdentifier;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalPerson;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalProviderRegistry;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\PlaceTypeFilterSettings;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\LanguageCode;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Geo\Coordinates;
@@ -22,7 +25,7 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Geo\Coordinates;
  */
 final class WikidataLocationAssignmentService
 {
-    public function __construct(private readonly WikidataExternalIdEditor $editor = new WikidataExternalIdEditor(), private readonly ExternalIdEditor $externalEditor = new ExternalIdEditor(), private readonly GovTypeEditor $govTypeEditor = new GovTypeEditor(), private readonly CoordinateEditor $coordinateEditor = new CoordinateEditor(), private readonly AddressEditor $addressEditor = new AddressEditor())
+    public function __construct(private readonly WikidataExternalIdEditor $editor = new WikidataExternalIdEditor(), private readonly ExternalIdEditor $externalEditor = new ExternalIdEditor(), private readonly GovTypeEditor $govTypeEditor = new GovTypeEditor(), private readonly CoordinateEditor $coordinateEditor = new CoordinateEditor(), private readonly AddressEditor $addressEditor = new AddressEditor(), private readonly PersonAssociationEditor $personEditor = new PersonAssociationEditor())
     {
     }
 
@@ -105,6 +108,71 @@ final class WikidataLocationAssignmentService
         return true;
     }
 
+    /**
+     * Create one external person and link it to the shared place.
+     *
+     * @return 'added'|'already-associated'|'invalid-provider'|'not-authorized'|'link-failed'
+     */
+    public function addPerson(Location $location, ExternalPerson $person, string $relationship, ?string $from = null, ?string $until = null): string
+    {
+        if (!$location->canEdit()) {
+            return 'not-authorized';
+        }
+
+        $provider = (new ExternalProviderRegistry())->byKey($person->provider);
+        $identifier = $provider?->identifier($person->id);
+        if ($identifier === null) {
+            return 'invalid-provider';
+        }
+        if (in_array($person->provider . ':' . $person->id, $this->personEditor->associatedExternalKeys($location), true)) {
+            return 'already-associated';
+        }
+
+        [$name, $given, $surname] = $this->personName($person->label ?? $person->id, $person->id);
+        $gedcom = "0 @@ INDI\n1 NAME " . $name;
+        if ($given !== '') {
+            $gedcom .= "\n2 GIVN " . $given;
+        }
+        if ($surname !== '') {
+            $gedcom .= "\n2 SURN " . $surname;
+        }
+        $gedcom .= "\n1 SEX " . ($person->sex ?? 'U');
+        if (($birth = $this->personDate($person->birthDate)) !== null) {
+            $gedcom .= "\n1 BIRT\n2 DATE " . $birth;
+        }
+        if (($death = $this->personDate($person->deathDate)) !== null) {
+            $gedcom .= "\n1 DEAT\n2 DATE " . $death;
+        }
+        $place = trim(preg_replace('/[\r\n]+/u', ' ', strip_tags($location->fullName())) ?? '');
+        $place = mb_substr($place, 0, 240);
+        $eventTag = $relationship === 'Owner' ? 'PROP' : 'RESI';
+        if ($place !== '') {
+            $gedcom .= "\n1 " . $eventTag . "\n2 PLAC " . $place;
+            $gedcom .= "\n3 _LOC @" . $location->xref() . "@";
+            if (($period = $this->periodDate($from, $until)) !== null) {
+                $gedcom .= "\n2 DATE " . $period;
+            }
+        }
+        $gedcom .= "\n";
+        foreach ($this->personIdentifiers($person, $identifier) as $personIdentifier) {
+            $gedcom = $this->externalEditor->add($gedcom, $personIdentifier);
+        }
+        $gedcom .= '1 NOTE Imported from ' . $person->provider . ' ' . $person->id;
+        if ($person->url !== '') {
+            $gedcom .= ': ' . $person->url;
+        }
+        $gedcom .= "\n";
+
+        $individual = $location->tree()->createIndividual($gedcom);
+        $updated = $this->personEditor->add($location, $individual->xref(), $person, $relationship);
+        if ($updated === $location->gedcom()) {
+            return 'link-failed';
+        }
+        $location->updateRecord($this->withUpdatedChange($updated), false);
+
+        return 'added';
+    }
+
     /** Add a missing shared-place NAME line, preserving all existing names. */
     public function addLocationName(Location $location, string $name, string $language = ''): bool
     {
@@ -154,5 +222,100 @@ final class WikidataLocationAssignmentService
             . "\n2 DATE " . strtoupper(date('d M Y'))
             . "\n3 TIME " . date('H:i:s')
             . "\n2 _WT_USER " . Auth::user()->userName();
+    }
+
+    private function personDate(?string $date): ?string
+    {
+        if ($date === null || preg_match('/^(\d{4})(?:-(\d{2})(?:-(\d{2}))?)?$/', trim($date), $match) !== 1) {
+            return null;
+        }
+        $months = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+        if (!isset($match[2]) || $match[2] === '') {
+            return $match[1];
+        }
+        $month = (int) $match[2];
+        if ($month < 1 || $month > 12) {
+            return null;
+        }
+        if (!isset($match[3]) || $match[3] === '') {
+            return $months[$month] . ' ' . $match[1];
+        }
+        return ltrim($match[3], '0') . ' ' . $months[$month] . ' ' . $match[1];
+    }
+
+    /** @return array{0:string,1:string,2:string} */
+    private function personName(string $label, string $fallback): array
+    {
+        $label = trim(preg_replace('/[\r\n]+/u', ' ', strip_tags($label)) ?? '');
+        if ($label === '' || mb_strlen($label) > 240) {
+            $label = $fallback;
+        }
+        $label = trim($label);
+        $given = '';
+        $surname = '';
+        if (preg_match('~^(.*?)\s*/([^/]+)/\s*$~u', $label, $match) === 1) {
+            $given = trim($match[1]);
+            $surname = trim($match[2]);
+        } elseif (str_contains($label, ',')) {
+            [$surname, $given] = array_pad(array_map('trim', explode(',', $label, 2)), 2, '');
+        } else {
+            $parts = preg_split('/\s+/u', $label) ?: [];
+            $surname = (string) array_pop($parts);
+            $given = trim(implode(' ', $parts));
+        }
+        $name = $given !== '' && $surname !== '' ? $given . ' /' . $surname . '/' : '/' . ($surname !== '' ? $surname : $label) . '/';
+        $name = Registry::elementFactory()->make('INDI:NAME')->canonical($name);
+        return [$name, $given, $surname];
+    }
+
+    private function periodDate(?string $from, ?string $until): ?string
+    {
+        $start = $this->personDate($from);
+        $end = $this->personDate($until);
+        if ($start !== null && $end !== null) {
+            return 'FROM ' . $start . ' TO ' . $end;
+        }
+        if ($start !== null) {
+            return 'FROM ' . $start;
+        }
+        if ($end !== null) {
+            return 'TO ' . $end;
+        }
+        return null;
+    }
+
+    /** @return list<ExternalIdentifier> */
+    private function personIdentifiers(ExternalPerson $person, ExternalIdentifier $primary): array
+    {
+        $identifiers = [$primary];
+        $seen = [$primary->authorityUri . ':' . $primary->value => true];
+        foreach ($person->externalLinks as $url) {
+            if (!is_string($url)) {
+                continue;
+            }
+            $definitions = [
+                '~^https?://(?:www\\.)?wikidata\\.org/(?:entity|wiki)/([Qq][1-9][0-9]*)/?$~i' => ['wikidata', 'https://www.wikidata.org/entity/', 'https://www.wikidata.org/entity/'],
+                '~^https?://database\\.factgrid\\.de/entity/(Q[1-9][0-9]*)/?$~i' => ['factgrid', 'https://database.factgrid.de/entity/', 'https://database.factgrid.de/entity/'],
+                '~^https?://(?:www\\.)?wikitree\\.com/wiki/([^/?#]+)$~i' => ['wikitree', 'https://www.wikitree.com/wiki/', 'https://www.wikitree.com/wiki/'],
+            ];
+            foreach ($definitions as $pattern => [$provider, $authority, $baseUrl]) {
+                if (preg_match($pattern, $url, $match) !== 1) {
+                    continue;
+                }
+                $value = $match[1];
+                if ($provider === 'wikidata') {
+                    $value = strtoupper($value[0]) . substr($value, 1);
+                } elseif ($provider === 'wikitree') {
+                    $value = rawurldecode($value);
+                }
+                $key = $authority . ':' . $value;
+                if (!isset($seen[$key])) {
+                    $identifiers[] = new ExternalIdentifier($provider, $value, $authority, $baseUrl . rawurlencode($value));
+                    $seen[$key] = true;
+                }
+                break;
+            }
+        }
+        return $identifiers;
     }
 }

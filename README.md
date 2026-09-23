@@ -192,10 +192,16 @@ consistent external information.
 The currently offered GEDCOM transfers are summarized in
 [Provider data offered for transfer](docs/IMPORTABLE_PROVIDER_DATA.md). They
 include explicitly selected external identifiers, coordinates, place names,
-GOV types and individual Wikidata/FactGrid address rows. Descriptions, images,
-population data and owners or occupants remain display-only.
+GOV types, Wikidata/FactGrid address rows and newly created individuals from
+provider relationships. Descriptions, images and population data remain
+display-only.
 
-Where Wikidata or FactGrid contains them, the same panel also shows public owners and occupants. These are external facts: no webtrees person is linked, changed or created. The table gives the public name and provider link, known birth/death dates, the period of the relationship and available WikiTree links.
+Where Wikidata or FactGrid contains them, the same panel also shows public
+owners and occupants. An editor can explicitly select **Add person** to create
+a new INDI with the available provider/WikiTree EXID values, a PROP or RESI
+event and a `_LOC:_ASSO` link. Existing webtrees people are not matched or
+merged automatically. The table gives the public name and provider link, known
+birth/death dates, the period of the relationship and available WikiTree links.
 GOV may provide several historical population figures. They are displayed as a
 chronologically sorted table with a compact line chart, using the user's
 webtrees number formatting. Additional GOV external identifiers are shown with

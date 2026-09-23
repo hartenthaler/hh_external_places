@@ -2,10 +2,17 @@
 
 ## Unreleased
 
+- Added conservative FactGrid defaults for federation, country, state, county,
+  municipality and locality filters. The values use FactGrid's own `P2`
+  vocabulary and are documented with their labels (Issue #147).
 - Editors can now transfer structured address rows from Wikidata and FactGrid
   into `_LOC:_ADDR`. Each imported row keeps provider provenance; existing
   matching rows are detected to prevent duplicate imports and can be marked or
   hidden as consistent (Issue #33).
+- Editors can now create a new person from a Wikidata or FactGrid owner or
+  occupant. The imported person receives a canonical name, sex (`U` when
+  unknown), available Wikidata/FactGrid and WikiTree EXIDs, a `PROP` or `RESI`
+  event and a link back to the shared place (Issues #33, #173).
 
 ## 2.2.6.14 - 2026-09-22
 

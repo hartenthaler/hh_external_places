@@ -327,13 +327,14 @@ final class WikidataClient
                     continue;
                 }
                 $label = $entity['labels'][$language]['value'] ?? $entity['labels']['en']['value'] ?? null;
-                $claims = is_array($entity['claims'] ?? null) ? $entity['claims'] : [];
-                $people[$qid] = new WikidataPerson(
+                    $claims = is_array($entity['claims'] ?? null) ? $entity['claims'] : [];
+                    $people[$qid] = new WikidataPerson(
                     $qid,
                     is_string($label) ? $label : null,
                     $this->claimDate($claims['P569'] ?? []),
                     $this->claimDate($claims['P570'] ?? []),
                     $this->personExternalLinks($claims),
+                    $this->personSex($claims),
                 );
             }
         }
@@ -357,8 +358,24 @@ final class WikidataClient
         if ($wikitree !== null) {
             $links['WikiTree'] = 'https://www.wikitree.com/wiki/' . rawurlencode($wikitree);
         }
+        $factgrid = $this->claimString($claims['P8168'] ?? [], '/^Q[1-9][0-9]*$/');
+        if ($factgrid !== null) {
+            $links['Factgrid'] = 'https://database.factgrid.de/entity/' . rawurlencode($factgrid);
+        }
 
         return $links;
+    }
+
+    /** @param array<string,mixed> $claims */
+    private function personSex(array $claims): ?string
+    {
+        $sexId = $this->claimEntityId($claims['P21'] ?? []);
+        return match ($sexId) {
+            'Q6581097' => 'M',
+            'Q6581072' => 'F',
+            'Q1097630', 'Q2449503' => 'X',
+            default => null,
+        };
     }
 
     /** @param mixed $statements */
@@ -533,6 +550,24 @@ final class WikidataClient
         }
 
         return array_values(array_unique($properties));
+    }
+
+    /** @param mixed $statements */
+    private function claimEntityId(mixed $statements): ?string
+    {
+        foreach (is_array($statements) ? $statements : [] as $statement) {
+            $value = is_array($statement)
+                ? ($statement['mainsnak']['datavalue']['value']
+                    ?? $statement['datavalue']['value']
+                    ?? $statement['value']
+                    ?? null)
+                : $statement;
+            $id = is_array($value) ? ($value['id'] ?? null) : (is_string($value) ? $value : null);
+            if (is_string($id) && preg_match('/^Q[1-9][0-9]*$/', $id) === 1) {
+                return $id;
+            }
+        }
+        return null;
     }
 
     /** @param mixed $statements */

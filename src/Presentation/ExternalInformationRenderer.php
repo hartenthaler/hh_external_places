@@ -31,7 +31,7 @@ final class ExternalInformationRenderer
         return $this->showConsistentReferences;
     }
 
-    public function externalInformationHtml(array $identifiers, string $language, string $skip = '', string $placeName = '', ?string $assignmentUrl = null, string $gedcom = '', array &$genwikiShown = [], ?Coordinates $sharedCoordinates = null): string
+    public function externalInformationHtml(array $identifiers, string $language, string $skip = '', string $placeName = '', ?string $assignmentUrl = null, string $gedcom = '', array &$genwikiShown = [], ?Coordinates $sharedCoordinates = null, array $associatedPersonKeys = []): string
     {
         if ($identifiers === []) {
             return '';
@@ -148,7 +148,7 @@ final class ExternalInformationRenderer
                         }
                     }
                     $html .= $this->crossReferenceHtml($information, $identifiers, $assignmentUrl);
-                    $html .= $this->externalPersonRelationsHtml($information);
+                    $html .= $this->externalPersonRelationsHtml($information, $assignmentUrl, $associatedPersonKeys);
                 }
                 $html .= $this->sourceHtml($provider->label(), $this->providerHomepage($provider->key())) . '</section>';
                 if ($provider->key() === 'genwiki') {
@@ -621,27 +621,21 @@ final class ExternalInformationRenderer
         return $display;
     }
 
-    private function externalPersonRelationsHtml(ExternalInformation $information): string
+    private function externalPersonRelationsHtml(ExternalInformation $information, ?string $assignmentUrl, array $associatedPersonKeys): string
     {
         if ($information->owners === [] && $information->occupants === []) {
             return '';
         }
 
         $html = '';
-        foreach ([MoreI18N::xlate('Owner') => $information->owners, I18N::translate('Occupants') => $information->occupants] as $heading => $relations) {
-            if ($relations === []) { continue; }
-            $html .= '<h5 class="mt-3">' . e($heading) . '</h5><div class="table-responsive"><table class="table table-sm"><thead><tr>'
-                . '<th>' . e(MoreI18N::xlate('Name')) . '</th><th>' . e(MoreI18N::xlate('Birth')) . '</th><th>' . e(MoreI18N::xlate('Death')) . '</th><th>' . e(MoreI18N::xlate('From')) . '</th><th>' . e(I18N::translate('Until')) . '</th></tr></thead><tbody>';
-            foreach ($relations as $relation) {
-                $person = $information->people[$relation->id] ?? null;
-                $label = $person?->label ?? $relation->id;
-                $html .= '<tr><td><a href="' . e($person?->url ?? '#') . '" rel="noopener noreferrer" target="_blank">' . e($label) . '</a> <small>(' . e($relation->id) . ')</small>';
-                foreach ($person?->externalLinks ?? [] as $linkLabel => $linkUrl) {
-                    $html .= ' · <a href="' . e($linkUrl) . '" rel="noopener noreferrer" target="_blank">' . e($linkLabel) . '</a>';
-                }
-                $html .= '</td><td>' . $this->displayWikidataDate($person?->birthDate) . '</td><td>' . $this->displayWikidataDate($person?->deathDate) . '</td><td>' . $this->displayWikidataDate($relation->from) . '</td><td>' . $this->displayWikidataDate($relation->until) . '</td></tr>';
+        foreach ([
+            MoreI18N::xlate('Owner') => [$information->owners, 'Owner'],
+            I18N::translate('Occupants') => [$information->occupants, 'Occupant'],
+        ] as $heading => [$relations, $relationship]) {
+            if ($relations === []) {
+                continue;
             }
-            $html .= '</tbody></table></div>';
+            $html .= $this->personRelationsHtml($heading, $relations, $information->people, $assignmentUrl, $associatedPersonKeys, $information->provider, $relationship);
         }
         return $html;
     }
@@ -688,29 +682,92 @@ final class ExternalInformationRenderer
         return $html;
     }
 
-    public function personRelationsHtml(string $heading, array $relations, array $people): string
+    public function personRelationsHtml(string $heading, array $relations, array $people, ?string $assignmentUrl = null, array $associatedPersonKeys = [], string $provider = '', ?string $relationship = null): string
     {
         if ($relations === []) {
             return '';
         }
 
+        $rows = '';
+        foreach ($relations as $relation) {
+            $personId = property_exists($relation, 'qid') ? $relation->qid : $relation->id;
+            $person = $people[$personId] ?? null;
+            $label = is_object($person) && property_exists($person, 'label') ? $person->label : $personId;
+            $personProvider = is_object($person) && property_exists($person, 'provider') ? $person->provider : $provider;
+            $personUrl = is_object($person) && property_exists($person, 'url') ? $person->url : null;
+            if ($personUrl === null && is_object($person) && method_exists($person, 'entityUrl')) {
+                $personUrl = $person->entityUrl();
+            }
+            if ($personUrl === null && $personProvider !== '') {
+                $personUrl = (new ExternalProviderRegistry())->byKey($personProvider)?->identifier($personId)?->url;
+            }
+            $personLinks = '';
+            $externalLinks = is_object($person) && property_exists($person, 'externalLinks') ? $person->externalLinks : [];
+            foreach ($externalLinks as $linkLabel => $linkUrl) {
+                $personLinks .= ' · <a href="' . e($linkUrl) . '" rel="noopener noreferrer" target="_blank">' . e($linkLabel) . '</a>';
+            }
+            $personName = $personUrl === null
+                ? e($label)
+                : '<a href="' . e($personUrl) . '" rel="noopener noreferrer" target="_blank">' . e($label) . '</a>';
+            $key = $personProvider . ':' . $personId;
+            $consistent = in_array($key, $associatedPersonKeys, true);
+            if ($consistent && !$this->showConsistentReferences()) {
+                continue;
+            }
+            $birthDate = is_object($person) && property_exists($person, 'birthDate') ? $person->birthDate : null;
+            $deathDate = is_object($person) && property_exists($person, 'deathDate') ? $person->deathDate : null;
+            $action = $consistent
+                ? '<span class="text-success small">' . e(I18N::translate('consistent')) . '</span>'
+                : '';
+            if (!$consistent && $assignmentUrl !== null && in_array($relationship, ['Owner', 'Occupant'], true) && $personProvider !== '') {
+                $action = '<form method="post" action="' . e($assignmentUrl) . '" class="d-inline">'
+                    . csrf_field()
+                    . '<input type="hidden" name="operation" value="add-person">'
+                    . '<input type="hidden" name="person_provider" value="' . e($personProvider) . '">'
+                    . '<input type="hidden" name="person_id" value="' . e($personId) . '">'
+                    . '<input type="hidden" name="person_label" value="' . e($label) . '">'
+                    . '<input type="hidden" name="person_birth" value="' . e((string) $birthDate) . '">'
+                    . '<input type="hidden" name="person_death" value="' . e((string) $deathDate) . '">'
+                    . '<input type="hidden" name="person_sex" value="' . e((string) (is_object($person) && property_exists($person, 'sex') ? $person->sex : '')) . '">'
+                    . '<input type="hidden" name="person_wikidata" value="' . e($this->externalPersonId($externalLinks, 'wikidata')) . '">'
+                    . '<input type="hidden" name="person_factgrid" value="' . e($this->externalPersonId($externalLinks, 'factgrid')) . '">'
+                    . '<input type="hidden" name="person_wikitree" value="' . e($this->externalPersonId($externalLinks, 'wikitree')) . '">'
+                    . '<input type="hidden" name="person_from" value="' . e((string) $relation->from) . '">'
+                    . '<input type="hidden" name="person_until" value="' . e((string) $relation->until) . '">'
+                    . '<input type="hidden" name="person_relationship" value="' . e((string) $relationship) . '">'
+                    . '<button class="btn btn-sm btn-outline-primary py-0" type="submit">' . e(I18N::translate('Add person')) . '</button></form>';
+            }
+            $rows .= '<tr><td>' . $personName . ' <small>(' . e($personId) . ')</small>' . $personLinks . '</td>'
+                . '<td>' . $this->displayWikidataDate($birthDate) . '</td><td>' . $this->displayWikidataDate($deathDate) . '</td>'
+                . '<td>' . $this->displayWikidataDate($relation->from) . '</td><td>' . $this->displayWikidataDate($relation->until) . '</td><td>' . $action . '</td></tr>';
+        }
+        if ($rows === '') {
+            return '';
+        }
         $html = '<h5 class="mt-3">' . e($heading) . '</h5><div class="table-responsive"><table class="table table-sm"><thead><tr>'
             . '<th>' . e(MoreI18N::xlate('Name')) . '</th>'
             . '<th>' . e(MoreI18N::xlate('Birth')) . '</th><th>' . e(MoreI18N::xlate('Death')) . '</th>'
-            . '<th>' . e(MoreI18N::xlate('From')) . '</th><th>' . e(I18N::translate('Until')) . '</th></tr></thead><tbody>';
-        foreach ($relations as $relation) {
-            $person = $people[$relation->qid] ?? null;
-            $label = $person?->label ?? $relation->qid;
-            $personLinks = '';
-            foreach ($person?->externalLinks ?? [] as $linkLabel => $linkUrl) {
-                $personLinks .= ' · <a href="' . e($linkUrl) . '" rel="noopener noreferrer" target="_blank">' . e($linkLabel) . '</a>';
-            }
-            $html .= '<tr><td><a href="https://www.wikidata.org/entity/' . e($relation->qid) . '" rel="noopener noreferrer" target="_blank">' . e($label) . '</a> <small>(' . e($relation->qid) . ')</small>' . $personLinks . '</td>'
-                . '<td>' . $this->displayWikidataDate($person?->birthDate) . '</td><td>' . $this->displayWikidataDate($person?->deathDate) . '</td>'
-                . '<td>' . $this->displayWikidataDate($relation->from) . '</td><td>' . $this->displayWikidataDate($relation->until) . '</td></tr>';
-        }
+            . '<th>' . e(MoreI18N::xlate('From')) . '</th><th>' . e(I18N::translate('Until')) . '</th><th></th></tr></thead><tbody>';
+        return $html . $rows . '</tbody></table></div>';
+    }
 
-        return $html . '</tbody></table></div>';
+    /** @param array<string,string> $externalLinks */
+    private function externalPersonId(array $externalLinks, string $provider): string
+    {
+        $url = $externalLinks[match ($provider) {
+            'wikidata' => 'Wikidata',
+            'factgrid' => 'Factgrid',
+            default => 'WikiTree',
+        }] ?? '';
+        $pattern = match ($provider) {
+            'wikidata' => '~wikidata\\.org/(?:entity|wiki)/(Q[1-9][0-9]*)~i',
+            'factgrid' => '~factgrid\\.de/entity/(Q[1-9][0-9]*)~i',
+            default => '~wikitree\\.com/wiki/([^/?#]+)~i',
+        };
+        if (preg_match($pattern, $url, $match) === 1) {
+            return rawurldecode($match[1]);
+        }
+        return '';
     }
 
     private function displayWikidataDate(?string $date): string

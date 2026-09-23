@@ -16,6 +16,7 @@ final class ExternalPerson
         public readonly ?string $birthDate,
         public readonly ?string $deathDate,
         public readonly array $externalLinks = [],
+        public readonly ?string $sex = null,
     ) {
     }
 }

@@ -14,6 +14,7 @@ final class WikidataPerson
         public readonly ?string $birthDate,
         public readonly ?string $deathDate,
         public readonly array $externalLinks = [],
+        public readonly ?string $sex = null,
     ) {
     }
 

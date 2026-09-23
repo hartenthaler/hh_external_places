@@ -922,3 +922,45 @@ msgstr ""
 
 msgid "Responses from enabled external providers are cached locally to reduce external requests."
 msgstr ""
+
+msgid "Person associated to location"
+msgstr ""
+
+msgid "Relationship"
+msgstr ""
+
+msgid "Add person"
+msgstr ""
+
+msgid "Invalid external person."
+msgstr ""
+
+msgid "The external person has been added to the shared place."
+msgstr ""
+
+msgid "The external person was not added because it is already associated or incomplete."
+msgstr ""
+
+msgid "This external person is already linked to the shared place."
+msgstr ""
+
+msgid "The external person was not added because the provider identifier is invalid."
+msgstr ""
+
+msgid "The external provider identifier is invalid."
+msgstr ""
+
+msgid "The external person has no usable name."
+msgstr ""
+
+msgid "The external-person relationship is invalid."
+msgstr ""
+
+msgid "The external person has an invalid sex value."
+msgstr ""
+
+msgid "You are not authorized to add a person to this shared place."
+msgstr ""
+
+msgid "The individual was created, but it could not be linked to the shared place."
+msgstr ""

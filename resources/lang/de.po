@@ -958,3 +958,45 @@ msgstr "GenWiki-Seitenkennungen, vom Bearbeiter eingegebener Suchtext und die an
 
 msgid "Responses from enabled external providers are cached locally to reduce external requests."
 msgstr "Antworten aktivierter externer Anbieter werden lokal zwischengespeichert, um externe Anfragen zu reduzieren."
+
+msgid "Person associated to location"
+msgstr "Mit dem Ort verbundene Person"
+
+msgid "Relationship"
+msgstr "Beziehung"
+
+msgid "Add person"
+msgstr "Person hinzufügen"
+
+msgid "Invalid external person."
+msgstr "Ungültige externe Person."
+
+msgid "The external person has been added to the shared place."
+msgstr "Die externe Person wurde zum gemeinsamen Ort hinzugefügt."
+
+msgid "The external person was not added because it is already associated or incomplete."
+msgstr "Die externe Person wurde nicht hinzugefügt, da sie bereits verknüpft ist oder Angaben fehlen."
+
+msgid "This external person is already linked to the shared place."
+msgstr "Diese externe Person ist bereits mit dem gemeinsamen Ort verknüpft."
+
+msgid "The external person was not added because the provider identifier is invalid."
+msgstr "Die externe Person wurde nicht hinzugefügt, da die Kennung des Anbieters ungültig ist."
+
+msgid "The external provider identifier is invalid."
+msgstr "Die Kennung des externen Anbieters ist ungültig."
+
+msgid "The external person has no usable name."
+msgstr "Die externe Person hat keinen verwendbaren Namen."
+
+msgid "The external-person relationship is invalid."
+msgstr "Die Beziehung zur externen Person ist ungültig."
+
+msgid "The external person has an invalid sex value."
+msgstr "Die externe Person hat einen ungültigen Geschlechtswert."
+
+msgid "You are not authorized to add a person to this shared place."
+msgstr "Sie sind nicht berechtigt, eine Person zu diesem gemeinsamen Ort hinzuzufügen."
+
+msgid "The individual was created, but it could not be linked to the shared place."
+msgstr "Die Person wurde angelegt, konnte aber nicht mit dem gemeinsamen Ort verknüpft werden."
