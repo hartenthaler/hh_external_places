@@ -6,6 +6,16 @@
 - Nominatim address results are now shown in the shared address table and can
   be transferred to `_LOC:_ADDR` with the same consistency checks as other
   provider addresses.
+- Field-level provider reconciliation now also offers explicit transfer of
+  population observations and provider images. Population values are stored as
+  GEDCOM-L `_DMGD` demographic data; images are linked through external media
+  objects without downloading them (Issue #141).
+- Added the first FamilySearch Places connectivity test. Administrators can
+  store an encrypted FamilySearch developer key and verify API access; place
+  lookup and display will follow in a later provider stage (Issue #154).
+- Linked persons from Wikidata and FactGrid can now show the Wikipedia article
+  in the user's language, with the selected sitelink retained when a new
+  individual is created (Issue #184).
 
 ## 2.2.6.15 - 2026-09-23
 
