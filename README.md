@@ -72,7 +72,7 @@ The current release provides:
 * showing historical addresses, owners and occupants from Wikidata or FactGrid;
 * showing a localized GeoNames parent hierarchy and translated type labels;
 * searching public people and organisations associated with external places;
-* linking displayed external people to their provider records and, when available, to WikiTree (`P2949`);
+* linking displayed external people to their provider records and, when available, to WikiTree (`P2949`), GenWiki (`P14871`) or the Wikipedia sitelink for the selected language;
 * configuring enabled providers and search options; and
 * opening linked Wikidata places in Domus.
 
