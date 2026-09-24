@@ -16,6 +16,9 @@
 - Linked persons from Wikidata and FactGrid can now show the Wikipedia article
   in the user's language, with the selected sitelink retained when a new
   individual is created (Issue #184).
+- Nearby-search request and empty-result handling is now shared by Wikidata,
+  FactGrid and GOV. A misleading FactGrid empty-result message is no longer
+  shown when a nearby search has returned results.
 
 ## 2.2.6.15 - 2026-09-23
 
