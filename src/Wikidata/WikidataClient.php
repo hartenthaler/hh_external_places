@@ -9,6 +9,7 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Http\HttpTransport;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\LanguageCode;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\PlaceTypeFilterSettings;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\WikibasePropertyCatalog;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\WikipediaLink;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Geo\Coordinates;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Infrastructure\WikibaseCacheRepository;
 use JsonException;
@@ -310,7 +311,7 @@ final class WikidataClient
                     'connect_timeout' => 3.0,
                     'headers'         => ['Accept' => 'application/json', 'User-Agent' => 'webtrees External Places/0.1 (https://github.com/hartenthaler/hh_external_places)'],
                     'http_errors'     => false,
-                    'query'           => ['action' => 'wbgetentities', 'format' => 'json', 'formatversion' => '2', 'ids' => implode('|', $chunk), 'languages' => $language . '|en', 'props' => 'labels|claims'],
+                    'query'           => ['action' => 'wbgetentities', 'format' => 'json', 'formatversion' => '2', 'ids' => implode('|', $chunk), 'languages' => $language . '|en', 'props' => 'labels|claims|sitelinks'],
                     'timeout'         => 6.0,
                 ]);
                 $body = $response->getBody()->getContents();
@@ -333,7 +334,7 @@ final class WikidataClient
                     is_string($label) ? $label : null,
                     $this->claimDate($claims['P569'] ?? []),
                     $this->claimDate($claims['P570'] ?? []),
-                    $this->personExternalLinks($claims),
+                    $this->personExternalLinks($claims, $entity['sitelinks'] ?? [], $language),
                     $this->personSex($claims),
                 );
             }
@@ -349,7 +350,7 @@ final class WikidataClient
      * @param array<string,mixed> $claims
      * @return array<string,string>
      */
-    private function personExternalLinks(array $claims): array
+    private function personExternalLinks(array $claims, mixed $sitelinks, string $language): array
     {
         $links = [];
         // WikiTree IDs are usually ASCII, but valid IDs may preserve
@@ -361,6 +362,13 @@ final class WikidataClient
         $factgrid = $this->claimString($claims['P8168'] ?? [], '/^Q[1-9][0-9]*$/');
         if ($factgrid !== null) {
             $links['Factgrid'] = 'https://database.factgrid.de/entity/' . rawurlencode($factgrid);
+        }
+        $genwiki = $this->claimString($claims['P14871'] ?? [], '/^[1-9][0-9]{0,11}$/');
+        if ($genwiki !== null) {
+            $links['GenWiki'] = 'https://wiki.genealogy.net/?curid=' . rawurlencode($genwiki);
+        }
+        if (($wikipedia = WikipediaLink::fromSitelinks($sitelinks, $language)) !== null) {
+            $links[$wikipedia['label']] = $wikipedia['url'];
         }
 
         return $links;

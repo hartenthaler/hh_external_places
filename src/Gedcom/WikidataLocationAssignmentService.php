@@ -10,6 +10,7 @@ use Fisharebest\Webtrees\Registry;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\WikidataIdentifier;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\ExternalIdentifier;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalPerson;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\WikipediaLink;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalProviderRegistry;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\PlaceTypeFilterSettings;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\LanguageCode;
@@ -329,8 +330,19 @@ final class WikidataLocationAssignmentService
             $definitions = [
                 '~^https?://(?:www\\.)?wikidata\\.org/(?:entity|wiki)/([Qq][1-9][0-9]*)/?$~i' => ['wikidata', 'https://www.wikidata.org/entity/', 'https://www.wikidata.org/entity/'],
                 '~^https?://database\\.factgrid\\.de/entity/(Q[1-9][0-9]*)/?$~i' => ['factgrid', 'https://database.factgrid.de/entity/', 'https://database.factgrid.de/entity/'],
+                '~^https?://wiki\\.genealogy\\.net/(?:\\?[^#]*?curid=|w/index\\.php\\?[^#]*?curid=)([1-9][0-9]{0,11})$~i' => ['genwiki', 'https://wiki.genealogy.net/?curid=', 'https://wiki.genealogy.net/?curid='],
                 '~^https?://(?:www\\.)?wikitree\\.com/wiki/([^/?#]+)$~i' => ['wikitree', 'https://www.wikitree.com/wiki/', 'https://www.wikitree.com/wiki/'],
             ];
+            if (($wikipedia = WikipediaLink::parse($url)) !== null) {
+                $value = $wikipedia['title'];
+                $authority = $wikipedia['authority'];
+                $key = $authority . ':' . $value;
+                if (!isset($seen[$key])) {
+                    $identifiers[] = new ExternalIdentifier('wikipedia', $value, $authority, $wikipedia['url']);
+                    $seen[$key] = true;
+                }
+                continue;
+            }
             foreach ($definitions as $pattern => [$provider, $authority, $baseUrl]) {
                 if (preg_match($pattern, $url, $match) !== 1) {
                     continue;

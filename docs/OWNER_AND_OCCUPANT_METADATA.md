@@ -18,7 +18,13 @@ matches or merges an existing individual.
 FactGrid relationship dates use `P49` (begin date) and `P50` (end date).
 FactGrid person records are loaded in one bounded batch and remain read-only.
 FactGrid `P2949` (**WikiTree person ID**) is rendered as a WikiTree link when
-present; Wikidata uses the corresponding `P2949` property.
+present; Wikidata uses the corresponding `P2949` property. Wikidata `P14871`
+(the GenWiki article page identifier) is rendered as a GenWiki link and is
+carried over as a numeric GenWiki `EXID` when an editor creates the person.
+The selected-language Wikipedia sitelink is handled in the same way and is
+carried over with its language-specific Wikipedia URI and page title.
+The provider mapping is configurable, so another Wikibase provider can expose
+the same link when it defines a corresponding GenWiki identifier property.
 
 All usable statements are shown, including historical statements and statements
 marked as deprecated in Wikidata. Historical information is the purpose of this
@@ -37,7 +43,7 @@ The module deliberately does not try to match an external person to an
 existing person in the family tree and does not send local person data to an
 external provider. The explicit **Add person** action creates a new `INDI`
 record with a canonical GEDCOM name (`NAME`, `GIVN`, `SURN`), stores the
-available Wikidata/FactGrid and WikiTree external IDs, records `SEX` (`U` for
+available Wikidata/FactGrid, GenWiki and WikiTree external IDs, records `SEX` (`U` for
 an unknown value), adds a `PROP` or `RESI` event and links the new person from
 the shared place with `_LOC:_ASSO`.
 

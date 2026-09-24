@@ -347,17 +347,21 @@ final class WikibaseProvider implements ExternalProvider
         foreach ($entities as $id => $entity) {
             $claims = is_array($entity['claims'] ?? null) ? $entity['claims'] : [];
             $links = [];
-            foreach (['factgrid' => $this->definition['factgrid'], 'wikidata' => $this->definition['wikidata'], 'gov' => $this->definition['gov'], 'wikitree' => $this->definition['wikitree']] as $provider => $property) {
+            foreach (['factgrid' => $this->definition['factgrid'], 'wikidata' => $this->definition['wikidata'], 'gov' => $this->definition['gov'], 'genwiki' => $this->definition['genwiki'], 'wikitree' => $this->definition['wikitree']] as $provider => $property) {
                 if ($property === null) { continue; }
                 foreach ($this->claimStrings($claims[$property] ?? [], $provider) as $value) {
                     $baseUrl = match ($provider) {
                         'factgrid' => 'https://database.factgrid.de/entity/',
                         'wikidata' => 'https://www.wikidata.org/entity/',
                         'gov' => 'https://gov.genealogy.net/item/show/',
+                        'genwiki' => 'https://wiki.genealogy.net/?curid=',
                         default => 'https://www.wikitree.com/wiki/',
                     };
-                    $links[$provider === 'wikitree' ? 'WikiTree' : ucfirst($provider)] = $baseUrl . rawurlencode($value);
+                    $links[$provider === 'wikitree' ? 'WikiTree' : ($provider === 'genwiki' ? 'GenWiki' : ucfirst($provider))] = $baseUrl . rawurlencode($value);
                 }
+            }
+            if (($wikipedia = WikipediaLink::fromSitelinks($entity['sitelinks'] ?? [], $language)) !== null) {
+                $links[$wikipedia['label']] = $wikipedia['url'];
             }
             $label = $this->languageValue($entity['labels'] ?? [], $language);
             $people[$id] = new ExternalPerson($this->key, $id, $this->entityUrl($id), $label, $this->claimDate($claims['P569'] ?? []), $this->claimDate($claims['P570'] ?? []), $links, $this->sexFromClaims($claims));

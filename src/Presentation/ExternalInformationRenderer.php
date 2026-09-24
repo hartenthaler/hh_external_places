@@ -790,6 +790,8 @@ final class ExternalInformationRenderer
                     . '<input type="hidden" name="person_sex" value="' . e((string) (is_object($person) && property_exists($person, 'sex') ? $person->sex : '')) . '">'
                     . '<input type="hidden" name="person_wikidata" value="' . e($this->externalPersonId($externalLinks, 'wikidata')) . '">'
                     . '<input type="hidden" name="person_factgrid" value="' . e($this->externalPersonId($externalLinks, 'factgrid')) . '">'
+                    . '<input type="hidden" name="person_genwiki" value="' . e($this->externalPersonId($externalLinks, 'genwiki')) . '">'
+                    . '<input type="hidden" name="person_wikipedia" value="' . e($this->externalPersonWikipediaUrl($externalLinks)) . '">'
                     . '<input type="hidden" name="person_wikitree" value="' . e($this->externalPersonId($externalLinks, 'wikitree')) . '">'
                     . '<input type="hidden" name="person_from" value="' . e((string) $relation->from) . '">'
                     . '<input type="hidden" name="person_until" value="' . e((string) $relation->until) . '">'
@@ -816,16 +818,30 @@ final class ExternalInformationRenderer
         $url = $externalLinks[match ($provider) {
             'wikidata' => 'Wikidata',
             'factgrid' => 'Factgrid',
+            'genwiki' => 'GenWiki',
             default => 'WikiTree',
         }] ?? '';
         $pattern = match ($provider) {
             'wikidata' => '~wikidata\\.org/(?:entity|wiki)/(Q[1-9][0-9]*)~i',
             'factgrid' => '~factgrid\\.de/entity/(Q[1-9][0-9]*)~i',
+            'genwiki' => '~wiki\\.genealogy\\.net/(?:\\?[^#]*?curid=|w/index\\.php\\?[^#]*?curid=)([1-9][0-9]{0,11})~i',
             default => '~wikitree\\.com/wiki/([^/?#]+)~i',
         };
         if (preg_match($pattern, $url, $match) === 1) {
             return rawurldecode($match[1]);
         }
+        return '';
+    }
+
+    /** @param array<string,string> $externalLinks */
+    private function externalPersonWikipediaUrl(array $externalLinks): string
+    {
+        foreach ($externalLinks as $label => $url) {
+            if (str_starts_with($label, 'Wikipedia (')) {
+                return $url;
+            }
+        }
+
         return '';
     }
 

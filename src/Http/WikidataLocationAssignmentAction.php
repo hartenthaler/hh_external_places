@@ -13,6 +13,7 @@ use Fisharebest\Webtrees\Validator;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\WikidataIdentifier;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalPerson;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalProviderRegistry;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\WikipediaLink;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Gedcom\WikidataLocationAssignmentService;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Geo\Coordinates;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\MoreI18N;
@@ -127,6 +128,8 @@ final class WikidataLocationAssignmentAction implements RequestHandlerInterface
             $sex = strtoupper(trim(Validator::parsedBody($request)->string('person_sex', '')));
             $wikidataId = strtoupper(trim(Validator::parsedBody($request)->string('person_wikidata', '')));
             $factgridId = strtoupper(trim(Validator::parsedBody($request)->string('person_factgrid', '')));
+            $genwikiId = trim(Validator::parsedBody($request)->string('person_genwiki', ''));
+            $wikipediaUrl = trim(Validator::parsedBody($request)->string('person_wikipedia', ''));
             $wikiTreeId = trim(Validator::parsedBody($request)->string('person_wikitree', ''));
             $relationship = Validator::parsedBody($request)->string('person_relationship', '');
             $from = trim(Validator::parsedBody($request)->string('person_from', ''));
@@ -149,6 +152,12 @@ final class WikidataLocationAssignmentAction implements RequestHandlerInterface
             }
             if ($factgridId !== '' && preg_match('/^Q[1-9][0-9]*$/', $factgridId) === 1) {
                 $externalLinks['Factgrid'] = 'https://database.factgrid.de/entity/' . $factgridId;
+            }
+            if ($genwikiId !== '' && preg_match('/^[1-9][0-9]{0,11}$/', $genwikiId) === 1) {
+                $externalLinks['GenWiki'] = 'https://wiki.genealogy.net/?curid=' . rawurlencode($genwikiId);
+            }
+            if (($wikipedia = WikipediaLink::parse($wikipediaUrl)) !== null) {
+                $externalLinks['Wikipedia (' . strtoupper($wikipedia['language']) . ')'] = $wikipedia['url'];
             }
             if ($wikiTreeId !== '' && preg_match('/^[\p{L}][\p{L}\p{M}0-9._-]{0,119}$/u', $wikiTreeId) === 1) {
                 $externalLinks['WikiTree'] = 'https://www.wikitree.com/wiki/' . rawurlencode($wikiTreeId);

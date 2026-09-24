@@ -108,7 +108,7 @@ final class ReadOnlyWikibaseClient
             $response = $this->httpClient->request('GET', $endpoint, [
                 'action' => 'wbgetentities', 'format' => 'json', 'formatversion' => '2',
                 'ids' => implode('|', $itemIds), 'languages' => $this->language($language) . '|en',
-                'props' => 'labels|claims',
+                'props' => 'labels|claims|sitelinks',
             ], ['Accept' => 'application/json', 'User-Agent' => 'webtrees External Places/0.3'], 6.0);
             if ($response === null || $response->getStatusCode() !== 200) { return []; }
             $body = $response->getBody()->getContents();
