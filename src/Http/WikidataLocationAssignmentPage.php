@@ -16,6 +16,7 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\ExternalPlacesModule;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalProviderSettings;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\GeoNamesProvider;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\GenWikiProvider;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\NearbySearchResult;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\PlaceTypeFilterSettings;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\CoordinateConsistencySettings;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\MoreI18N;
@@ -93,6 +94,27 @@ final class WikidataLocationAssignmentPage implements RequestHandlerInterface
             $factgridNearbyCandidates = $wikibaseClient->nearby('factgrid', $coordinates['latitude'], $coordinates['longitude'], $radiusKm, $language, $houseOnly, $factgridFilterLevel);
         }
 
+        $externalNearbyCandidates = [];
+        if ($providerEnabled && $providerKey === 'gov' && $nearbyRequested && $coordinates !== null && $govProvider !== null && method_exists($govProvider, 'nearby')) {
+            $externalNearbyCandidates = array_values(array_filter(
+                $govProvider->nearby($coordinates['latitude'], $coordinates['longitude'], $radiusKm),
+                static fn (array $candidate): bool => !$houseOnly || PlaceTypeFilterSettings::matches('gov', $candidate, $filterLevel ?? 'house'),
+            ));
+        }
+
+        $nearbyCandidates = [];
+        if ($providerEnabled && $providerKey === 'wikidata' && $nearbyRequested && $coordinates !== null) {
+            $nearbyCandidates = $client->nearby($coordinates['latitude'], $coordinates['longitude'], $radiusKm, $language, $locationName, $houseOnly, $filterLevel ?? 'house');
+        }
+
+        $activeNearbyCandidates = match ($providerKey) {
+            'wikidata' => $nearbyCandidates,
+            'factgrid' => $factgridNearbyCandidates,
+            'gov'      => $externalNearbyCandidates,
+            default    => [],
+        };
+        $nearbyResult = NearbySearchResult::forProvider($providerKey, $nearbyRequested && $providerEnabled, $activeNearbyCandidates);
+
         $current = (new ExternalIdService())->wikidataIdentifiers($location->gedcom())->identifier();
         $entity  = $current === null ? null : $client->fetch($current, $language);
         $wikidataCandidates = $providerEnabled && $providerKey === 'wikidata' && $submittedSearch !== ''
@@ -122,9 +144,10 @@ final class WikidataLocationAssignmentPage implements RequestHandlerInterface
             'location'       => $location,
             'location_name'  => $locationName,
             'has_search'     => $submittedSearch !== '',
-            'nearby_candidates' => $providerEnabled && $providerKey === 'wikidata' && $nearbyRequested && $coordinates !== null ? $client->nearby($coordinates['latitude'], $coordinates['longitude'], $radiusKm, $language, $locationName, $houseOnly, $filterLevel ?? 'house') : [],
-            'external_nearby_candidates' => $providerEnabled && $nearbyRequested && $providerKey === 'gov' && $coordinates !== null && $govProvider !== null && method_exists($govProvider, 'nearby') ? array_values(array_filter($govProvider->nearby($coordinates['latitude'], $coordinates['longitude'], $radiusKm), static fn (array $candidate): bool => !$houseOnly || PlaceTypeFilterSettings::matches('gov', $candidate, $filterLevel ?? 'house'))) : [],
+            'nearby_candidates' => $nearbyCandidates,
+            'external_nearby_candidates' => $externalNearbyCandidates,
             'nearby_requested' => $nearbyRequested,
+            'nearby_result'    => $nearbyResult,
             'house_only'      => $houseOnly,
             'filter_level'    => $filterLevel,
             'suggested_filter_levels' => $suggestedFilterLevels,
