@@ -1114,3 +1114,78 @@ msgstr "Das Jahr der %s stimmt überein."
 
 msgid "The year of %s differs."
 msgstr "Das Jahr der %s ist unterschiedlich."
+
+msgid "Consistency summary"
+msgstr "Konsistenzübersicht"
+
+msgid "Provider"
+msgstr "Provider"
+
+msgid "Field"
+msgstr "Feld"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Details"
+msgstr "Details"
+
+msgid "Provider data"
+msgstr "Providerdaten"
+
+msgid "The provider data is currently unavailable."
+msgstr "Die Providerdaten sind derzeit nicht verfügbar."
+
+msgid "Place name"
+msgstr "Ortsname"
+
+msgid "The provider does not supply a place name."
+msgstr "Der Provider liefert keinen Ortsnamen."
+
+msgid "The shared place has no name to compare."
+msgstr "Der Ortsdatensatz enthält keinen Vergleichsnamen."
+
+msgid "The place name matches."
+msgstr "Der Ortsname stimmt überein."
+
+msgid "The place name differs."
+msgstr "Der Ortsname weicht ab."
+
+msgid "Coordinates"
+msgstr "Koordinaten"
+
+msgid "The provider does not supply coordinates."
+msgstr "Der Provider liefert keine Koordinaten."
+
+msgid "The shared place has no coordinates to compare."
+msgstr "Der Ortsdatensatz enthält keine Vergleichskoordinaten."
+
+msgid "No coordinate tolerance is configured for this hierarchy level."
+msgstr "Für diese Hierarchieebene ist keine Koordinatentoleranz konfiguriert."
+
+msgid "Distance: %s %s (tolerance %s %s)."
+msgstr "Entfernung: %s %s (Toleranz %s %s)."
+
+msgid "Place type"
+msgstr "Ortstyp"
+
+msgid "The GOV place type matches."
+msgstr "Der GOV-Ortstyp stimmt überein."
+
+msgid "The GOV place type differs."
+msgstr "Der GOV-Ortstyp weicht ab."
+
+msgid "The shared place has no GOV place type."
+msgstr "Der Ortsdatensatz enthält keinen GOV-Ortstyp."
+
+msgid "The GOV place type is unavailable."
+msgstr "Der GOV-Ortstyp ist nicht verfügbar."
+
+msgid "Mismatch"
+msgstr "Abweichung"
+
+msgid "Missing"
+msgstr "Fehlt"
+
+msgid "Unavailable"
+msgstr "Nicht verfügbar"

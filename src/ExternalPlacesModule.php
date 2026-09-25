@@ -56,6 +56,7 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Http\WikidataLocationAssig
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Http\SimilarPersonSearchPage;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Http\ExternalInformationPage;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Presentation\ExternalInformationRenderer;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Presentation\ConsistencySummary;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikidata\WikidataClient;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikidata\NearbyDiscoverySettings;
 use Vesta\Model\GenericViewElement;
@@ -313,7 +314,8 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
             $genwikiShown = [];
             // Nominatim is contextual map/address information, not an
             // assignable identifier provider. Keep this special block first.
-            $html = $nominatimHtml;
+            $summaryHtml = ConsistencySummary::render($externalIdentifiers, $language, $location->gedcom(), $sharedCoordinates, self::showConsistentReferences());
+            $html = $summaryHtml . $nominatimHtml;
             $html .= $renderer->externalInformationHtml($externalIdentifiers, $language, '', $location->fullName(), $assignmentUrl, $location->gedcom(), $genwikiShown, $sharedCoordinates, $associatedPersonKeys, $location);
             $html .= $geoNamesHtml;
             $html .= '<div class="d-flex gap-2 flex-wrap mt-2">';
@@ -343,7 +345,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
 
         $label = $entity?->label ?? $identifier->qid();
         $assignmentUrl = $location->canEdit() ? self::assignmentUrl(['tree' => $location->tree()->name(), 'xref' => $location->xref()]) : null;
-        $html  = '<section class="mt-4">' . $renderer->providerHeading('wikidata', I18N::translate('Wikidata'));
+        $html  = '<section id="external-provider-wikidata" class="mt-4">' . $renderer->providerHeading('wikidata', I18N::translate('Wikidata'));
         $html .= '<a href="' . e($identifier->entityUrl()) . '" rel="noopener noreferrer" target="_blank">' . e($label) . '</a> (' . e($identifier->qid()) . ')';
         if ($entity?->description !== null) {
             $html .= ' — ' . e($entity->description);
@@ -386,7 +388,8 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         // Nominatim is contextual map/address information, not an
         // assignable identifier provider. Keep this special block first.
         $nominatimHtml = $renderer->nominatimHtml($renderer->nominatimPlaceName($location->gedcom(), $this->nominatimPlaceContext($place, $location->fullName())), $language, $location->gedcom(), $assignmentUrl);
-        $html = $nominatimHtml . $html;
+        $summaryHtml = ConsistencySummary::render($externalIdentifiers, $language, $location->gedcom(), $sharedCoordinates, self::showConsistentReferences());
+        $html = $summaryHtml . $nominatimHtml . $html;
         $html .= $renderer->externalInformationHtml($externalIdentifiers, $language, 'wikidata', $location->fullName(), $assignmentUrl, $location->gedcom(), $genwikiShown, $sharedCoordinates, $associatedPersonKeys, $location);
         $html .= $renderer->geoNamesHtml($location->fullName(), $language);
         $html .= '<div class="d-flex gap-2 flex-wrap mt-2">';

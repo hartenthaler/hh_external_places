@@ -1079,3 +1079,78 @@ msgstr ""
 
 msgid "The year of %s differs."
 msgstr ""
+
+msgid "Consistency summary"
+msgstr ""
+
+msgid "Provider"
+msgstr ""
+
+msgid "Field"
+msgstr ""
+
+msgid "Status"
+msgstr ""
+
+msgid "Details"
+msgstr ""
+
+msgid "Provider data"
+msgstr ""
+
+msgid "The provider data is currently unavailable."
+msgstr ""
+
+msgid "Place name"
+msgstr ""
+
+msgid "The provider does not supply a place name."
+msgstr ""
+
+msgid "The shared place has no name to compare."
+msgstr ""
+
+msgid "The place name matches."
+msgstr ""
+
+msgid "The place name differs."
+msgstr ""
+
+msgid "Coordinates"
+msgstr ""
+
+msgid "The provider does not supply coordinates."
+msgstr ""
+
+msgid "The shared place has no coordinates to compare."
+msgstr ""
+
+msgid "No coordinate tolerance is configured for this hierarchy level."
+msgstr ""
+
+msgid "Distance: %s %s (tolerance %s %s)."
+msgstr ""
+
+msgid "Place type"
+msgstr ""
+
+msgid "The GOV place type matches."
+msgstr ""
+
+msgid "The GOV place type differs."
+msgstr ""
+
+msgid "The shared place has no GOV place type."
+msgstr ""
+
+msgid "The GOV place type is unavailable."
+msgstr ""
+
+msgid "Mismatch"
+msgstr ""
+
+msgid "Missing"
+msgstr ""
+
+msgid "Unavailable"
+msgstr ""
