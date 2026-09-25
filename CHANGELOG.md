@@ -23,6 +23,10 @@
   ranks up to 20 possible duplicates. Administrators can open webtrees' core
   merge workflow for a selected candidate; shared-place consistency checks
   remain limited to people already linked to that `_LOC` (Issue #179).
+- Added a compact consistency summary at the top of the external-information
+  page. It reports match, mismatch, missing and unavailable values per
+  provider and field, with accessible links to the detailed provider sections
+  (Issue #143).
 
 ## 2.2.6.15 - 2026-09-23
 

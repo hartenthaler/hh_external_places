@@ -13,6 +13,16 @@ The setting for consistent external information controls whether consistent
 rows are shown. Missing and inconsistent values remain visible because they
 may require a decision.
 
+## Compact consistency summary
+
+The external-information page starts with a compact, accessible table. It
+lists the provider, field, status and a link to the detailed provider section.
+The status is one of **match**, **mismatch**, **missing** or **unavailable**;
+the wording is always present and is not conveyed by colour alone. Matching
+rows follow the administrator's setting for consistent external information.
+The summary is read-only: importing or changing a value remains an explicit
+editor action in the detailed section.
+
 ## Fields and actions
 
 The current field actions are:

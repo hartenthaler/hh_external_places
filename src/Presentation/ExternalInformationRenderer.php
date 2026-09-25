@@ -20,6 +20,7 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Gedcom\AddressEditor;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Gedcom\GovTypeValidator;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Gedcom\MediaEditor;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Gedcom\PopulationEditor;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Gedcom\PlaceNameRegistry;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Geo\Coordinates;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\MoreI18N;
 
@@ -56,7 +57,7 @@ final class ExternalInformationRenderer
                     $displayLabel = $placeName !== '' ? trim(strip_tags($placeName)) : $identifier->value;
                 }
                 $showIdentifier = $displayLabel !== $identifier->value;
-                $html .= '<section class="mt-4">' . $this->providerHeading($provider->key(), $provider->label())
+                $html .= '<section id="external-provider-' . e($provider->key()) . '" class="mt-4">' . $this->providerHeading($provider->key(), $provider->label())
                     . '<a href="' . e($identifier->url) . '" rel="noopener noreferrer" target="_blank">'
                     . e($displayLabel) . '</a>' . ($showIdentifier ? ' <small>(' . e($identifier->value) . ')</small>' : '');
                 if ($information?->description !== null) {
@@ -278,7 +279,7 @@ final class ExternalInformationRenderer
         if (!ExternalProviderSettings::isEnabled('geonames')) { return ''; }
         $information = (new GeoNamesProvider())->lookup($placeName, $language);
         if ($information === null) { return ''; }
-        $html = '<section class="mt-4">' . $this->providerHeading('geonames', I18N::translate('GeoNames')) . '<a href="' . e($information['url']) . '" rel="noopener noreferrer" target="_blank">' . e($information['label']) . '</a>';
+        $html = '<section id="external-provider-geonames" class="mt-4">' . $this->providerHeading('geonames', I18N::translate('GeoNames')) . '<a href="' . e($information['url']) . '" rel="noopener noreferrer" target="_blank">' . e($information['label']) . '</a>';
         foreach ($information['details'] as $detail) {
             $html .= '<br><small>' . e($this->externalDetailLabel($detail['label'])) . ': ' . e($this->externalDetailValue($detail['label'], $detail['value'])) . '</small>';
         }
@@ -328,7 +329,7 @@ final class ExternalInformationRenderer
         if ($information === null) {
             return '<div class="alert alert-secondary small"><strong>Nominatim diagnostic:</strong> ' . e($provider->diagnostic() !== '' ? $provider->diagnostic() : 'no result') . '</div>';
         }
-        $html = '<section class="mt-4">' . $this->providerHeading('nominatim', 'Nominatim') . '<a href="' . e($information['url']) . '" rel="noopener noreferrer" target="_blank">' . e($information['label']) . '</a>';
+        $html = '<section id="external-provider-nominatim" class="mt-4">' . $this->providerHeading('nominatim', 'Nominatim') . '<a href="' . e($information['url']) . '" rel="noopener noreferrer" target="_blank">' . e($information['label']) . '</a>';
         if ($information['description'] !== null && $information['description'] !== '') {
             $html .= ' — ' . e($information['description']);
         }
@@ -470,21 +471,7 @@ final class ExternalInformationRenderer
 
     private function locationNamesByLanguage(string $gedcom): array
     {
-        $names = [];
-        $currentName = null;
-        foreach (preg_split('/\r?\n/', $gedcom) ?: [] as $line) {
-            if (preg_match('/^1 NAME(?: |$)(.*)$/', $line, $match) === 1 && trim($match[1]) !== '') {
-                $currentName = trim($match[1]);
-                $names[''] ??= [];
-                $names[''][] = $currentName;
-            } elseif ($currentName !== null && preg_match('/^2 LANG (.+)$/', $line, $match) === 1) {
-                $language = LanguageCode::normalize($match[1]);
-                if ($language === '') { continue; }
-                $names[$language][] = $currentName;
-            }
-        }
-        foreach ($names as $language => $values) { $names[$language] = array_values(array_unique($values)); }
-        return $names;
+        return PlaceNameRegistry::byLanguage($gedcom);
     }
 
     private function populationHtml(ExternalInformation $information, ?string $assignmentUrl, string $gedcom): string
