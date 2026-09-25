@@ -1189,3 +1189,9 @@ msgstr "Fehlt"
 
 msgid "Unavailable"
 msgstr "Nicht verfügbar"
+
+msgid "Validity date range"
+msgstr "Gültigkeitszeitraum"
+
+msgid "The provider does not supply a comparable validity range."
+msgstr "Der Provider liefert keinen vergleichbaren Gültigkeitszeitraum."

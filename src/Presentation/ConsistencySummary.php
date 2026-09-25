@@ -89,6 +89,14 @@ final class ConsistencySummary
                 };
                 $rows[] = self::row($provider->label(), I18N::translate('Place type'), $state, $detail, $anchor);
             }
+
+            // GOV type blocks may be dated, but the provider-neutral read
+            // model currently exposes no comparable external type intervals.
+            // Report that limitation explicitly instead of implying that the
+            // local and external periods match.
+            if ($providerKey === 'gov' && GovTypeValidator::entries($gedcom) !== []) {
+                $rows[] = self::row($provider->label(), I18N::translate('Validity date range'), 'unavailable', I18N::translate('The provider does not supply a comparable validity range.'), $anchor);
+            }
         }
 
         if ($rows === []) {
