@@ -1034,3 +1034,48 @@ msgstr ""
 
 msgid "The individual was created, but it could not be linked to the shared place."
 msgstr ""
+
+msgid "Similar people to the new individual %s"
+msgstr ""
+
+msgid "The complete current family tree was searched for possible duplicates. The candidates are ranked by the available matching evidence."
+msgstr ""
+
+msgid "No similar people were found."
+msgstr ""
+
+msgid "Back to external information for the shared place"
+msgstr ""
+
+msgid "You are not authorized to search for similar people."
+msgstr ""
+
+msgid "The individual for the similarity search could not be found."
+msgstr ""
+
+msgid "Match"
+msgstr ""
+
+msgid "Administrator access is required for merging."
+msgstr ""
+
+msgid "The normalized name matches."
+msgstr ""
+
+msgid "The names share normalized words."
+msgstr ""
+
+msgid "The sex matches."
+msgstr ""
+
+msgid "The sex differs."
+msgstr ""
+
+msgid "An external identifier matches."
+msgstr ""
+
+msgid "The year of %s matches."
+msgstr ""
+
+msgid "The year of %s differs."
+msgstr ""

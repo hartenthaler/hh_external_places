@@ -14,6 +14,7 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domain\WikidataIdentifier;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalPerson;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\ExternalProviderRegistry;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\External\WikipediaLink;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\ExternalPlacesModule;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Gedcom\WikidataLocationAssignmentService;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Geo\Coordinates;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\MoreI18N;
@@ -163,7 +164,8 @@ final class WikidataLocationAssignmentAction implements RequestHandlerInterface
                 $externalLinks['WikiTree'] = 'https://www.wikitree.com/wiki/' . rawurlencode($wikiTreeId);
             }
             $person = new ExternalPerson($providerKey, $externalId, $identifier->url, $label, $birthDate !== '' ? $birthDate : null, $deathDate !== '' ? $deathDate : null, $externalLinks, $sex !== '' ? $sex : null);
-            $result = $service->addPerson($location, $person, $relationship, $from !== '' ? $from : null, $until !== '' ? $until : null);
+            $createdXref = null;
+            $result = $service->addPerson($location, $person, $relationship, $from !== '' ? $from : null, $until !== '' ? $until : null, $createdXref);
             $message = match ($result) {
                 'added' => I18N::translate('The external person has been added to the shared place.'),
                 'already-associated' => I18N::translate('This external person is already linked to the shared place.'),
@@ -174,6 +176,14 @@ final class WikidataLocationAssignmentAction implements RequestHandlerInterface
             FlashMessages::addMessage($message, $result === 'added' ? 'success' : 'danger');
         } else {
             throw new HttpBadRequestException(I18N::translate('Invalid Wikidata assignment operation.'));
+        }
+
+        if ($operation === 'add-person' && $result === 'added' && $createdXref !== null) {
+            return redirect(ExternalPlacesModule::similarPersonSearchUrl([
+                'tree'           => $tree->name(),
+                'xref'           => $location->xref(),
+                'person'         => $createdXref,
+            ]));
         }
 
         return redirect($location->url());

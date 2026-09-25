@@ -226,6 +226,7 @@ and, where a public URL template is known, as links.
 * [Field-level reconciliation and import actions](docs/FIELD_RECONCILIATION.md)
 * [Provider data offered for transfer](docs/IMPORTABLE_PROVIDER_DATA.md)
 * [Owner and occupant metadata](docs/OWNER_AND_OCCUPANT_METADATA.md)
+* [Person matching after external imports](docs/PERSON_MATCHING.md)
 * [Version 2 roadmap](docs/ROADMAP.md)
 * [Changelog](CHANGELOG.md)
 
