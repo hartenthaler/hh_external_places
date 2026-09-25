@@ -147,7 +147,7 @@ final class WikidataLocationAssignmentService
      *
      * @return 'added'|'already-associated'|'invalid-provider'|'not-authorized'|'link-failed'
      */
-    public function addPerson(Location $location, ExternalPerson $person, string $relationship, ?string $from = null, ?string $until = null): string
+    public function addPerson(Location $location, ExternalPerson $person, string $relationship, ?string $from = null, ?string $until = null, ?string &$createdXref = null): string
     {
         if (!$location->canEdit()) {
             return 'not-authorized';
@@ -198,6 +198,7 @@ final class WikidataLocationAssignmentService
         $gedcom .= "\n";
 
         $individual = $location->tree()->createIndividual($gedcom);
+        $createdXref = $individual->xref();
         $updated = $this->personEditor->add($location, $individual->xref(), $person, $relationship);
         if ($updated === $location->gedcom()) {
             return 'link-failed';

@@ -1,0 +1,33 @@
+<?php
+
+declare(strict_types=1);
+
+use Fisharebest\Webtrees\I18N;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\MoreI18N;
+
+/** @var string $information_url */
+/** @var string $person_name */
+/** @var Fisharebest\Webtrees\Individual $person */
+/** @var list<array{individual:Fisharebest\Webtrees\Individual,name:string,birth:string,death:string,sex:string,score:int,evidence:list<string>,external_keys:list<string>,merge_url:?string}> $candidates */
+/** @var Fisharebest\Webtrees\Location $location */
+?>
+<?php $personName = '<a href="' . e($person->url()) . '">' . e($person_name) . '</a>'; ?>
+<h1><?= I18N::translate('Similar people to the new individual %s', $personName) ?></h1>
+<p><a class="btn btn-outline-secondary btn-sm" href="<?= e($information_url) ?>"><?= I18N::translate('Back to external information for the shared place') ?></a></p>
+<p><?= I18N::translate('The complete current family tree was searched for possible duplicates. The candidates are ranked by the available matching evidence.') ?></p>
+<?php if ($candidates === []) : ?>
+    <div class="alert alert-secondary"><?= I18N::translate('No similar people were found.') ?></div>
+<?php else : ?>
+    <div class="table-responsive"><table class="table table-sm table-hover align-middle">
+        <thead><tr><th><?= MoreI18N::xlate('Individual') ?></th><th><?= MoreI18N::xlate('Birth') ?></th><th><?= MoreI18N::xlate('Death') ?></th><th><?= I18N::translate('Match') ?></th><th><?= I18N::translate('Actions') ?></th></tr></thead>
+        <tbody><?php foreach ($candidates as $candidate) : ?>
+            <tr>
+                <td><a href="<?= e($candidate['individual']->url()) ?>"><?= e($candidate['name']) ?></a> <small>(<?= e($candidate['individual']->xref()) ?>)</small></td>
+                <td><?= e($candidate['birth']) ?></td>
+                <td><?= e($candidate['death']) ?></td>
+                <td><strong><?= e((string) $candidate['score']) ?></strong><br><small><?= e(implode(' ', $candidate['evidence'])) ?></small></td>
+                <td><?php if ($candidate['merge_url'] !== null) : ?><a class="btn btn-sm btn-outline-primary" href="<?= e($candidate['merge_url']) ?>"><?= MoreI18N::xlate('Merge') ?></a><?php else : ?><span class="text-muted"><?= I18N::translate('Administrator access is required for merging.') ?></span><?php endif ?></td>
+            </tr>
+        <?php endforeach ?></tbody>
+    </table></div>
+<?php endif ?>

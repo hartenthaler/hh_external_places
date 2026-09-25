@@ -19,6 +19,10 @@
 - Nearby-search request and empty-result handling is now shared by Wikidata,
   FactGrid and GOV. A misleading FactGrid empty-result message is no longer
   shown when a nearby search has returned results.
+- After importing an external person, a separate full-tree similarity search
+  ranks up to 20 possible duplicates. Administrators can open webtrees' core
+  merge workflow for a selected candidate; shared-place consistency checks
+  remain limited to people already linked to that `_LOC` (Issue #179).
 
 ## 2.2.6.15 - 2026-09-23
 

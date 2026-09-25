@@ -53,6 +53,7 @@ use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Geo\Coordinates;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikibase\ReadOnlyWikibaseClient;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Domus\DomusMapLinkProvider;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Http\WikidataLocationAssignmentPage;
+use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Http\SimilarPersonSearchPage;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Http\ExternalInformationPage;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Presentation\ExternalInformationRenderer;
 use Hartenthaler\Webtrees\Module\ExternalPlacesModule\Wikidata\WikidataClient;
@@ -78,6 +79,8 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
     private const CACHE_SCHEMA_VERSION_PREFERENCE = 'wikibase_cache_schema_version';
     private const ASSIGNMENT_ROUTE_NAME = 'hh-external-places.assignment-page';
     private const ASSIGNMENT_ROUTE_PATH = '/tree/{tree}/external-place/{xref}/assignment';
+    private const SIMILAR_PERSON_ROUTE_NAME = 'hh-external-places.similar-person-page';
+    private const SIMILAR_PERSON_ROUTE_PATH = '/tree/{tree}/external-place/{xref}/similar-person/{person}';
     private const EXTERNAL_INFORMATION_ROUTE_PATH = '/tree/{tree}/external-place/{xref}/information';
     private const ORTSREGISTER_MODULE_NAME = '_ortsregister_';
     private const ORTSREGISTER_DETAIL_ROUTE = 'ortsregister.orte.detail';
@@ -113,6 +116,7 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         if (method_exists($router, 'add')) {
             // webtrees 2.3 identifies routes by their request-handler class.
             $router->add(self::ASSIGNMENT_ROUTE_PATH, WikidataLocationAssignmentPage::class);
+            $router->add(self::SIMILAR_PERSON_ROUTE_PATH, SimilarPersonSearchPage::class);
             $router->add(self::EXTERNAL_INFORMATION_ROUTE_PATH, ExternalInformationPage::class);
         } else {
             // webtrees 2.2 uses an explicit route name and HTTP verb map.
@@ -121,6 +125,11 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
                 self::ASSIGNMENT_ROUTE_PATH,
                 WikidataLocationAssignmentPage::class,
             )->allows(['GET', 'POST']);
+            $router->get(
+                self::SIMILAR_PERSON_ROUTE_NAME,
+                self::SIMILAR_PERSON_ROUTE_PATH,
+                SimilarPersonSearchPage::class,
+            );
             $router->get(
                 'hh-external-places.external-information',
                 self::EXTERNAL_INFORMATION_ROUTE_PATH,
@@ -167,6 +176,17 @@ class ExternalPlacesModule extends AbstractModule implements ModuleConfigInterfa
         $routeName = method_exists($routeMap, 'add')
             ? WikidataLocationAssignmentPage::class
             : self::ASSIGNMENT_ROUTE_NAME;
+
+        return route($routeName, $parameters);
+    }
+
+    /** Build the separate similar-person search URL on both webtrees routing APIs. */
+    public static function similarPersonSearchUrl(array $parameters): string
+    {
+        $routeMap = Registry::routeFactory()->routeMap();
+        $routeName = method_exists($routeMap, 'add')
+            ? SimilarPersonSearchPage::class
+            : self::SIMILAR_PERSON_ROUTE_NAME;
 
         return route($routeName, $parameters);
     }

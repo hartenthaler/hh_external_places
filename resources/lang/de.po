@@ -1069,3 +1069,48 @@ msgstr "Das Bild wurde nicht verknüpft, da es bereits vorhanden oder ungültig 
 
 msgid "The individual was created, but it could not be linked to the shared place."
 msgstr "Die Person wurde angelegt, konnte aber nicht mit dem gemeinsamen Ort verknüpft werden."
+
+msgid "Similar people to the new individual %s"
+msgstr "Ähnliche Personen zur neuen Person %s"
+
+msgid "The complete current family tree was searched for possible duplicates. The candidates are ranked by the available matching evidence."
+msgstr "Der vollständige aktuelle Stammbaum wurde nach möglichen Dubletten durchsucht. Die Kandidaten sind nach den verfügbaren Übereinstimmungen sortiert."
+
+msgid "No similar people were found."
+msgstr "Es wurden keine ähnlichen Personen gefunden."
+
+msgid "Back to external information for the shared place"
+msgstr "Zurück zu den externen Informationen des gemeinsamen Ortes"
+
+msgid "You are not authorized to search for similar people."
+msgstr "Sie sind nicht berechtigt, nach ähnlichen Personen zu suchen."
+
+msgid "The individual for the similarity search could not be found."
+msgstr "Die Person für die Ähnlichkeitssuche wurde nicht gefunden."
+
+msgid "Match"
+msgstr "Übereinstimmung"
+
+msgid "Administrator access is required for merging."
+msgstr "Zum Zusammenführen ist Administratorzugriff erforderlich."
+
+msgid "The normalized name matches."
+msgstr "Der normalisierte Name stimmt überein."
+
+msgid "The names share normalized words."
+msgstr "Die Namen enthalten normalisierte gemeinsame Wörter."
+
+msgid "The sex matches."
+msgstr "Das Geschlecht stimmt überein."
+
+msgid "The sex differs."
+msgstr "Das Geschlecht ist unterschiedlich."
+
+msgid "An external identifier matches."
+msgstr "Eine externe Kennung stimmt überein."
+
+msgid "The year of %s matches."
+msgstr "Das Jahr der %s stimmt überein."
+
+msgid "The year of %s differs."
+msgstr "Das Jahr der %s ist unterschiedlich."
