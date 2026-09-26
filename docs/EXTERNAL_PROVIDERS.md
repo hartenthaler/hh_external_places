@@ -1,8 +1,7 @@
 # External providers and identifier consistency
 
-The public name of this module is **External Places**. The technical module
-identifier remains `hh_external_places` during the compatibility transition;
-see [the naming proposal](RENAME_PROPOSAL.md).
+The public name of this module is **External Places**. Its technical module
+identifier is `hh_external_places`.
 
 The module uses one provider-neutral read model for public place information.
 Each adapter has a fixed endpoint, identifier validator and reviewed property

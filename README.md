@@ -182,17 +182,15 @@ and, where a public URL template is known, as links.
 * [Concept: Wikidata and Domus integration](docs/WIKIDATA_DOMUS_CONCEPT.md)
 * [External providers and identifier consistency](docs/EXTERNAL_PROVIDERS.md)
 * [Coordinates and consistency](docs/COORDINATES.md)
-* [FamilySearch Places access test](docs/FAMILYSEARCH_PLACES.md)
-* [GOV type catalogue](docs/GOV_TYPE_CATALOG.md)
-* [Module and repository naming proposal](docs/RENAME_PROPOSAL.md)
-* [Roadmap](docs/ROADMAP.md)
-* [Development notes](docs/DEVELOPMENT.md)
 * [Historical address model](docs/HISTORICAL_ADDRESSES.md)
 * [Field-level reconciliation and import actions](docs/FIELD_RECONCILIATION.md)
 * [Provider data offered for transfer](docs/IMPORTABLE_PROVIDER_DATA.md)
 * [Owner and occupant metadata](docs/OWNER_AND_OCCUPANT_METADATA.md)
 * [Person matching after external imports](docs/PERSON_MATCHING.md)
-* [Version 2 roadmap](docs/ROADMAP.md)
+* [GOV type catalogue](docs/GOV_TYPE_CATALOG.md)
+* [FamilySearch Places access test](docs/FAMILYSEARCH_PLACES.md)
+* [Roadmap](docs/ROADMAP.md)
+* [Development notes](docs/DEVELOPMENT.md)
 * [Changelog](CHANGELOG.md)
 
 <a id="privacy"></a>
@@ -233,23 +231,34 @@ for a convenient installation of webtrees custom modules:
 <a id="translation"></a>
 ## 🌐 Translation
 
+### Module interface
+
 The module uses the standard webtrees gettext system (`.po`/`.mo`) for its
 user interface: headings, buttons, messages and other operating texts are
 translated through `resources/lang`. GOV object types are not maintained as
-interface strings; their multilingual labels come from the
-bundled source `resources/config/gov-types.owl`. See [the GOV type catalogue
-documentation](docs/GOV_TYPE_CATALOG.md) for the source and fallback rules.
-German is currently available. Contributions are welcome as pull requests.
+interface strings. German is currently available. Contributions are welcome as
+pull requests.
+
+### Provider terminology
+
+GOV object types use multilingual labels from the bundled source
+`resources/config/gov-types.owl`, rather than interface translations. See [the
+GOV type catalogue documentation](docs/GOV_TYPE_CATALOG.md) for the source and
+fallback rules.
 
 <a id="credits"></a>
 ## 🙏 Credits
 
-* [webtrees](https://www.webtrees.net)
-* [Vesta Shared Places](https://github.com/vesta-webtrees-2-custom-modules/vesta_shared_places)
-* David Straub for developing [Domus](https://domus.genealogy.net), and the Domus community
-* [Wikidata](https://www.wikidata.org) and [Wikimedia Commons](https://commons.wikimedia.org)
-* [FactGrid](https://database.factgrid.de) and [GOV](https://gov.genealogy.net)
-* GeoNames, GOV, Nominatim, ...
+* The [webtrees project](https://www.webtrees.net) for the genealogy platform and
+  its extensible module architecture.
+* Richard Cissée for the [Vesta Shared Places modules](https://github.com/vesta-webtrees-2-custom-modules)
+  and their shared-place data model.
+* David Straub and the [Domus](https://domus.genealogy.net) community for the
+  public research and map application for houses and buildings.
+* The teams behind [Wikidata](https://www.wikidata.org), [Wikimedia Commons](https://commons.wikimedia.org),
+  [FactGrid](https://database.factgrid.de), [GOV](https://gov.genealogy.net),
+  [GeoNames](https://www.geonames.org) and [Nominatim/OpenStreetMap](https://nominatim.openstreetmap.org)
+  for maintaining the public information services used by this module.
 
 <a id="license"></a>
 ## ⚖️ License

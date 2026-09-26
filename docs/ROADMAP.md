@@ -17,35 +17,47 @@ Completed: shared places offer a read-only Domus link through a replaceable prov
 
 Completed: show historical address data plus public Wikidata owners and occupants, with dates and provenance. The module remains read-only: it does not resolve people against the family tree or import external data into GEDCOM.
 
-## Version 2 – Planned reconciliation and extended research
+## Version 2 – Complete planned functionality
 
-Version 2 now starts with a dedicated bug-fixing and quality phase before
-larger research features. The open Version 2 issues are:
+Version 2 is the completion target for the functionality planned for this
+module. It is not limited to bug fixing: all core provider integrations,
+reconciliation checks, explicit import actions, consistency handling and
+supporting documentation must work together coherently before Version 2 is
+considered complete. The remaining Version 2 work is tracked in these issues:
 
-### Bug fixing and quality
+### Quality and provider consistency
 
-- #99 – make Nominatim reliably visible when enabled;
-- #98 – fix shared-place type assignment and temporal consistency checks;
-- #93 – expand the GOV type catalogue and replace remaining codes with labels;
-- #92 – fix missing or malformed GOV population tables and charts; and
-- #97 – clarify house/farm classification and historical date ranges.
-
-### Provider data and reconciliation
-
-- #83 – compare provider coordinates and offer validated import;
-- #88 – show and reconcile GOV alternate names;
+- #97 – clarify house/farm classification and historical date ranges;
 - #87 – show a filtered GOV object timeline;
-- #91 – suggest only filters matching the shared-place classification; and
-- #33 – reconcile provider data with the family tree.
+- #142 – notify editors when a linked external record changes; and
+- #146 – merge provider timelines into one chronological view.
 
-### Further research and presentation
+### Provider data and presentation
 
 - #25 – display subobjects;
-- #37 – show relevant external objects as an optional map layer; and
-- #73 – document the module's focus on houses and farms.
+- #37 – show relevant external objects as an optional map layer;
+- #49 – add OpenHistoricalMap as a historical map layer with a time slider; and
+- #191 – set a title when importing media objects.
 
-The deferred backlog also contains #48 (OpenRouteService) and #49
-(OpenHistoricalMap); these remain outside the current Version 2 scope until
-their practical benefit and provider availability are clearer. No automatic
-GEDCOM changes are planned. The naming rationale is documented in
-[Module and repository naming proposal](RENAME_PROPOSAL.md).
+### Documentation and release quality
+
+- #171 – update the documentation screenshots.
+
+Issues already completed in the 0.x milestones remain part of the Version 2
+baseline; Version 2 closes only when the remaining core issues above provide a
+consistent end-to-end workflow.
+
+## Version 3 – Optional extensions
+
+Version 3 contains optional additions beyond the planned Version 2 scope.
+Their implementation is not guaranteed and depends on provider availability,
+technical feasibility and the practical benefit for users. The current
+optional backlog includes:
+
+- #154 – add FamilySearch Places as an external information provider;
+- #174 – investigate and import place-related events via `_LOC:EVEN`;
+- #115 – expand the GenWiki provider with additional article information;
+- #138 – add Deutsche Digitale Bibliothek sources with type/date filtering;
+- #144 – group related `_LOC` records under one GOV parent;
+- #145 – group external-information sections by provider; and
+- #112 – add English screenshots and captions.
