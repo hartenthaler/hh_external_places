@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Reordered the README sections for clearer navigation between features,
+  screenshots, usage and documentation.
 - Further user-facing improvements are planned.
 
 ## 2.2.6.16 - 2026-09-25

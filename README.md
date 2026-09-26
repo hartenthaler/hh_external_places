@@ -10,14 +10,14 @@ External Places is a [webtrees](https://www.webtrees.net) module for enriching [
 ## 📚 Contents
 
 * [Purpose](#purpose)
-* [Domus](#domus)
 * [Main features](#main-features)
+* [Domus](#domus)
 * [Screenshots](#screenshots)
+* [Usage](#usage)
+* [Documentation](#documentation)
 * [Privacy](#privacy)
 * [Requirements](#requirements)
 * [Installation](#installation)
-* [Usage](#usage)
-* [Documentation](#documentation)
 * [Translation](#translation)
 * [Credits](#credits)
 * [License](#license)
@@ -47,17 +47,6 @@ where available, its geometry on a map. Its block is shown first on the
 external-information page. Requests are cached and subject to the
 [Nominatim usage policy](https://operations.osmfoundation.org/policies/nominatim/).
 
-<a id="domus"></a>
-## 🏠 Domus
-
-[Domus](https://domus.genealogy.net) is an open application for researching the history of houses and buildings. It complements webtrees: webtrees remains the place for private genealogical data, while Domus can provide specialised public research and map views.
-**Show in Domus** opens the linked Wikidata item in Domus in a new browser tab.
-Without a Wikidata link, it opens the Domus map start page.
-The Domus view can expose links to GOV and GenWiki, overlay historical maps,
-and show Wikidata residents or owners for houses and farms where available.
-
-![A shared place opened in Domus](docs/images/domus.png)
-
 <a id="main-features"></a>
 ## ⚙️ Main features
 
@@ -75,6 +64,17 @@ The current release provides:
 * linking displayed external people to their provider records and, when available, to WikiTree (`P2949`), GenWiki (`P14871`) or the Wikipedia sitelink for the selected language;
 * configuring enabled providers and search options; and
 * opening linked Wikidata places in Domus.
+
+<a id="domus"></a>
+## 🏠 Domus
+
+[Domus](https://domus.genealogy.net) is an open application for researching the history of houses and buildings. It complements webtrees: webtrees remains the place for private genealogical data, while Domus can provide specialised public research and map views.
+**Show in Domus** opens the linked Wikidata item in Domus in a new browser tab.
+Without a Wikidata link, it opens the Domus map start page.
+The Domus view can expose links to GOV and GenWiki, overlay historical maps,
+and show Wikidata residents or owners for houses and farms where available.
+
+![A shared place opened in Domus](docs/images/domus.png)
 
 <a id="screenshots"></a>
 ## 🖼️ Screenshots
@@ -122,41 +122,6 @@ Editors can search each provider by name or, where supported, by geographic radi
 Result lists can be filtered for the relevant hierarchy level when a provider returns many matches.
 
 ![External-ID assignment and provider searches](docs/images/zuordnung.png)
-
-<a id="privacy"></a>
-## 🔒 Privacy
-
-When an external entry is loaded, the server requests only the validated identifier and requested display language.
-
-Nearby searches send the shared place's coordinates and configured radius to
-the selected provider. Standard technical request metadata is sent by the
-server. The module does not transmit private genealogical notes or sources.
-
-Responses are cached locally. If a provider is temporarily unavailable, the normal Vesta Shared Place page remains available.
-When the optional Legal Notice module is active, it includes the selected external providers in the generated privacy policy together with the purpose of the request and the transferred technical data.
-
-<a id="requirements"></a>
-## 📌 Requirements
-
-* webtrees 2.2.x or 2.3.x (the module is webtrees 2.3 ready)
-* Vesta Shared Places
-* PHP with HTTPS access to the selected provider APIs for live enrichment; cached data remains usable while offline
-
-<a id="installation"></a>
-## 📥 Installation
-
-Install and use [Custom Module Manager](https://github.com/Jeferson49/CustomModuleManager)
-for a convenient installation of webtrees custom modules:
-
-1. Open **Control panel / Modules / Custom Module Manager** in webtrees.
-2. Find **External Places** and click **Install module**.
-
-**Manual installation**:
-
-1. Download the [latest release](https://github.com/hartenthaler/hh_external_places/releases/latest).
-2. Unzip it into the `modules_v4` directory of your webtrees installation.
-3. Ensure that the directory is named `hh_external_places`.
-4. In the webtrees control panel, enable **External Places**.
 
 <a id="usage"></a>
 ## Usage
@@ -229,6 +194,41 @@ and, where a public URL template is known, as links.
 * [Person matching after external imports](docs/PERSON_MATCHING.md)
 * [Version 2 roadmap](docs/ROADMAP.md)
 * [Changelog](CHANGELOG.md)
+
+<a id="privacy"></a>
+## 🔒 Privacy
+
+When an external entry is loaded, the server requests only the validated identifier and requested display language.
+
+Nearby searches send the shared place's coordinates and configured radius to
+the selected provider. Standard technical request metadata is sent by the
+server. The module does not transmit private genealogical notes or sources.
+
+Responses are cached locally. If a provider is temporarily unavailable, the normal Vesta Shared Place page remains available.
+When the optional Legal Notice module is active, it includes the selected external providers in the generated privacy policy together with the purpose of the request and the transferred technical data.
+
+<a id="requirements"></a>
+## 📌 Requirements
+
+* webtrees 2.2.x or 2.3.x (the module is webtrees 2.3 ready)
+* Vesta Shared Places
+* PHP with HTTPS access to the selected provider APIs for live enrichment; cached data remains usable while offline
+
+<a id="installation"></a>
+## 📥 Installation
+
+Install and use [Custom Module Manager](https://github.com/Jeferson49/CustomModuleManager)
+for a convenient installation of webtrees custom modules:
+
+1. Open **Control panel / Modules / Custom Module Manager** in webtrees.
+2. Find **External Places** and click **Install module**.
+
+**Manual installation**:
+
+1. Download the [latest release](https://github.com/hartenthaler/hh_external_places/releases/latest).
+2. Unzip it into the `modules_v4` directory of your webtrees installation.
+3. Ensure that the directory is named `hh_external_places`.
+4. In the webtrees control panel, enable **External Places**.
 
 <a id="translation"></a>
 ## 🌐 Translation
